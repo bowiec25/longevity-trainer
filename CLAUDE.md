@@ -14,6 +14,11 @@ Plan + progress: `docs/PLAN.md` (read "Where we are" first). Why each step: `doc
 
 Before saying work is done, run `ruff check`, `ruff format --check` and `pytest`. CI (`.github/workflows/ci.yml`) runs the same with `uv sync --locked`.
 
+## Architecture
+- `src/quizkit/`: **generic** quiz parts copied from `mandarin-hsk-trainer` (`caa969a`): cards, grader, deck, engine, Claude judge, Leitner progress. Never imports `longevity_trainer` (`tests/test_reuse.py` fails if it does). Each block has a `SPEC.md`; read it before changing the block.
+- `src/longevity_trainer/`: longevity-specific code.
+- Tests never call the real Claude (`tests/conftest.py`).
+
 ## Content rules
 - **Every card carries a receipt:** a source from the trusted list (M2), pinned (URL, date, SHA-256), plus a word-for-word quote a script finds in it. No receipt, no card.
 - **The primer is the syllabus, not a source.** `Desktop\Longevity_Platform_Blueprint\1_DOCS\longevity_trends_primer.pdf` (the user's own synthesis) says *what* to learn; facts still need a trusted source. Never commit the PDF (the repo is public).

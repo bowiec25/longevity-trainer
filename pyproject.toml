@@ -7,10 +7,17 @@ authors = [
     { name = "Cameron Bowie", email = "221522165+bowiec25@users.noreply.github.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pydantic>=2.14.3",
+    "rapidfuzz>=3.14.6",
+]
 
 [project.scripts]
 longevity-trainer = "longevity_trainer:main"
+
+[tool.uv.build-backend]
+# Two packages in one project: generic quizkit (copied from mandarin-hsk-trainer caa969a) + longevity-specific code
+module-name = ["quizkit", "longevity_trainer"]
 
 [build-system]
 requires = ["uv_build>=0.13.6,<0.14.0"]
