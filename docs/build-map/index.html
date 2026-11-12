@@ -295,6 +295,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
   <div class="docs">
     <div class="doc"><b>docs/PLAN.md</b><span>plan + "Where we are" checklist</span></div>
     <div class="doc"><b>docs/SETUP_LOG.md</b><span>why each step, in plain words</span></div>
+    <div class="doc"><b>docs/LEARNING_GOALS.md</b><span>what you want to learn + the question standard (the card writer must follow it)</span></div>
     <div class="doc"><b>docs/FUTURE.md</b><span>ideas for later</span></div>
     <div class="doc"><b>docs/decisions/</b><span>5 ADRs: scope, script vs agent, quizkit copied, receipts, kinds of card</span></div>
     <div class="doc"><b>CLAUDE.md</b><span>Claude's briefing note</span></div>
@@ -308,6 +309,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 5: the question standard</span><span>Your call: define good questions before making any. Five questions per topic (what · how · how sure · catch · popularity); 10 examples you labelled (names are good vocabulary; trivia and overselling are not). The card writer must follow <code>docs/LEARNING_GOALS.md</code>.</span></li>
     <li><span class="when">2026-11-12</span><span class="what">M1 Step 4: five ADRs</span><span>0001 scope · 0002 script vs agent (+ <code>-p</code> vs Agent SDK) · 0003 quizkit copied · 0004 every card carries a receipt · 0005 testable + kinds of card.</span></li>
     <li><span class="when">2026-11-12</span><span class="what">M1 Step 3: Claude's safety rails</span><span><code>.env</code> block hook, auto-format hook, permissions, 19 tests; copied from HSK unchanged. You ran the copy (Claude can't edit its own <code>.claude/</code>). Live test waits for a session started in this folder.</span></li>
     <li><span class="when">2026-11-12</span><span class="what">M1 Step 2: quizkit copied</span><span>From HSK <code>caa969a</code> with 513 tests; only <code>scaffold.py</code>'s package name changed. The reuse guard and the "no real Claude in tests" net came too. 537 tests pass. <a href="snapshots/m1-step2.html">snapshot</a></span></li>
