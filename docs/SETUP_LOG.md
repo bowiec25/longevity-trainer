@@ -15,6 +15,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M0.4 | Uploaded to GitHub (public); CI ran green | Backup, and GitHub re-runs the checks on a fresh computer |
 | M0.5 | Locked `main`: changes only arrive through a PR with green CI, for everyone | Nothing broken or unreviewed can reach the main copy, by accident or in a hurry |
 | M1.1 | Gave each milestone one tool to learn | Your goal: learn the tools while building something useful |
+| M1.2 | Copied quizkit (the generic quiz parts) and its tests from HSK | Reuse proven parts instead of rebuilding; 537 tests came with them |
 
 ---
 
@@ -89,3 +90,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 > **In plain words:** each milestone now gives you something useful *and* teaches one new tool: M1 reuse + tests, M2 a fan-out workflow, M3 the Agent SDK + subagents, M4 `claude -p` + evals.
 
 - First change through the full routine: issue #2 → branch → PR → CI → you merge.
+
+## M1 Step 2: copy quizkit (2026-11-12)
+
+> **In plain words:** we moved HSK's generic quiz parts (cards, marking, dealing, the quiz loop, the Claude judge, the Leitner boxes) into this project, with their 513 tests. Now 537 tests pass here.
+
+- **Copied, not installed** (decided in M0): from HSK commit `caa969a`. quizkit is identical at HSK's latest commit, so nothing was missed.
+- **Only one code change:** `scaffold.py` (the `/new-block` file maker) now writes to `longevity_trainer` instead of `hsk_trainer`.
+- **Tests use HSK words as sample data** (e.g. 爸爸 = dad). That's fine: they test the marking machinery, not Mandarin.
+- **Two safety nets came along:** `test_reuse.py` fails if quizkit ever imports our longevity code, and `conftest.py` makes sure no test calls the real Claude.
+- **The capitals example** came too, and still plays with our package blocked: proof the parts really are generic.

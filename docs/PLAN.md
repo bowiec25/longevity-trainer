@@ -10,7 +10,7 @@
   - [x] 5. Protect `main` (mirrors HSK: PR + green `check` required, up to date with main, admins included, 0 approvals, no force-push / delete; squash-only, auto-delete branches); a direct push was rejected; this step's docs went in as the first PR
 - [ ] **M1 Foundations + first playable slice** (issue #2)
   - [x] 1. Plan update: one tool to learn per milestone
-  - [ ] 2. Copy quizkit + its tests (HSK `caa969a`)
+  - [x] 2. Copied quizkit (HSK `caa969a`; identical at HSK HEAD `3d91733`) + its generic tests + the capitals example; only change: `scaffold.py` package name. 537 tests pass
   - [ ] 3. Copy the Claude safety rails (hooks, permissions) + tests
   - [ ] 4. ADRs 0001–0005
   - [ ] 5. 15 hand-made hallmark cards with receipts + quote-check script
