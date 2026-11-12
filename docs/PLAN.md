@@ -20,13 +20,18 @@
   - [x] Copied HSK's `test-writer` + `block-reviewer` subagents and the Claude GitHub review workflow (⏳ needs the `CLAUDE_CODE_OAUTH_TOKEN` secret from the user)
   - [x] CI guards: `tests/test_process.py` (every module a block with a SPEC + its own tests) and `check_reviews.py` (PR must tick test-writer, block-reviewer, `/code-review`)
   - [x] Steps 6–7 redone through the loop: quizkit blocks `receipts` (quote check) and `jsonl_loader` (folder of records), longevity block `card_bank`; `longevity check-receipts` replaces `python -m longevity_trainer.receipts`
-- [ ] **M2 Sources in** (issue #11)
+- [x] **M2 Sources in** (issue #11; closed early, rest postponed)
   - [x] 1. Topic map: `docs/TOPIC_MAP.md` + `data/topics.jsonl`: 73 topics from the primer's sections; 59 quiz now (v1), 9 wait for M5 (dated), 5 read-don't-quiz; 9 groups for the fan-out
   - [x] 2. ADR 0007: trusted sources + licences: tiers A guideline · B major-journal review · C the study itself (only for claims about it); never news, company sites, preprints or the primer; commit the record + short quotes, never the document
   - [x] 3. Pinned 3 real sources by hand (WHO page · Aging Cell review · PEARL), findings in `docs/SOURCE_FORMATS.md`: many official sites block programs (skipped); three formats (PDF, HTML, JATS XML); Europe PMC's API is the road to open journal articles, with machine-readable licences; preprint twins rejected
   - [x] 4. **Changed (2026-11-12): Claude marks open answers** (`marking` block): the user asked to drop the source-checker work ("the least important part") for now. `uv run longevity quiz` sends any answer the answer list calls wrong to Claude; `--no-judge` turns it off
-  - ⏸ Postponed (see FUTURE.md): `source_text`, `source_vetter`, the fan-out source finder, the coverage check
-- [ ] **M3 Questions with receipts**
+  - ⏸ Postponed (see FUTURE.md): `source_vetter`, the fan-out source finder, the coverage check (`source_text` moved into M3 Step 1)
+- [ ] **M3 Questions with receipts** (issue #17): an agent writes cards, a checker agent applies the LEARNING_GOALS rules, both measured on labelled eval sets. `claude -p` (subscription), not the Agent SDK + API key: one structured call per card needs no tools
+  - [x] 1. `source_text` block (quizkit): plain text from PDF, HTML and journal XML; `receipts` now checks quotes in any format (source records gain `format`). Leaves out hidden page parts, reference lists, author notes and formula code
+  - [ ] 2. Card eval set before any agent: ~25 labelled cards (your 11 + planted bad ones per rule); bar: every bad card caught, ≤1 good flagged
+  - [ ] 3. `card_checker` agent block, scored on the eval set (twice; Haiku vs Sonnet)
+  - [ ] 4. `card_writer` agent block + script gate + checker; writer eval on 3 topics + your spot-check
+  - [ ] 5. First bank of ~50 cards
 - [ ] **M4 First playable quiz**
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**

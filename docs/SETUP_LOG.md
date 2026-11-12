@@ -26,6 +26,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M2.2 | ADR 0007: what counts as a trusted source, and what we may commit | The agents in Step 5 get a clear brief; a script can check it |
 | M2.3 | Pinned 3 real sources by hand and wrote down what goes wrong | Real pages before any SPEC (HSK lesson): Step 4 changed because of it |
 | M2.4 | Claude marks open answers in the quiz (source checker postponed) | User: fixed answer lists are "a nightmare" for open questions; the receipt work was taking all the time |
+| M3.1 | `source_text`: plain text from PDF, web pages and journal XML | 3 of our 4 sources aren't PDFs; the quote check and the card writer both need their text |
 
 ---
 
@@ -204,3 +205,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Answers are saved** in `data/judge_cache.jsonl` (gitignored), so the same answer is never asked twice.
 - **Offline-safe:** if Claude fails twice in a row, marking switches off for the run and you mark yourself.
 - **Changed plan:** the source-checker steps are postponed; the user found them the least useful part.
+
+## M3 Step 1: reading any source (2026-11-12)
+
+> **In plain words:** before an agent can write cards from a source, something has to turn the source into plain text, like photocopying a page before you highlight it. The quote check could only read PDFs; now it reads web pages and journal XML too.
+
+- **New quizkit block `source_text`:** PDF → one text per page; a web page or journal article → one long text. Standard library only, no new dependency, and it never goes online (checked: XML bombs and external entities are refused).
+- **What counts as the text:** visible page text only (not scripts, menus hidden by the page, or the tab title); for articles, the title, abstract, body and captions, but **not** the reference list (PEARL hides it inside the body), author/funding notes or formula code. Otherwise a quote could be "found" in someone else's paper title.
+- **Receipts:** each source record now says its `format`; the 15 hallmark quotes are still all found.
+- **The loop earned its keep:** the test-writer caught that `rapa<italic>my</italic>cin` came out as "rapa my cin", and that PEARL's reference list sat inside the body. The reviewers caught charset, hidden-element and wrapped-article gaps.

@@ -759,3 +759,63 @@ def test_check_all_bad_record_file_gives_unusable_line(tmp_path, content):
     assert lines[0].startswith("c1: ")
     assert "unusable" in lines[0]
     assert "no source record" not in lines[0]
+
+
+# --- Source format (pdf default, html, jats-xml) ---------------------------------
+
+
+def test_block_spec_inputs_include_format():
+    assert "format" in block.BLOCK_SPEC.inputs
+
+
+def test_load_source_without_format_defaults_to_pdf(tmp_path):
+    record = source_record()
+    assert "format" not in record
+    assert load_source(write_record(tmp_path, record)).format == "pdf"
+
+
+def test_load_source_rejects_unknown_format(tmp_path):
+    with pytest.raises(ValidationError):
+        load_source(write_record(tmp_path, source_record(format="docx")))
+
+
+HTML = (
+    b"<html><body><h1>Review</h1>"
+    b"<p>Autophagy declines with age in many tissues of mice.</p></body></html>"
+)
+
+
+def test_page_keys_html_gives_exactly_one_key(tmp_path):
+    page = tmp_path / "page.html"
+    page.write_bytes(HTML)
+    keys = page_keys(page, format="html")
+    assert len(keys) == 1
+    assert to_key(GOOD_QUOTE) in keys[0]
+
+
+def test_page_keys_unknown_format_raises_value_error(tmp_path):
+    path = tmp_path / "doc.docx"
+    path.write_bytes(b"whatever")
+    with pytest.raises(ValueError):
+        page_keys(path, format="docx")
+
+
+def test_check_all_finds_quote_in_html_source_on_page_1(tmp_path):
+    sdir = tmp_path / "sources"
+    sdir.mkdir()
+    url = "https://example.org/rev.html"
+    record = {
+        "id": "rev",
+        "title": "Title rev",
+        "url": url,
+        "size": len(HTML),
+        "sha256": hashlib.sha256(HTML).hexdigest(),
+        "local_path": "docs/rev.html",
+        "format": "html",
+    }
+    (sdir / "rev.json").write_text(json.dumps(record), encoding="utf-8")
+    fetch = UrlFetch({url: HTML})
+    assert check_all([("c1", r("rev", page=1))], sdir, tmp_path, fetch=fetch) == []
+    assert check_all([("c2", r("rev", page=2))], sdir, tmp_path, fetch=fetch) == [
+        "c2: quote is on page 1, receipt says 2"
+    ]
