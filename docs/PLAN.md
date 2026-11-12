@@ -15,7 +15,7 @@
   - [x] 4. ADRs 0001–0005 in `docs/decisions/`: scope, script vs agent, quizkit copied, receipts, testable + kinds of card
   - [x] 5. Learning goals + the question standard (`docs/LEARNING_GOALS.md`; user's steer: define what a good question is before making any): five questions per topic (what, how, how sure, catch, popularity); 11 examples labelled by the user
   - [x] 6. 15 hand-made hallmark cards with receipts (`data/cards/hallmarks.jsonl`), pinned source (`data/sources/`), quote check `python -m longevity_trainer.receipts` (15/15 found)
-  - [ ] 7. Play them: `longevity quiz`
+  - [x] 7. Play them: `uv run longevity quiz` (grader for names; you mark explain answers yourself; receipt after each answer). Your play-test closes M1
 - [ ] **M2 Sources in**
 - [ ] **M3 Questions with receipts**
 - [ ] **M4 First playable quiz**

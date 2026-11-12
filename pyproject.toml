@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 longevity-trainer = "longevity_trainer:main"
+longevity = "longevity_trainer.cli:main"
 
 [tool.uv.build-backend]
 # Two packages in one project: generic quizkit (copied from mandarin-hsk-trainer caa969a) + longevity-specific code
