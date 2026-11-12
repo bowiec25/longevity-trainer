@@ -18,6 +18,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M1.2 | Copied quizkit (the generic quiz parts) and its tests from HSK | Reuse proven parts instead of rebuilding; 537 tests came with them |
 | M1.3 | Copied Claude's safety rails: the `.env` lock, auto-format, permissions | Claude can't read secrets, and its code is always tidy |
 | M1.4 | Wrote the first 5 decision records (ADRs) | So nobody undoes a decision by accident, and future you knows why |
+| M1.5 | Defined what you want to learn and what a good question is | Cards (and the agent that writes them later) follow your standard, not my guesses |
 
 ---
 
@@ -122,3 +123,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **0004 receipts:** the six layers of trust, from source list to freshness.
 - **0005 testable + kinds of card:** the definition and the seven kinds.
 - Accepted ADRs are never rewritten: a change gets a new ADR, so the history stays readable (HSK lesson).
+
+## M1 Step 5: learning goals + the question standard (2026-11-12)
+
+> **In plain words:** before writing any cards, we wrote down what you want to be tested on, and what makes a question good. The card writer agent (M3) must follow this file.
+
+- **Your steer:** "we need to spend more time defining what a good question is". Right call: it needs no extra infrastructure, and it becomes the agent's instructions and the test of its output.
+- **Five questions per topic:** what is it · how does it work · how sure are we it helps longevity (grade + why) · what's the catch · is it growing in popularity (dated, re-checked in M5).
+- **You labelled 10 examples.** One surprise: I marked the plain name question (#10) bad; you marked it good. So names are welcome as vocabulary, as long as each topic also gets how/why questions. Trivia (#8) and vague overselling (#9): bad.
+- **Why this is best practice:** one file is the single source of truth. The card writer's prompt includes it word for word (a test will check), the fact-auditor checks cards against it, and your labelled examples become the eval set.
