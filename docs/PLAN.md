@@ -30,8 +30,8 @@
   - [x] 1. `source_text` block (quizkit): plain text from PDF, HTML and journal XML; `receipts` now checks quotes in any format (source records gain `format`). Leaves out hidden page parts, reference lists, author notes and formula code
   - [x] 2. Card eval set before any agent: 29 labelled cards in `tests/data/card_eval.jsonl` (13 good, 16 bad; your labels + planted bad ones per rule; every quote checked). An independent review fixed 11 unfair labels. Your steer became rule 4: for a trial, know what it meant, not its sample size. Bar: every bad card caught, ≤1 good flagged
   - [x] 3. `card_checker` agent block (Haiku, prompt v2): reads each card like a strict teacher against LEARNING_GOALS §2. Across 14 real runs, incl. 12 fresh held-out cards it was never tuned on, **no bad card got through**; it wrongly rejects about 30% of good cards (bar: ≤ a third, your call; tuning later). Sonnet was stricter and dearer. The checker also caught 4 real flaws in our own exam cards
-  - [ ] 4. `card_writer` agent block + script gate + checker; writer eval on 3 topics + your spot-check
-  - [ ] 5. First bank of ~50 cards
+  - [x] 4. `card_writer` agent block (Sonnet, prompt v3): drafts cards from one source; code checks the quote is really there and drops repeats, then the checker. Writer eval: every run found all its quotes (0 invented); prompt v2 ("the quote alone must back the whole card") lifted kept cards from ~1/3 to ~5/8; 2 of 3 topics pass the bar each run (the miss: no "how" card; run again). Your spot-check: 10/10 👍. ADR 0008: `claude -p`, not the Agent SDK
+  - [ ] 5. First bank of ~50 cards (user, 2026-11-12: science first: drugs and supplements, the hallmarks, and the factors (exercise, sleep, diet); companies later, as M5 dated cards)
 - [ ] **M4 First playable quiz**
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**

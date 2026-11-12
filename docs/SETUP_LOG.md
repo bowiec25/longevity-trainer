@@ -29,6 +29,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M3.1 | `source_text`: plain text from PDF, web pages and journal XML | 3 of our 4 sources aren't PDFs; the quote check and the card writer both need their text |
 | M3.2 | An exam for the card checker, written before the checker | Set the bar before building (HSK lesson), so the result can't be bent to fit |
 | M3.3 | Card checker (Claude Haiku) measured on the exam and on fresh held-out cards | A judgment needs an eval, and an eval you tuned on overstates the score |
+| M3.4 | Card writer (Claude Sonnet): drafts cards from a source; code and the checker keep only the good ones | Writing a question needs judgment; the gates make sure nothing unchecked reaches the bank |
 
 ---
 
@@ -241,3 +242,20 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Fairness:** exam changes after seeing results were ruled on by an independent agent (it agreed with the checker on 3 cards, disagreed on 3, which stay as they are). Then an agent that never saw the prompt wrote 12 **held-out** cards; the checker caught all their bad cards too, so it isn't just fitted to our exam.
 - **The bar moved twice, by your decision:** "≤1 good card rejected" became "≤ a third", because a rejected card costs a redraft but a bad card teaches a mistake. To revisit when tuning.
 - **Safety rails:** `check-cards-exam --dry-run` (no Claude), `--limit N`, `--holdout`; every real run prints its calls, tokens and cost.
+
+## M3 Step 4: the student who writes flashcards (2026-11-12)
+
+> **In plain words:** a student reads a textbook and writes flashcards (Sonnet). Then three checks: is the quote really in the book (code), is it a repeat (code), does it follow the rules (the strict teacher from Step 3). Only cards that pass all three go in the box.
+
+| Run | Prompt | Rapamycin (PEARL) | Epigenetic clocks | Physical activity (WHO) |
+|---|---|---|---|---|
+| 1 | v1 | kept 1/8 ❌ | 3/8 ❌ | 4/8 ❌ |
+| 2 | v2 | 4/8 ❌ (no "how" card) | 6/8 ✅ | 5/8 ✅ |
+| 3 | v2 | 4/8 ✅ | 5/8 ❌ (no "how" card) | 5/8 ✅ |
+
+- **The writer never invented a quote:** 0 quote drops in all 9 runs. Almost every drop was the checker's rule 3 (the answer said more than the quote). So v2 told the writer: **the quote alone must back the whole card** (one short claim per answer, no open lists). That more than doubled the kept cards.
+- **Tests first this time:** the test-writer wrote 72 tests from the SPEC before any code (red, then green), plus more after the reviews.
+- **Your spot-check:** 10 kept cards, all 👍 ("these all look pretty good"). Your steer: Step 5's bank should be science first (drugs and supplements, hallmarks, exercise/sleep/diet), companies later as M5 dated cards.
+- **Reviews caught:** a broken card file could make new ids clash with old ones (now it stops and says so); a rejected question blocked a later good draft of the same question; quotes across a PDF page break could never be found (prompt v3 marks pages; the eval sources were all one page, so the v2 numbers stand); no cost line (now: calls, tokens, cost); `--replace` could lose cards if the write failed (now temp file + swap).
+- **ADR 0008:** the writer uses `claude -p` (one call, JSON reply, no tools), not the Agent SDK that ADR 0002 planned: no API key, no extra cost.
+- **Variance:** the "how" card is the one most often missing; a run that misses the bar writes nothing, so you just run it again.
