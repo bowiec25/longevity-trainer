@@ -142,7 +142,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>0</b><span>quiz cards (none until M3, on purpose)</span></div>
-    <div class="tile"><b>564</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>571</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>5</b><span>decision records (ADRs)</span></div>
@@ -261,19 +261,20 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 564 tests guard</h2>
+    <h2>4. What the 571 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Test file</th><th class="n">Tests</th><th></th><th>What it protects</th></tr></thead>
       <tbody>
+        <tr><td class="mono">test_cli.py</td><td class="n">7</td><td class="bar"><span style="width:2%"></span></td><td>the quiz: right answers score, typos forgiven, own mark y/n, blank is wrong, q quits and keeps the score, receipt shown</td></tr>
         <tr><td class="mono">test_receipts.py</td><td class="n">8</td><td class="bar"><span style="width:2%"></span></td><td>quote matching survives PDF mess; one changed word fails; cards load; every real quote is in the pinned review (skips without the PDF)</td></tr>
         <tr><td class="mono">quizkit tests (16 files)</td><td class="n">513</td><td class="bar"><span style="width:100%"></span></td><td>marking, dealing, the quiz loop, the judge (fake Claude), Leitner boxes, progress, scaffold, reuse guard; copied from HSK</td></tr>
         <tr><td class="mono">test_hooks.py</td><td class="n">19</td><td class="bar"><span style="width:4%"></span></td><td>the <code>.env</code> blocker and the auto-format hook (copied from HSK)</td></tr>
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">564</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">571</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -311,6 +312,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 7: play it</span><span><code>uv run longevity quiz</code>: the 15 cards in random order, the receipt after each answer. Names marked by the grader; explain answers by you (Claude judge in M4). 571 tests pass. <a href="snapshots/m1-step7.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M1 Step 6: 15 cards with receipts</span><span>Hallmark cards (names + how/why), each quoting the 2023 <i>Cell</i> review. A script finds every quote on its page: 15/15. The PDF is pinned by SHA-256, not committed. 564 tests pass. <a href="snapshots/m1-step6.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M1 Step 5: the question standard</span><span>Your call: define good questions before making any. Five questions per topic (what · how · how sure · catch · popularity); 10 examples you labelled (names are good vocabulary; trivia and overselling are not). The card writer must follow <code>docs/LEARNING_GOALS.md</code>.</span></li>
     <li><span class="when">2026-11-12</span><span class="what">M1 Step 4: five ADRs</span><span>0001 scope · 0002 script vs agent (+ <code>-p</code> vs Agent SDK) · 0003 quizkit copied · 0004 every card carries a receipt · 0005 testable + kinds of card.</span></li>

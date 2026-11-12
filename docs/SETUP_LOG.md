@@ -20,6 +20,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M1.4 | Wrote the first 5 decision records (ADRs) | So nobody undoes a decision by accident, and future you knows why |
 | M1.5 | Defined what you want to learn and what a good question is | Cards (and the agent that writes them later) follow your standard, not my guesses |
 | M1.6 | 15 hallmark cards, each with a quote a script finds in the pinned review | Proves the receipt idea on real content before any agent writes cards |
+| M1.7 | `longevity quiz`: play the 15 cards, see the receipt after each | The first thing you can actually use |
 
 ---
 
@@ -142,3 +143,11 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Quote matching ignores PDF mess** (ligatures, hyphens at line ends, curly quotes, accents) by comparing letters and digits only. Changing one word still fails (a test checks this).
 - **Following your standard:** 10 name/fact cards (vocabulary) and 5 how/why/term cards (mechanism).
 - **In CI** the real-PDF test skips (no download there); the format tests run. Locally: `uv run python -m longevity_trainer.receipts` → `15/15 quotes found`.
+
+## M1 Step 7: play the cards (2026-11-12)
+
+> **In plain words:** `uv run longevity quiz` asks the 15 questions in a random order. After each answer you see the right answer and its receipt (the quote and page).
+
+- **Marking is free and instant for now:** names and facts are checked by quizkit's grader (small typos forgiven). For "explain" answers, or any answer it calls wrong, you see the model answer and mark yourself (y/n). The Claude judge comes in M4, with an eval set to test its marking.
+- **Reuse:** the quiz loop is quizkit's `QuizSession`, including its "own mark" feature from HSK; this step only added the screen code (`cli.py`).
+- **Not yet:** progress isn't saved (Leitner boxes come later).
