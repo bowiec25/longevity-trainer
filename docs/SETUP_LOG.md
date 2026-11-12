@@ -28,6 +28,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M2.4 | Claude marks open answers in the quiz (source checker postponed) | User: fixed answer lists are "a nightmare" for open questions; the receipt work was taking all the time |
 | M3.1 | `source_text`: plain text from PDF, web pages and journal XML | 3 of our 4 sources aren't PDFs; the quote check and the card writer both need their text |
 | M3.2 | An exam for the card checker, written before the checker | Set the bar before building (HSK lesson), so the result can't be bent to fit |
+| M3.3 | Card checker (Claude Haiku) measured on the exam and on fresh held-out cards | A judgment needs an eval, and an eval you tuned on overstates the score |
 
 ---
 
@@ -224,3 +225,19 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Every quote is real:** a test checks each one, word for word, in its pinned source.
 - **The exam was reviewed too:** an independent agent found 11 unfair labels (good cards saying slightly more than their quotes, bad cards breaking two rules at once). Fixed; a bad card now lists every rule a correct checker could name.
 - **Your steer became a rule:** for a trial, know that it exists and what it meant for the field, not its sample size (LEARNING_GOALS rule 4).
+
+## M3 Step 3: the strict teacher (2026-11-12)
+
+> **In plain words:** like airport security for cards. The checker reads each card and its quote and rejects anything that breaks a rule. A strict guard means some extra bag checks (good cards rejected), but nothing dangerous gets through (no bad card accepted).
+
+| Run | Model, prompt | Bad cards caught | Good cards wrongly rejected |
+|---|---|---|---|
+| 1 | Haiku v1 | 16/16 | 8/13 (prompt too literal; but 4 were real flaws in my exam cards) |
+| 2–5 | Haiku / Sonnet v2 | 17/17 every run | Haiku 3/12, Sonnet 4–6/12 |
+| 6–9 | Haiku / Sonnet v2, after fair fixes | 17/17 every run | Haiku 3, Sonnet 4–5 |
+| 10–13 | Haiku v2: main exam + **held-out** | 17/17 and 6/6 | 3–4/12 and 2/6 |
+
+- **Haiku chosen:** catches everything, rejects fewer good cards than Sonnet, costs about $0.01 per 29 cards.
+- **Fairness:** exam changes after seeing results were ruled on by an independent agent (it agreed with the checker on 3 cards, disagreed on 3, which stay as they are). Then an agent that never saw the prompt wrote 12 **held-out** cards; the checker caught all their bad cards too, so it isn't just fitted to our exam.
+- **The bar moved twice, by your decision:** "≤1 good card rejected" became "≤ a third", because a rejected card costs a redraft but a bad card teaches a mistake. To revisit when tuning.
+- **Safety rails:** `check-cards-exam --dry-run` (no Claude), `--limit N`, `--holdout`; every real run prints its calls, tokens and cost.
