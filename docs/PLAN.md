@@ -62,6 +62,12 @@ After each answer the quiz shows the receipt: source, year, quote.
 
 M1 adds an ADR "what's testable + kinds of card". M2 starts with a **topic map of the primer** (each section → card kinds → testable or not), then picks sources that can back those topics.
 
+## The two hard parts: writing questions and marking them (user, 2026-11-12)
+Curating the **card-writing agent** and **how answers are marked** will be a big part of this project, so each gets the HSK judge treatment (playbook M4 lesson: "an AI judge needs an eval, not just tests"):
+- **card_writer (M3):** a prompt per kind of card; a hand-labelled set of good and bad cards (e.g. answer too strong for the quote, two right answers, trivia nobody needs); a bar set before running; the fact-auditor's planted test with an answer key.
+- **Marking (M4):** a rule per kind of card (exact, typo, list grader, Claude judge with a rubric); a hand-labelled eval set of borderline answers **you** label (your labels become rules in the prompt, as with HSK's gist rubric); the bar: at least 90% right and no wrong "yes".
+- Both are re-run whenever a prompt or model changes.
+
 ## Sharing quizkit: copy it in
 Copy `src/quizkit/` (about 2,100 lines; needs only `pydantic` + `rapidfuzz`) and its tests from `mandarin-hsk-trainer` commit `caa969a`, and record that commit in an ADR (M1).
 - **Not installed from the Mandarin repo:** that package ships quizkit *and* the Mandarin code, pulls in `pypinyin`, `streamlit` etc., and every quizkit change would need a Mandarin release.
@@ -74,8 +80,8 @@ Copy `src/quizkit/` (about 2,100 lines; needs only `pydantic` + `rapidfuzz`) and
 | M0 | Plan + setup | Public repo, CI green, `main` protected, docs + build map |
 | M1 | Foundations | ADRs (scope, script vs agent, quizkit copy, sources + receipts, what's testable + kinds of card), quizkit copied with its tests passing, hooks / permissions / subagents / skills copied, reuse-scan test |
 | M2 | Sources in | Topic map of the primer (section → card kinds → testable?); source list researched + pinned (fingerprints, licences); real pages looked at before any SPEC |
-| M3 | Questions with receipts | `card_writer` agent + quote-check script + `fact-auditor`; a first bank of about 50 checked cards |
-| M4 | First playable quiz | CLI quiz on the quizkit engine + judge; the receipt shown after each answer |
+| M3 | Questions with receipts | `card_writer` agent (prompt per card kind + its own eval set) + quote-check script + `fact-auditor` (planted test); a first bank of about 50 checked cards |
+| M4 | First playable quiz | CLI quiz on the quizkit engine; marking rule per card kind (incl. the new list grader) + a judge eval set you label; the receipt shown after each answer |
 | M5 | Freshness | Scheduled re-check of sources; changed / expired → cards pulled; one-line summary |
 | M6 | Smarts + web | Leitner progress + a Streamlit page (mostly reused) |
 
