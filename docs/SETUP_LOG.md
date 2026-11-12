@@ -22,6 +22,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M1.6 | 15 hallmark cards, each with a quote a script finds in the pinned review | Proves the receipt idea on real content before any agent writes cards |
 | M1.7 | `longevity quiz`: play the 15 cards, see the receipt after each | The first thing you can actually use |
 | Loop | The build loop restored and enforced: SPEC → independent test-writer → build → reviewers → PR | Steps 6–7 skipped it; now CI fails if anyone does |
+| M2.1 | Topic map: every primer section → topics → card kinds → quiz now / later / never | Decides what M2 needs sources for, and what M3 writes cards on |
 
 ---
 
@@ -161,3 +162,14 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Redone through the loop:** the quote checker and the folder loader are now quizkit blocks any quiz can use; the cards are a longevity block.
 - **What the independent agents found** (none caught by my own tests): a card kind with spaces was rejected; the quote key treated `IL-1α` = `IL-1β` and `1.5` = `15`; a "quote" of dots could match anything; a line splitter that shifted error line numbers; a path that could land a download outside the project.
 - **Still to do:** the Claude GitHub review needs a token from you (`CLAUDE_CODE_OAUTH_TOKEN`).
+
+## M2 Step 1: the topic map (2026-11-12)
+
+> **In plain words:** a list of the 73 things the primer covers, and for each: which kinds of card suit it, and whether we quiz it now, after the M5 freshness checks, or never.
+
+- **59 quiz now:** the science (ageing, hallmarks, the big ideas, reading evidence) and, for each drug, supplement and intervention, what it is, how it works and how strong the evidence is.
+- **9 wait for M5:** prices, companies, rules and deals change within months, so they need an "as of" date and a re-check.
+- **5 read-don't-quiz:** news sources, people, events.
+- **Groups:** the 59 are split into 9 groups; in Step 5 one agent per group looks for trusted sources.
+- **Public repo:** only topic names and primer section numbers are committed, never the primer's text.
+- **No code in this step**, so the PR's reviews are "n/a" (the CI check accepts n/a with a reason).
