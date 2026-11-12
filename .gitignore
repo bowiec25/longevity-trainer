@@ -1,0 +1,36 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets: never commit (copy .env.example to .env instead)
+.env
+
+# Personal source material: the primer is the syllabus, kept outside this public repo.
+# (M2 may un-ignore pinned source PDFs under data/raw/ with a "!" line, if their licence allows.)
+*.pdf
+
+# Local data (personal progress, not shared; used from M4)
+data/progress.db
+data/judge_cache.jsonl
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Claude Code: personal (not shared) files
+.claude/settings.local.json
+.claude/statusline.ps1
+CLAUDE.local.md

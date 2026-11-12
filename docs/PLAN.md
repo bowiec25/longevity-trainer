@@ -1,0 +1,86 @@
+# Where we are
+
+- [x] Plan agreed (2026-11-12)
+- [ ] **M0 Plan + setup**
+  - [x] 1. Plan written: `docs/PLAN.md`, `docs/SETUP_LOG.md`, `docs/FUTURE.md`
+  - [x] 2. Project + git: `uv init --package` (Python 3.13; hello runs), branch renamed `master` → `main`, `.gitattributes` (LF + `data/raw/**` byte-for-byte)
+  - [x] 3a. Skeleton (copied from HSK, then adapted): `.gitignore` (+ `*.pdf`), `.env.example` (no keys needed), README, `CLAUDE.md`, ruff + pytest, smoke test, CI (versions looked up: checkout v7.0.1 + setup-uv v10.3.3, both pinned to SHAs), PR template + "Still the right thing?" issue form + PR check (22 tests); 24 tests green; first commit
+  - [ ] 3b. Build map started (`docs/build-map/`, new artifact)
+  - [ ] 4. GitHub repo `bowiec25/longevity-trainer` (public), first push, CI green
+  - [ ] 5. Protect `main` (PR + green CI, admins included, squash-only, auto-delete branches); test a direct push is rejected
+- [ ] **M1 Foundations**
+- [ ] **M2 Sources in**
+- [ ] **M3 Questions with receipts**
+- [ ] **M4 First playable quiz**
+- [ ] **M5 Freshness**
+- [ ] **M6 Smarts + web**
+
+---
+
+# The plan
+
+## Goal
+A quiz that tests my longevity knowledge: health, ageing, sleep, exercise, nutrition, and the science behind them. Built the same way as `mandarin-hsk-trainer` (its `docs/PLAYBOOK.md` is the checklist), reusing its generic `quizkit`.
+
+## What's different from Mandarin
+Mandarin had one fixed word list, so the truth was easy. Longevity facts can be **wrong, contested or out of date**. So the main design problem is **where questions come from and how we know they're right**, not the quiz itself. M2, M3 and M5 are about that.
+
+## Where questions come from: every answer carries a receipt
+A card can't exist without a pinned source and a word-for-word quote from it that backs the answer. (Decided in detail in M2 with an ADR.)
+
+| Layer | Who | What it checks | Strictness |
+|---|---|---|---|
+| 1. Trusted source list | User + Claude, once (M2, ADR) | Only guidelines, consensus statements, systematic reviews from named bodies (e.g. NIH/NIA, WHO, CDC, NHS, Cochrane, AASM) | 🔴 code rejects other sources |
+| 2. Pinned copy | Script | Source saved with URL, date, SHA-256 fingerprint | 🔴 |
+| 3. Claude writes the card | Agent | Question + answer + the quote that supports it | n/a |
+| 4. Quote check | Script | The quote appears word for word in the saved source | 🔴 |
+| 5. Meaning check | Read-only `fact-auditor` subagent | Does the answer follow from the quote? Too strong? Missing caveat? Flagged = removed, no human gate | 🔵 + dated report |
+| 6. Freshness | Script, on a schedule (M5) | Re-fetch sources; changed fingerprint or past a review-by date → card pulled until re-checked | 🟠 |
+
+After each answer the quiz shows the receipt: source, year, quote.
+
+**Open (decide in M2):** licences (a public repo re-publishes what we save: US-government pages are public domain, WHO/NHS/Cochrane have their own terms, so for some we may commit only short quotes + fingerprints); contested topics ("contested" label, or left out of v1); answer type (free text marked by the Claude judge vs multiple choice).
+
+## The primer: the syllabus (added 2026-11-12)
+`Desktop\Longevity_Platform_Blueprint\1_DOCS\longevity_trends_primer.pdf` (92 pages, 23 sections, the user's own synthesis, dated 2 Oct 2026) is **what to learn**, not a source: it has almost no citations and says "the field moves weekly". Every fact taken from it still needs a receipt from a trusted source, which also checks the primer. The PDF stays out of the public repo; we commit only a topic map in our own words.
+
+**Testable** = one clear right answer, stated by a trusted source, true for about 2+ years. Otherwise "read, don't quiz".
+
+**Kinds of card**, so the whole primer can be learned, not just the easy facts:
+
+| Kind | Example | Marked by | Primer parts | When |
+|---|---|---|---|---|
+| Fact recall | "Death risk doubles about every __ years" → 8 | grader (exact/typo) | 1, history, numbers | v1 |
+| Term | "What is a senolytic?" | Claude judge, gist rubric (in quizkit) | Glossary, 1–4 | v1 |
+| Explain the idea | "Why does geroscience expect to delay many diseases at once?" | judge, gist rubric vs the source | 1–3 | v1 |
+| Grade the evidence | "Best evidence for NMN in healthy people?" → C (the primer's A–E grades) | exact | 2, scorecards | v1 |
+| Dated fact | "UK monthly cost of GLP-1s?" | exact + "as of" date, expires | 3–5 | after M5 |
+| Read, don't quiz | podcasts, events | not a card | 5 | never |
+
+**v1 focus (user, 2026-11-12):** mechanisms, science and history: sections 01–04, the science in 06–10, some of the testing in 11–13. "Think about how best to learn everything in the doc" → the card kinds above; dated industry facts wait for M5.
+
+M1 adds an ADR "what's testable + kinds of card". M2 starts with a **topic map of the primer** (each section → card kinds → testable or not), then picks sources that can back those topics.
+
+## Sharing quizkit: copy it in
+Copy `src/quizkit/` (about 2,100 lines; needs only `pydantic` + `rapidfuzz`) and its tests from `mandarin-hsk-trainer` commit `caa969a`, and record that commit in an ADR (M1).
+- **Not installed from the Mandarin repo:** that package ships quizkit *and* the Mandarin code, pulls in `pypinyin`, `streamlit` etc., and every quizkit change would need a Mandarin release.
+- **Copy suits now:** this quiz will probably change quizkit (a source on cards, a receipt-checking judge rubric). Easier in place while learning.
+- **Later:** extract quizkit into its own repo, installed by both (see `docs/FUTURE.md`).
+
+## Milestones
+| # | Name | "Done" looks like |
+|---|---|---|
+| M0 | Plan + setup | Public repo, CI green, `main` protected, docs + build map |
+| M1 | Foundations | ADRs (scope, script vs agent, quizkit copy, sources + receipts, what's testable + kinds of card), quizkit copied with its tests passing, hooks / permissions / subagents / skills copied, reuse-scan test |
+| M2 | Sources in | Topic map of the primer (section → card kinds → testable?); source list researched + pinned (fingerprints, licences); real pages looked at before any SPEC |
+| M3 | Questions with receipts | `card_writer` agent + quote-check script + `fact-auditor`; a first bank of about 50 checked cards |
+| M4 | First playable quiz | CLI quiz on the quizkit engine + judge; the receipt shown after each answer |
+| M5 | Freshness | Scheduled re-check of sources; changed / expired → cards pulled; one-line summary |
+| M6 | Smarts + web | Leitner progress + a Streamlit page (mostly reused) |
+
+## How we work
+- Small steps; stop after each one for the user's go-ahead.
+- Short, plain messages: analogy first, then a tiny map of where the step fits; detail in closed `<details>` toggles.
+- Plan mode for big or unclear steps. Every plan starts with **"Still the right thing?"**.
+- No human approval gates: checks act on their own, the user gets a one-line summary.
+- Every step: tick this file, add to `docs/SETUP_LOG.md`, `docs/FUTURE.md` for ideas, update the build map (from M0 Step 3).
