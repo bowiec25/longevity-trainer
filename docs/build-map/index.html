@@ -142,7 +142,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>0</b><span>quiz cards (none until M3, on purpose)</span></div>
-    <div class="tile"><b>537</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>556</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>1 / 7</b><span>milestones done: M0 ✅</span></div>
@@ -253,24 +253,25 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <div class="gate auto"><h3>CI on GitHub</h3><span class="chip auto">Automatic</span><ul><li>PR check (an empty "Still the right thing?" fails)</li><li><code>uv sync --locked</code> + the 3 checks</li><li>live: first run green, 24 passed</li></ul></div>
     <div class="gate hard"><h3>Push protection</h3><span class="chip hard">Hard stop, for everyone</span><ul><li>blocks uploads with known API keys</li><li>+ secret scanning (public repo)</li></ul></div>
     <div class="gate hard"><h3>Protected main</h3><span class="chip hard">Hard stop, for everyone</span><ul><li>PR + green CI required</li><li>admins included, squash only</li><li>tested: a direct push was rejected</li></ul></div>
-    <div class="gate hard later"><h3>Claude's safety rails</h3><span class="chip hard">Hard stop</span><ul><li><code>.env</code> deny + hook</li><li>auto-format hook</li><li>copied from HSK in M1</li></ul></div>
+    <div class="gate hard"><h3>Claude's safety rails</h3><span class="chip hard">Hard stop, Claude only</span><ul><li><code>.env</code> deny + hook</li><li>auto-format hook</li><li>19 tests; live test next session</li></ul></div>
     <div class="gate you"><h3>You merge</h3><span class="chip you">Your call</span><ul><li><code>gh pr merge N --squash</code></li><li>Claude never merges</li></ul></div>
   </div>
 </section>
 
 <section>
   <div>
-    <h2>4. What the 537 tests guard</h2>
+    <h2>4. What the 556 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Test file</th><th class="n">Tests</th><th></th><th>What it protects</th></tr></thead>
       <tbody>
         <tr><td class="mono">quizkit tests (16 files)</td><td class="n">513</td><td class="bar"><span style="width:100%"></span></td><td>marking, dealing, the quiz loop, the judge (fake Claude), Leitner boxes, progress, scaffold, reuse guard; copied from HSK</td></tr>
+        <tr><td class="mono">test_hooks.py</td><td class="n">19</td><td class="bar"><span style="width:4%"></span></td><td>the <code>.env</code> blocker and the auto-format hook (copied from HSK)</td></tr>
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">537</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">556</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -281,7 +282,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
   </div>
   <div class="docs">
     <div class="doc card"><b>Copied, then adapted</b><span><code>ci.yml</code> (actions re-pinned: checkout v7.0.1, setup-uv v10.3.3), <code>check_pr_body.py</code> + 22 tests, PR template, issue form, <code>.gitignore</code>, <code>.gitattributes</code>, this map's look</span></div>
-    <div class="doc card"><b>Copied from HSK (M1)</b><span>✅ <code>quizkit</code> (cards, grader, deck, engine, judge, Leitner) + 513 tests + the capitals example · next: hooks, permissions</span></div>
+    <div class="doc card"><b>Copied from HSK (M1)</b><span>✅ <code>quizkit</code> (cards, grader, deck, engine, judge, Leitner) + 513 tests + the capitals example · ✅ hooks + permissions</span></div>
     <div class="doc card"><b>New here</b><span>the receipt rule, the primer as syllabus, kinds of card, <code>*.pdf</code> kept out of git; later: sources, quote check, fact-auditor, list grader</span></div>
   </div>
 </section>
@@ -305,6 +306,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 3: Claude's safety rails</span><span><code>.env</code> block hook, auto-format hook, permissions, 19 tests; copied from HSK unchanged. You ran the copy (Claude can't edit its own <code>.claude/</code>). Live test waits for a session started in this folder.</span></li>
     <li><span class="when">2026-11-12</span><span class="what">M1 Step 2: quizkit copied</span><span>From HSK <code>caa969a</code> with 513 tests; only <code>scaffold.py</code>'s package name changed. The reuse guard and the "no real Claude in tests" net came too. 537 tests pass. <a href="snapshots/m1-step2.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M1 Step 1: one tool per milestone</span><span>M1 reuse + tests · M2 fan-out workflow · M3 Agent SDK + subagents · M4 <code>claude -p</code> + evals. First change through the full routine (issue #2, PR #3).</span></li>
     <li><span class="when">2026-11-12</span><span class="what">M0 done: <code>main</code> protected</span><span>HSK's settings mirrored (PR + green CI, admins included, squash only, branches auto-deleted, 0 approvals). A direct push was rejected; this step went in as the first PR. <a href="snapshots/m0-done.html">snapshot</a></span></li>

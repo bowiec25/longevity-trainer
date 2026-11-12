@@ -31,4 +31,5 @@ Before saying work is done, run `ruff check`, `ruff format --check` and `pytest`
 - After each step: tick `docs/PLAN.md`, add a plain-English entry to `docs/SETUP_LOG.md`, add ideas to `docs/FUTURE.md`, update the build map: edit `docs/build-map/index.html` (tiles, diagram, gates, tests table, one line in "How it grew"), save a frozen copy as `docs/build-map/snapshots/<step>.html` linked from that line (in the copy, strip `snapshots/` from the timeline links and add the 📸 banner), and republish the folder to the "Longevity Trainer Build Map" artifact (slug `3dd79f10-f680-4225-84a4-fd70cc124d81`).
 - Once `main` is protected (M0 Step 5): issue → branch → small commits → PR → green CI → squash-merge. Never commit to `main` directly. Stage files by name, not `git add -A`.
 - Look up versions, tags and limits; don't guess.
-- Secrets live in `.env` (gitignored). Document key names in `.env.example`.
+- Secrets live in `.env` (gitignored; Claude is denied reading it). Document key names in `.env.example`.
+- Hooks (`.claude/hooks/`, tested in `tests/test_hooks.py`, copied from HSK): `block_env.py` blocks any tool or shell command touching `.env`; `format_python.py` runs `ruff format` after every `.py` edit. They only load in a session started inside this folder. Claude can't edit `.claude/` itself: the user runs those changes.
