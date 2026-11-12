@@ -1,0 +1,23 @@
+{"card_id": "hm-autophagy-name", "typed": "the recycling hallmark", "expected": false, "why": "vague: describes it, doesn't name it"}
+{"card_id": "hm-autophagy-name", "typed": "loss of autophagy", "expected": true, "why": "same hallmark, other words"}
+{"card_id": "hm-dysbiosis-name", "typed": "gut microbiome imbalance", "expected": true, "why": "names the idea of dysbiosis in plain words"}
+{"card_id": "hm-epigenetic-name", "typed": "DNA methylation changes", "expected": false, "why": "only one part of the hallmark"}
+{"card_id": "epigenetic-clocks-what-2", "typed": "GrimAge and PhenoAge", "expected": false, "why": "the question says 'respectively': wrong order"}
+{"card_id": "epigenetic-clocks-what-2", "typed": "PhenoAge", "expected": false, "why": "half the answer"}
+{"card_id": "hm-mito-inflammation", "typed": "an immune response, inflammation", "expected": true, "why": "says inflammation"}
+{"card_id": "hm-mito-inflammation", "typed": "cell death", "expected": false, "why": "a different outcome"}
+{"card_id": "physical-activity-how-sure-3", "typed": "about a third", "expected": true, "why": "same figure in words"}
+{"card_id": "physical-activity-how-sure-3", "typed": "around 25%", "expected": false, "why": "wrong figure"}
+{"card_id": "hm-inflammaging-term", "typed": "inflammation that gets worse with age", "expected": true, "why": "the key idea"}
+{"card_id": "hm-inflammaging-term", "typed": "inflammation caused by ageing cells", "expected": false, "why": "a cause, not what the word means"}
+{"card_id": "hallmarks-mitochondria-senescence-and-stem-cells-how-sure-1", "typed": "removing senescent cells extends lifespan in mice", "expected": true, "why": "the evidence and the species"}
+{"card_id": "hallmarks-mitochondria-senescence-and-stem-cells-how-sure-1", "typed": "removing senescent cells extends lifespan in humans", "expected": false, "why": "mice, not humans: overclaims"}
+{"card_id": "hallmarks-mitochondria-senescence-and-stem-cells-how-sure-1", "typed": "senolytics extend healthspan", "expected": false, "why": "no species"}
+{"card_id": "hallmarks-mitochondria-senescence-and-stem-cells-how-2", "typed": "inflammation", "expected": true, "why": "the main part (fibrosis missing), accepted by the user"}
+{"card_id": "hm-autophagy-how", "typed": "wraps old parts and digests them in lysosomes", "expected": true, "why": "the mechanism in plain words"}
+{"card_id": "hm-autophagy-how", "typed": "it breaks down proteins", "expected": false, "why": "too vague: no how"}
+{"card_id": "hallmarks-mitochondria-senescence-and-stem-cells-how-5", "typed": "a bit of mitochondrial stress makes you live longer", "expected": false, "why": "the question asks the conditions: partial and early"}
+{"card_id": "hallmarks-proteostasis-autophagy-and-nutrient-sensing-how-sure-1", "typed": "mice", "expected": true, "why": "the example the answer gives"}
+{"card_id": "hallmarks-proteostasis-autophagy-and-nutrient-sensing-how-sure-1", "typed": "humans", "expected": false, "why": "not shown in humans"}
+{"card_id": "hallmarks-proteostasis-autophagy-and-nutrient-sensing-what-1", "typed": "keeping proteins in balance; when lost, misfolded proteins clump", "expected": true, "why": "both parts in plain words"}
+{"card_id": "hallmarks-genome-telomeres-and-epigenetics-what-1", "typed": "they measure how old your cells are", "expected": false, "why": "no methylation, no mortality: too vague"}

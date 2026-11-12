@@ -14,7 +14,8 @@ from pydantic import ValidationError
 
 import longevity_trainer.blocks.card_bank as block
 from quizkit.blocks.base import missing_spec_sections, spec_section
-from quizkit.models import Card
+from quizkit.models import Card, Question
+from quizkit.modes import Mode, build_question
 
 SPEC_MD = Path(block.__file__).parent / "SPEC.md"
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -214,6 +215,38 @@ def test_to_quizkit_makes_a_quizkit_card(tmp_path):
         "topic": "autophagy",
     }
     assert q.level == 1
+
+
+# to_question
+
+
+@pytest.mark.parametrize("kind", ["name", "fact", "term", "explain"])
+def test_to_question_is_the_card_as_the_quiz_asks_it(tmp_path, kind):
+    write(tmp_path / "a.jsonl", card("a1", kind=kind, topic="autophagy"))
+    (c,) = block.load_cards(tmp_path)
+    q = c.to_question()
+    assert isinstance(q, Question)
+    assert q.card_id == "a1"
+    assert q.mode == kind
+    assert q.shown == {
+        "question": "Which hallmark is the shortening of chromosome ends?"
+    }
+    assert q.accepted_answers == ["telomere attrition", "telomere shortening"]
+
+
+def test_to_question_matches_build_question_on_to_quizkit(tmp_path):
+    """SPEC: built by build_question(card.to_quizkit(), Mode(kind, ["question"]))."""
+    write(tmp_path / "a.jsonl", card("a1", kind="explain", answers=[" x ", "y"]))
+    (c,) = block.load_cards(tmp_path)
+    expected = build_question(c.to_quizkit(), Mode(name="explain", show=["question"]))
+    assert c.to_question() == expected
+    assert c.to_question().accepted_answers == ["x", "y"]
+
+
+def test_every_real_card_becomes_a_question():
+    for c in block.load_cards():
+        q = c.to_question()
+        assert (q.card_id, q.mode, q.shown) == (c.id, c.kind, {"question": c.question})
 
 
 # Failure modes: a bad line -> ValueError naming the file and the line number

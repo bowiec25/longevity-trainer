@@ -141,8 +141,8 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section aria-label="Summary">
   <div class="tiles">
-    <div class="tile hi"><b>63</b><span>quiz cards (hallmarks, rapamycin, clocks, exercise), every quote checked</span></div>
-    <div class="tile"><b>1174</b><span>automatic tests, all passing</span></div>
+    <div class="tile hi"><b>62</b><span>quiz cards (hallmarks, rapamycin, clocks, exercise), every quote checked</span></div>
+    <div class="tile"><b>1285</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>8</b><span>decision records (ADRs)</span></div>
@@ -262,7 +262,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 1174 tests guard</h2>
+    <h2>4. What the 1285 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
@@ -275,7 +275,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">blocks/test_card_checker.py</td><td class="n">74</td><td class="bar"><span style="width:14%"></span></td><td>longevity block, by the test-writer: the checker's prompt carries your rules word for word; bad replies rejected; exam scoring and the bar; the exam command (dry run, limit, held-out)</td></tr>
         <tr><td class="mono">blocks/test_marking.py</td><td class="n">51</td><td class="bar"><span style="width:10%"></span></td><td>longevity block, by the test-writer: names vs explanations get the right marking rules, length limits, cache, "asking Claude" only on real calls, offline switch-off after 2 failures</td></tr>
         <tr><td class="mono">blocks/test_receipts.py</td><td class="n">114</td><td class="bar"><span style="width:22%"></span></td><td>quizkit block, tests by the test-writer: quote keys (IL-1α ≠ IL-1β, 1.5 ≠ 15), pinned sources, safe paths, every bad source → one line, never a crash</td></tr>
-        <tr><td class="mono">blocks/test_card_bank.py</td><td class="n">46</td><td class="bar"><span style="width:9%"></span></td><td>longevity block: every bad card line named by file and line; repeats; the real bank loads</td></tr>
+        <tr><td class="mono">blocks/test_card_bank.py</td><td class="n">52</td><td class="bar"><span style="width:9%"></span></td><td>longevity block: every bad card line named by file and line; repeats; the real bank loads</td></tr>
         <tr><td class="mono">blocks/test_jsonl_loader.py</td><td class="n">34</td><td class="bar"><span style="width:7%"></span></td><td>quizkit block: folder of records, editor-true line numbers, repeats, empty folder</td></tr>
         <tr><td class="mono">test_process.py + test_check_reviews.py</td><td class="n">16</td><td class="bar"><span style="width:3%"></span></td><td>the build loop: code outside a block, a missing SPEC or tests, or unticked reviews fail CI</td></tr>
         <tr><td class="mono">quizkit tests (16 files)</td><td class="n">513</td><td class="bar"><span style="width:100%"></span></td><td>marking, dealing, the quiz loop, the judge (fake Claude), Leitner boxes, progress, scaffold, reuse guard; copied from HSK</td></tr>
@@ -283,7 +283,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">984</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">1285</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -323,6 +323,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M4 Step 2: an exam for the marker</span><span>You labelled 23 borderline answers; Claude's marking, run exactly as the quiz runs it (answer list first), agreed on 21 both times and never passed a wrong answer: PASSED. The reviewers caught copied code, now shared quizkit parts (one scorer, one file loader) and one <code>card.to_question()</code>. Your 👎 removed the sedentary card (62). <a href="snapshots/m4-step2.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M4 Step 1: the quiz remembers</span><span>Spaced repetition and saved progress, wired from quizkit's own blocks through a new <code>study</code> block: due cards first, then new ones; a card you miss comes back first; <code>longevity stats</code> per topic. The reviewer caught a bug that would have pushed cards up boxes early. <a href="snapshots/m4-step1.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M3 Steps 5–6: the first bank, and a bank that grows</span><span>63 cards: rapamycin, epigenetic clocks, exercise (WHO) and all 12 hallmarks, every quote checked. Your steer, "update it as we go", became <code>write-cards --add</code>: it tops up a topic and skips questions the bank already has. <code>--pages</code> writes long reviews one section at a time. M3 done. <a href="snapshots/m3-done.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M3 Step 4: the student who writes flashcards</span><span>New block <code>card_writer</code> (Claude Sonnet) drafts cards from one source; code checks each quote is really there and drops repeats, then the strict teacher checks the rules. It never invented a quote; telling it "the quote alone must back the whole card" lifted kept cards from about a third to about five in eight. You spot-checked 10: all 👍. <a href="snapshots/m3-step4.html">snapshot</a></span></li>

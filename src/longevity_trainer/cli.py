@@ -6,6 +6,7 @@ each card's box is saved in data/progress.db (quizkit's progress_store), unless
 --no-save. `--topic` picks cards whose topic contains the text. `stats` shows, per
 topic, new / in each box / due now, the last 7 days' score and the most missed.
 `check-receipts` finds every card's quote in its pinned source (downloads it if needed).
+`check-marking-eval` scores Claude's marking on answers you labelled (real Claude).
 `check-cards-exam` scores the card checker on the labelled exam (real Claude;
 --holdout for the never-tuned-on cards, --limit, --dry-run).
 `write-cards` drafts cards on a topic from a pinned source, gates them (quote found,
@@ -47,7 +48,12 @@ from longevity_trainer.blocks.card_writer import (
     slug,
     write_cards,
 )
-from longevity_trainer.blocks.marking import make_judge
+from longevity_trainer.blocks.marking import (
+    check_card_ids,
+    load_marking_cases,
+    make_judge,
+    run_marking_eval,
+)
 from longevity_trainer.blocks.study import (
     Saver,
     deal,
@@ -57,12 +63,12 @@ from longevity_trainer.blocks.study import (
     stats_lines,
 )
 from quizkit.blocks.engine import Attempt, QuizSession
+from quizkit.blocks.judge import PROMPT_VERSION as JUDGE_PROMPT_VERSION
 from quizkit.blocks.progress_store import ProgressFileError, ProgressStore
 from quizkit.blocks.receipts import check_all
 from quizkit.claude import ClaudeError, ask_claude
 from quizkit.download import DownloadError
-from quizkit.models import Judge, Question, Verdict
-from quizkit.modes import Mode, build_question
+from quizkit.models import Judge, Verdict
 
 SELF_YES = Verdict(correct=True, reason="you marked it right", source="self")
 SELF_NO = Verdict(correct=False, reason="you marked it wrong", source="self")
@@ -77,12 +83,6 @@ def _read(prompt: str) -> str | None:
         return input(prompt)
     except EOFError:
         return None
-
-
-def to_question(card: LongevityCard) -> Question:
-    """The card as a question; its kind (name, fact, term, explain) is the mode, so
-    saved progress and the judge can tell kinds apart."""
-    return build_question(card.to_quizkit(), Mode(name=card.kind, show=["question"]))
 
 
 def _wrap(text: str, indent: str = "   ") -> str:
@@ -117,7 +117,7 @@ def play(
     finally marked (e.g. a `Saver`); an answer left unmarked by quitting isn't sent."""
     by_id = {c.id: c for c in cards}
 
-    session = QuizSession([to_question(c) for c in cards], judge=judge)
+    session = QuizSession([c.to_question() for c in cards], judge=judge)
     write(f"Longevity quiz: {len(cards)} questions. Type q to stop.\n")
     number = 0
     while not session.done:
@@ -380,6 +380,41 @@ def write_cards_command(
     return 0
 
 
+def marking_eval(limit: int | None, dry_run: bool) -> int:
+    """Score Claude's marking on the answers you labelled; exit code 0 = bar met."""
+    try:
+        cases = load_marking_cases()
+        if limit is not None:
+            cases = cases[:limit]
+        cards = load_cards()
+        check_card_ids(cases, cards)
+    except (ValueError, OSError) as err:
+        print(f"check-marking-eval: {err}")
+        return 1
+    if dry_run:
+        for case in cases:
+            want = "right" if case.expected else "wrong"
+            print(f"{case.card_id}: {case.typed!r} -> {want}")
+        print(f"{len(cases)} answers; no Claude calls (dry run)")
+        return 0
+    ask, replies = _counting_ask()
+    report = run_marking_eval(cases, cards, make_judge(ask=ask))
+    print(
+        f"\n{report.right}/{report.total} agree with you; wrong yes {report.wrong_yes}, "
+        f"wrong no {report.wrong_no}, not checked {report.not_checked} -> "
+        f"{'PASSED' if report.passed else 'NOT PASSED'}"
+    )
+    if report.not_checked:
+        print(
+            f"{report.not_checked} not checked: Claude didn't answer (offline or not "
+            "logged in?), so this isn't a result about marking."
+        )
+    models = ", ".join(sorted({r.model for r in replies})) or "none answered"
+    print(f"model: {models}; judge prompt v{JUDGE_PROMPT_VERSION}")
+    print(_cost_line(replies))
+    return 0 if report.passed else 1
+
+
 def cards_exam(model: str, holdout: bool, limit: int | None, dry_run: bool) -> int:
     """Score the card checker on the exam; exit code 0 = the bar is met."""
     try:
@@ -439,6 +474,14 @@ def main(argv: list[str] | None = None) -> int:
     exam.add_argument(
         "--dry-run", action="store_true", help="list the cards; don't call Claude"
     )
+    mark_eval = sub.add_parser(
+        "check-marking-eval",
+        help="score Claude's marking on the answers you labelled (real Claude)",
+    )
+    mark_eval.add_argument("--limit", type=_positive, default=None, help="first N only")
+    mark_eval.add_argument(
+        "--dry-run", action="store_true", help="list the answers; don't call Claude"
+    )
     writer = sub.add_parser(
         "write-cards", help="draft cards on a topic from a pinned source (real Claude)"
     )
@@ -467,6 +510,8 @@ def main(argv: list[str] | None = None) -> int:
         return stats_command()
     if args.command == "check-receipts":
         return check_all_receipts()
+    if args.command == "check-marking-eval":
+        return marking_eval(args.limit, args.dry_run)
     if args.command == "check-cards-exam":
         return cards_exam(args.model, args.holdout, args.limit, args.dry_run)
     if args.command == "write-cards":

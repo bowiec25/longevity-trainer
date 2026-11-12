@@ -817,3 +817,270 @@ def test_options_after_the_subject_are_by_name_only():
 
     with pytest.raises(TypeError):
         block.ClaudeJudge("Capitals.", None)
+
+
+# -- The shared scorer: quizkit.blocks.judge.eval.score / ScoreItem / run_eval ------
+# Fake marks and a fake clock; never the real Claude. Imported inside each test so
+# the tests above still run before eval.py has the new names.
+
+
+def fake_clock():
+    """A clock that only moves when a mark says so (via `advance`)."""
+    now = [0.0]
+
+    def clock() -> float:
+        return now[0]
+
+    def advance(seconds: float) -> None:
+        now[0] += seconds
+
+    return clock, advance
+
+
+def item(
+    card_id, typed, expected, said, reason="fake", *, calls=None, took=0.0, advance=None
+):
+    from quizkit.blocks.judge.eval import ScoreItem
+
+    def mark():
+        if calls is not None:
+            calls.append(card_id)
+        if advance is not None:
+            advance(took)
+        return said, reason
+
+    return ScoreItem(card_id, typed, expected, mark)
+
+
+def silent(_line: str) -> None:
+    pass
+
+
+def test_score_item_is_a_named_tuple_with_four_fields():
+    from quizkit.blocks.judge.eval import ScoreItem
+
+    def mark():
+        return True, "r"
+
+    it = ScoreItem("c1", "paris", True, mark)
+    assert isinstance(it, tuple)
+    assert (it.card_id, it.typed, it.expected, it.mark) == ("c1", "paris", True, mark)
+
+
+def test_score_all_agree_passes():
+    from quizkit.blocks.judge.eval import EvalReport, score
+
+    items = [item("a", "x", True, True), item("b", "y", False, False)]
+    report = score(items, show=silent)
+    assert isinstance(report, EvalReport)
+    assert (report.total, report.right, report.wrong_yes, report.wrong_no) == (
+        2,
+        2,
+        0,
+        0,
+    )
+    assert report.not_checked == 0
+    assert report.passed is True
+
+
+def test_score_one_wrong_yes_fails_even_at_95_percent():
+    from quizkit.blocks.judge.eval import score
+
+    items = [item(f"c{i}", "x", True, True) for i in range(19)]
+    items.append(item("bad", "y", False, True))
+    report = score(items, show=silent)
+    assert (report.total, report.right, report.wrong_yes) == (20, 19, 1)
+    assert report.passed is False
+
+
+def test_score_wrong_no_is_counted():
+    from quizkit.blocks.judge.eval import score
+
+    report = score([item("a", "x", True, False)], show=silent)
+    assert (report.right, report.wrong_no, report.wrong_yes) == (0, 1, 0)
+
+
+@pytest.mark.parametrize("expected", [True, False])
+def test_score_none_is_not_checked_and_not_right(expected):
+    from quizkit.blocks.judge.eval import score
+
+    report = score([item("a", "x", expected, None)], show=silent)
+    assert report.not_checked == 1
+    assert (report.right, report.wrong_yes, report.wrong_no) == (0, 0, 0)
+    assert report.passed is False
+
+
+def test_score_calls_each_mark_once_in_order():
+    from quizkit.blocks.judge.eval import score
+
+    calls: list[str] = []
+    items = [item(c, "x", True, True, calls=calls) for c in ["c", "a", "b"]]
+    score(items, show=silent)
+    assert calls == ["c", "a", "b"]
+
+
+def test_score_shows_one_line_per_item_with_the_right_marker():
+    from quizkit.blocks.judge.eval import score
+
+    items = [
+        item("c1", "right", True, True, "r1"),
+        item("c2", "wrongyes", False, True, "r2"),
+        item("c3", "wrongno", True, False, "r3"),
+        item("c4", "unchecked", True, None, "r4"),
+    ]
+    lines: list[str] = []
+    score(items, show=lines.append)
+    assert len(lines) == 4
+    assert lines[0].startswith("✓ c1")
+    assert lines[1].startswith("✗ WRONG YES c2")
+    assert lines[2].startswith("✗ wrong no c3")
+    assert lines[3].startswith("? c4")
+
+
+def test_score_line_shape():
+    """Marker, card id, typed (repr), yes/no, (want yes|no, <seconds> s), reason."""
+    from quizkit.blocks.judge.eval import score
+
+    clock, advance = fake_clock()
+    items = [
+        item("fr", "Paris", True, True, "the capital", took=2.0, advance=advance),
+        item("de", "Bonn", False, None, "couldn't check: x", took=1.0, advance=advance),
+    ]
+    lines: list[str] = []
+    score(items, show=lines.append, clock=clock)
+    assert re.match(
+        r"^✓ fr 'Paris'\W*yes\W*\(want yes, 2(\.\d+)? s\)\W*the capital$", lines[0]
+    ), lines[0]
+    # not checked: shown as "no", and still says what was wanted
+    assert re.match(
+        r"^\? de 'Bonn'\W*no\W*\(want no, 1(\.\d+)? s\)\W*couldn't check: x$",
+        lines[1],
+    ), lines[1]
+
+
+def test_score_typed_is_shown_as_repr():
+    from quizkit.blocks.judge.eval import score
+
+    lines: list[str] = []
+    score([item("c1", "it's  odd", True, True)], show=lines.append)
+    assert repr("it's  odd") in lines[0]
+
+
+def test_score_seconds_are_averaged_with_the_clock():
+    from quizkit.blocks.judge.eval import score
+
+    clock, advance = fake_clock()
+    items = [
+        item("a", "x", True, True, took=2.0, advance=advance),
+        item("b", "y", True, True, took=4.0, advance=advance),
+    ]
+    report = score(items, show=silent, clock=clock)
+    assert report.seconds == pytest.approx(3.0)
+
+
+def test_score_no_items_is_total_zero_not_passed():
+    from quizkit.blocks.judge.eval import score
+
+    lines: list[str] = []
+    report = score([], show=lines.append)
+    assert report.total == 0
+    assert report.seconds == 0
+    assert report.passed is False
+    assert lines == []
+
+
+def eval_case(card_id, typed, expected, rubric="words"):
+    from quizkit.blocks.judge.eval import EvalCase
+
+    return EvalCase(
+        subject=CAPITALS_SUBJECT,
+        card_id=card_id,
+        shown={"country": card_id},
+        accepted=["Answer"],
+        typed=typed,
+        expected=expected,
+        rubric=rubric,
+    )
+
+
+def test_run_eval_gives_the_same_report_on_a_fake_judge():
+    """run_eval is built on score: same counts, markers and timing as before."""
+    from quizkit.blocks.judge.eval import EvalReport, run_eval
+
+    clock, advance = fake_clock()
+    said = {
+        "good": block.Verdict(correct=True, reason="ok", source="claude"),
+        "bad": block.Verdict(correct=True, reason="oops", source="cache"),
+        "missed": block.Verdict(correct=False, reason="no", source="claude"),
+        "down": block.Verdict(correct=False, reason="off", source="not_checked"),
+    }
+    made: list[tuple] = []
+
+    def make_judge(subject, rubric=None):
+        made.append((subject, rubric))
+
+        def judge(question, typed):
+            advance(1.0)
+            return said[typed]
+
+        return judge
+
+    cases = [
+        eval_case("fr", "good", True),
+        eval_case("de", "bad", False),
+        eval_case("it", "missed", True),
+        eval_case("es", "down", False, rubric="gist"),
+    ]
+    lines: list[str] = []
+    report = run_eval(cases, make_judge, show=lines.append, clock=clock)
+    assert report == EvalReport(
+        total=4, right=1, wrong_yes=1, wrong_no=1, not_checked=1, seconds=1.0
+    )
+    assert report.passed is False
+    assert lines[0].startswith("✓ fr 'good'") and lines[0].endswith("ok")
+    assert lines[1].startswith("✗ WRONG YES de 'bad'")
+    assert lines[2].startswith("✗ wrong no it 'missed'")
+    assert lines[3].startswith("? es 'down'") and "(want no, 1" in lines[3]
+    # one judge per subject and rubric: words once, gist once with GIST_RUBRIC
+    assert made == [(CAPITALS_SUBJECT, None), (CAPITALS_SUBJECT, block.GIST_RUBRIC)]
+
+
+def test_run_eval_not_checked_never_counts_as_a_yes():
+    """A not_checked verdict is said=None, even on a case labelled wrong."""
+    from quizkit.blocks.judge.eval import run_eval
+
+    def make_judge(subject, rubric=None):
+        return lambda q, typed: block.Verdict(
+            correct=False, reason="off", source="not_checked"
+        )
+
+    report = run_eval([eval_case("fr", "x", False)], make_judge, show=silent)
+    assert (report.right, report.wrong_no, report.not_checked) == (0, 0, 1)
+
+
+def test_run_eval_no_cases_is_total_zero_not_passed():
+    from quizkit.blocks.judge.eval import run_eval
+
+    report = run_eval([], lambda *a, **k: None, show=silent)
+    assert report.total == 0 and report.passed is False
+
+
+# -- verdict_mark: a Verdict -> (said, reason) for score --------------------------
+
+
+def test_verdict_mark_not_checked_is_none_and_its_reason():
+    from quizkit.blocks.judge.eval import verdict_mark
+
+    v = block.Verdict(
+        correct=False, reason="couldn't check: offline", source="not_checked"
+    )
+    assert verdict_mark(v) == (None, "couldn't check: offline")
+
+
+@pytest.mark.parametrize("source", ["claude", "cache", "self"])
+@pytest.mark.parametrize("correct", [True, False])
+def test_verdict_mark_other_sources_give_correct_and_reason(source, correct):
+    from quizkit.blocks.judge.eval import verdict_mark
+
+    v = block.Verdict(correct=correct, reason="because", source=source)
+    assert verdict_mark(v) == (correct, "because")
