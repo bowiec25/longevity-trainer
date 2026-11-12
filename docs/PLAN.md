@@ -14,7 +14,7 @@
   - [x] 3. Copied the Claude safety rails from HSK, unchanged (the user ran the copy: Claude Code blocks Claude editing its own `.claude/` settings): `.env` block hook, auto-format hook, allow/deny permissions, 19 hook tests. ⏳ Live test (Claude tries `.env`, is blocked) in the next session started inside this folder
   - [x] 4. ADRs 0001–0005 in `docs/decisions/`: scope, script vs agent, quizkit copied, receipts, testable + kinds of card
   - [x] 5. Learning goals + the question standard (`docs/LEARNING_GOALS.md`; user's steer: define what a good question is before making any): five questions per topic (what, how, how sure, catch, popularity); 11 examples labelled by the user
-  - [ ] 6. 15 hand-made cards with receipts, following the standard + quote-check script
+  - [x] 6. 15 hand-made hallmark cards with receipts (`data/cards/hallmarks.jsonl`), pinned source (`data/sources/`), quote check `python -m longevity_trainer.receipts` (15/15 found)
   - [ ] 7. Play them: `longevity quiz`
 - [ ] **M2 Sources in**
 - [ ] **M3 Questions with receipts**

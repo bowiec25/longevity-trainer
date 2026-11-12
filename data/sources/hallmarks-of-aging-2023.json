@@ -1,0 +1,14 @@
+{
+  "id": "hallmarks-of-aging-2023",
+  "title": "Hallmarks of aging: An expanding universe",
+  "authors": "López-Otín C, Blasco MA, Partridge L, Serrano M, Kroemer G",
+  "journal": "Cell 186(2):243-278",
+  "year": 2023,
+  "doi": "10.1016/j.cell.2022.11.001",
+  "url": "https://repisalud.isciii.es/bitstreams/50b2dc3b-2261-4c14-89ce-3e155584985d/download",
+  "retrieved": "2026-11-12",
+  "size": 5099460,
+  "sha256": "f5d53a1b8612f19da5a04c7fa1c5f384c4c169fdbc24a271ef927ef8a4e37ae1",
+  "local_path": "data/raw/hallmarks-of-aging-2023.pdf",
+  "licence_note": "Repository record says CC BY-NC-ND 4.0, but the PDF says (c) 2022 Elsevier. So the PDF is not committed: only this record and short quotes. It downloads to data/raw/ (gitignored)."
+}

@@ -19,6 +19,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M1.3 | Copied Claude's safety rails: the `.env` lock, auto-format, permissions | Claude can't read secrets, and its code is always tidy |
 | M1.4 | Wrote the first 5 decision records (ADRs) | So nobody undoes a decision by accident, and future you knows why |
 | M1.5 | Defined what you want to learn and what a good question is | Cards (and the agent that writes them later) follow your standard, not my guesses |
+| M1.6 | 15 hallmark cards, each with a quote a script finds in the pinned review | Proves the receipt idea on real content before any agent writes cards |
 
 ---
 
@@ -132,3 +133,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Five questions per topic:** what is it · how does it work · how sure are we it helps longevity (grade + why) · what's the catch · is it growing in popularity (dated, re-checked in M5).
 - **You labelled 10 examples.** One surprise: I marked the plain name question (#10) bad; you marked it good. So names are welcome as vocabulary, as long as each topic also gets how/why questions. Trivia (#8) and vague overselling (#9): bad.
 - **Why this is best practice:** one file is the single source of truth. The card writer's prompt includes it word for word (a test will check), the fact-auditor checks cards against it, and your labelled examples become the eval set.
+
+## M1 Step 6: 15 hallmark cards with receipts (2026-11-12)
+
+> **In plain words:** 15 questions on the hallmarks of ageing, each carrying a word-for-word quote from the 2023 *Cell* review. A script opens the PDF and checks every quote is really there, on the page the card says.
+
+- **The source is pinned, not committed:** `data/sources/hallmarks-of-aging-2023.json` has the URL, size and SHA-256. The PDF downloads to `data/raw/` (gitignored), because its licence is unclear (the repository says CC BY-NC-ND, the PDF says © Elsevier).
+- **Quote matching ignores PDF mess** (ligatures, hyphens at line ends, curly quotes, accents) by comparing letters and digits only. Changing one word still fails (a test checks this).
+- **Following your standard:** 10 name/fact cards (vocabulary) and 5 how/why/term cards (mechanism).
+- **In CI** the real-PDF test skips (no download there); the format tests run. Locally: `uv run python -m longevity_trainer.receipts` → `15/15 quotes found`.
