@@ -12,7 +12,7 @@
   - [x] 1. Plan update: one tool to learn per milestone
   - [x] 2. Copied quizkit (HSK `caa969a`; identical at HSK HEAD `3d91733`) + its generic tests + the capitals example; only change: `scaffold.py` package name. 537 tests pass
   - [x] 3. Copied the Claude safety rails from HSK, unchanged (the user ran the copy: Claude Code blocks Claude editing its own `.claude/` settings): `.env` block hook, auto-format hook, allow/deny permissions, 19 hook tests. ⏳ Live test (Claude tries `.env`, is blocked) in the next session started inside this folder
-  - [ ] 4. ADRs 0001–0005
+  - [x] 4. ADRs 0001–0005 in `docs/decisions/`: scope, script vs agent, quizkit copied, receipts, testable + kinds of card
   - [ ] 5. 15 hand-made hallmark cards with receipts + quote-check script
   - [ ] 6. Play them: `longevity quiz`
 - [ ] **M2 Sources in**

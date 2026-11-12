@@ -17,6 +17,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M1.1 | Gave each milestone one tool to learn | Your goal: learn the tools while building something useful |
 | M1.2 | Copied quizkit (the generic quiz parts) and its tests from HSK | Reuse proven parts instead of rebuilding; 537 tests came with them |
 | M1.3 | Copied Claude's safety rails: the `.env` lock, auto-format, permissions | Claude can't read secrets, and its code is always tidy |
+| M1.4 | Wrote the first 5 decision records (ADRs) | So nobody undoes a decision by accident, and future you knows why |
 
 ---
 
@@ -110,3 +111,14 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **You ran the copy, not me:** Claude Code stops Claude from changing its own settings (`.claude/`). Same idea as the public-repo block: Claude can't loosen its own limits.
 - **Live test still to do:** hooks only load in a session started inside this folder. This chat started in your home folder, so my `.env` read wasn't blocked here. Next session: start `claude` in `code/longevity-trainer` and ask it to read `.env`. It should be blocked.
 - These rails stop **Claude only**. GitHub's protected `main` stops everyone. Layers beat one lock.
+
+## M1 Step 4: the first five ADRs (2026-11-12)
+
+> **In plain words:** five short notes saying "we decided X, because Y", in `docs/decisions/`. Code shows *what*; ADRs show *why*.
+
+- **0001 scope:** the primer is the syllabus; v1 = name & recall + science.
+- **0002 script vs agent:** code checks what it can; agents only where judgment is needed, always checked by a script. Also: `claude -p` vs the Agent SDK.
+- **0003 quizkit copied:** from HSK `caa969a`, and why not installed.
+- **0004 receipts:** the six layers of trust, from source list to freshness.
+- **0005 testable + kinds of card:** the definition and the seven kinds.
+- Accepted ADRs are never rewritten: a change gets a new ADR, so the history stays readable (HSK lesson).
