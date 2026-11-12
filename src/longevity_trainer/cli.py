@@ -1,7 +1,9 @@
-"""The terminal front end: `longevity quiz` and `longevity check-receipts`.
+"""The terminal front end: `longevity quiz`, `check-receipts` and `check-cards-exam`.
 
 `quiz` plays the cards, with the receipt after each answer.
 `check-receipts` finds every card's quote in its pinned source (downloads it if needed).
+`check-cards-exam` scores the card checker on the labelled exam (real Claude;
+--holdout for the never-tuned-on cards, --limit, --dry-run).
 
 Marking:
 - name / fact cards: the quizkit grader (small typos forgiven).
@@ -19,9 +21,17 @@ import textwrap
 from collections.abc import Callable
 
 from longevity_trainer.blocks.card_bank import ROOT, LongevityCard, load_cards
+from longevity_trainer.blocks.card_checker import (
+    EXAM_FILE,
+    HOLDOUT_FILE,
+    check_card,
+    load_exam,
+    run_exam,
+)
 from longevity_trainer.blocks.marking import make_judge
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.receipts import check_all
+from quizkit.claude import ask_claude
 from quizkit.models import Judge, Question, Verdict
 from quizkit.modes import Mode, build_question
 
@@ -131,6 +141,36 @@ def check_all_receipts(write: Callable[[str], None] = print) -> int:
     return 1 if problems else 0
 
 
+def cards_exam(model: str, holdout: bool, limit: int | None, dry_run: bool) -> int:
+    """Score the card checker on the exam; exit code 0 = the bar is met."""
+    try:
+        cases = load_exam(HOLDOUT_FILE if holdout else EXAM_FILE)
+    except ValueError as err:
+        print(err)
+        return 1
+    if limit is not None:
+        cases = cases[: max(1, limit)]
+    if dry_run:
+        for case in cases:
+            print(f"{case.id}: expected {case.expected} {case.rules or ''}".rstrip())
+        print(f"{len(cases)} cards; no Claude calls (dry run)")
+        return 0
+    replies = []
+
+    def ask(prompt: str, **kwargs: object) -> object:
+        reply = ask_claude(prompt, **kwargs)
+        replies.append(reply)
+        return reply
+
+    report = run_exam(
+        cases, check=lambda card: check_card(card, ask=ask, model=model), model=model
+    )
+    cost = sum(r.cost_usd or 0 for r in replies)
+    tokens = sum(r.input_tokens + r.output_tokens for r in replies)
+    print(f"{len(replies)} Claude calls, {tokens} tokens, ${cost:.4f}")
+    return 0 if report.passed else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="longevity")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -141,12 +181,26 @@ def main(argv: list[str] | None = None) -> int:
         "--no-judge", action="store_true", help="mark open answers yourself, no Claude"
     )
     sub.add_parser("check-receipts", help="find every quote in its pinned source")
+    exam = sub.add_parser(
+        "check-cards-exam",
+        help="score the card checker on the labelled exam (real Claude)",
+    )
+    exam.add_argument("--model", default="haiku", help="Claude model (haiku, sonnet…)")
+    exam.add_argument(
+        "--holdout", action="store_true", help="the held-out cards (never tuned on)"
+    )
+    exam.add_argument("--limit", type=int, default=None, help="only the first N cards")
+    exam.add_argument(
+        "--dry-run", action="store_true", help="list the cards; don't call Claude"
+    )
     args = parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):  # Windows consoles: show ✓ and quotes
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if args.command == "check-receipts":
         return check_all_receipts()
+    if args.command == "check-cards-exam":
+        return cards_exam(args.model, args.holdout, args.limit, args.dry_run)
     cards = load_cards()
     random.Random(args.seed).shuffle(cards)
     if args.n is not None:
