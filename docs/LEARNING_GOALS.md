@@ -39,7 +39,7 @@ A good question:
 1. **Names are welcome, but never alone.** "Which hallmark is the shortening of chromosome ends?" is good vocabulary (user, 2026-11-12). Each topic must *also* have how/why questions; a topic tested only by names is incomplete.
 2. **Always covers conviction for interventions.** Every drug or supplement gets at least one "how sure are we?" question, and the answer names the species or population (mice ≠ healthy people ≠ high-risk patients).
 3. **Has one clear right answer that a trusted source states**, and is still true in about 2 years (ADR 0005).
-4. **Is worth knowing in a conversation about the field.** No trivia: no dates of celebrity decisions, no "which month", no exact figures nobody would quote.
+4. **Is worth knowing in a conversation about the field.** No trivia: no dates of celebrity decisions, no "which month", no exact figures nobody would quote. **For a trial, know that it exists, what it tested and what it meant for the field**, not its details (sample size, p-values, registry numbers) (user, 2026-11-12).
 5. **Doesn't oversell.** It never uses grade-A language for grade-C/D evidence ("reverses ageing").
 6. **Stands alone.** It makes sense without having read the source.
 

@@ -27,6 +27,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M2.3 | Pinned 3 real sources by hand and wrote down what goes wrong | Real pages before any SPEC (HSK lesson): Step 4 changed because of it |
 | M2.4 | Claude marks open answers in the quiz (source checker postponed) | User: fixed answer lists are "a nightmare" for open questions; the receipt work was taking all the time |
 | M3.1 | `source_text`: plain text from PDF, web pages and journal XML | 3 of our 4 sources aren't PDFs; the quote check and the card writer both need their text |
+| M3.2 | An exam for the card checker, written before the checker | Set the bar before building (HSK lesson), so the result can't be bent to fit |
 
 ---
 
@@ -214,3 +215,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **What counts as the text:** visible page text only (not scripts, menus hidden by the page, or the tab title); for articles, the title, abstract, body and captions, but **not** the reference list (PEARL hides it inside the body), author/funding notes or formula code. Otherwise a quote could be "found" in someone else's paper title.
 - **Receipts:** each source record now says its `format`; the 15 hallmark quotes are still all found.
 - **The loop earned its keep:** the test-writer caught that `rapa<italic>my</italic>cin` came out as "rapa my cin", and that PEARL's reference list sat inside the body. The reviewers caught charset, hidden-element and wrapped-article gaps.
+
+## M3 Step 2: the exam before the student (2026-11-12)
+
+> **In plain words:** like writing the answer key before the exam. 29 cards, each already marked good or bad (and which rule it breaks). The card checker in Step 3 has to match these marks: catch every bad card, wrongly flag at most one good one.
+
+- **Where they come from:** your labelled examples from LEARNING_GOALS, reviewed hallmark cards, and bad cards planted on purpose (mice answered as if people, overselling, trivia, quotes that don't back the answer, questions that need the paper to make sense).
+- **Every quote is real:** a test checks each one, word for word, in its pinned source.
+- **The exam was reviewed too:** an independent agent found 11 unfair labels (good cards saying slightly more than their quotes, bad cards breaking two rules at once). Fixed; a bad card now lists every rule a correct checker could name.
+- **Your steer became a rule:** for a trial, know that it exists and what it meant for the field, not its sample size (LEARNING_GOALS rule 4).
