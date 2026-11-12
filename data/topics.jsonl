@@ -1,0 +1,73 @@
+{"id": "evidence-grades", "topic": "Evidence grades A-E: what each means", "primer": "0.2", "group": "evidence", "kinds": ["term", "explain"], "status": "v1"}
+{"id": "gompertz", "topic": "The Gompertz curve: death risk doubles about every 8 years", "primer": "1.2", "group": "ageing-basics", "kinds": ["fact", "explain"], "status": "v1"}
+{"id": "healthspan", "topic": "Lifespan vs healthspan, and the gap between them", "primer": "1.3", "group": "ageing-basics", "kinds": ["term", "explain"], "status": "v1"}
+{"id": "why-we-age", "topic": "Why we age: the evolutionary explanation", "primer": "1.4", "group": "ageing-basics", "kinds": ["explain"], "status": "v1"}
+{"id": "hallmarks", "topic": "The 12 hallmarks of ageing (2023)", "primer": "2.1", "group": "hallmarks", "kinds": ["name", "explain"], "status": "v1"}
+{"id": "mtor", "topic": "mTOR: the cell's growth switch", "primer": "2.2", "group": "hallmarks", "kinds": ["name", "term", "explain"], "status": "v1"}
+{"id": "ampk", "topic": "AMPK: the energy-shortage sensor", "primer": "2.2", "group": "hallmarks", "kinds": ["name", "term", "explain"], "status": "v1"}
+{"id": "insulin-igf1", "topic": "Insulin / IGF-1 signalling and lifespan", "primer": "2.2", "group": "hallmarks", "kinds": ["name", "explain"], "status": "v1"}
+{"id": "sirtuins-nad", "topic": "Sirtuins and NAD+", "primer": "2.2", "group": "hallmarks", "kinds": ["name", "term", "explain"], "status": "v1"}
+{"id": "geroscience", "topic": "The geroscience hypothesis", "primer": "3.1", "group": "big-ideas", "kinds": ["term", "explain"], "status": "v1"}
+{"id": "damage-vs-information", "topic": "Two theories of ageing: damage vs lost information", "primer": "3.2", "group": "big-ideas", "kinds": ["explain"], "status": "v1"}
+{"id": "reprogramming", "topic": "Partial reprogramming and the Yamanaka factors", "primer": "3.3", "group": "big-ideas", "kinds": ["name", "term", "explain"], "status": "v1"}
+{"id": "senolytics", "topic": "Senescent ('zombie') cells and senolytics", "primer": "3.4", "group": "big-ideas", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "young-blood", "topic": "Young blood: parabiosis and blood factors", "primer": "3.5", "group": "big-ideas", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "itp", "topic": "The Interventions Testing Program (ITP) and what it found", "primer": "3.6", "group": "big-ideas", "kinds": ["name", "fact", "explain"], "status": "v1"}
+{"id": "biomarkers-surrogates", "topic": "Biomarkers and surrogate endpoints", "primer": "4.1", "group": "evidence", "kinds": ["term", "explain"], "status": "v1"}
+{"id": "study-types", "topic": "Kinds of study, from weakest to strongest", "primer": "4.2", "group": "evidence", "kinds": ["name", "explain"], "status": "v1"}
+{"id": "claim-questions", "topic": "Questions to ask of any longevity claim", "primer": "4.3", "group": "evidence", "kinds": ["explain"], "status": "v1"}
+{"id": "consumer-eras", "topic": "The three eras of consumer longevity", "primer": "5", "group": "market", "kinds": [], "status": "read"}
+{"id": "glp1-what", "topic": "GLP-1 drugs: what they are and how they work", "primer": "6.1", "group": "drugs", "kinds": ["term", "explain"], "status": "v1"}
+{"id": "glp1-longevity", "topic": "Why GLP-1s are called the first longevity drug: outcome trials", "primer": "6.2", "group": "drugs", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "glp1-price", "topic": "GLP-1 prices in the US and UK", "primer": "6.3", "group": "drugs", "kinds": ["fact"], "status": "after-m5"}
+{"id": "statins-lipids", "topic": "Cholesterol drugs (statins, ApoB) and longevity", "primer": "6.4", "group": "drugs", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "rapamycin", "topic": "Rapamycin: mechanism, mouse evidence, human trials", "primer": "6.5", "group": "drugs", "kinds": ["name", "explain", "grade"], "status": "v1"}
+{"id": "metformin", "topic": "Metformin and the TAME trial", "primer": "6.6", "group": "drugs", "kinds": ["name", "explain", "grade"], "status": "v1"}
+{"id": "off-label-newer", "topic": "Newer off-label favourites (e.g. SGLT2 inhibitors, acarbose)", "primer": "6.7", "group": "drugs", "kinds": ["name", "explain", "grade"], "status": "v1"}
+{"id": "peptide-what", "topic": "What a peptide is", "primer": "7.1", "group": "peptides", "kinds": ["term"], "status": "v1"}
+{"id": "peptide-boom", "topic": "Why peptides exploded, and the US/UK rules", "primer": "7.2-7.4", "group": "peptides", "kinds": ["fact"], "status": "after-m5"}
+{"id": "peptides-each", "topic": "Peptides one by one (BPC-157, GHK-Cu, sermorelin, MOTS-c…): claim and evidence", "primer": "7.5", "group": "peptides", "kinds": ["name", "grade"], "status": "v1"}
+{"id": "hrt", "topic": "Menopause HRT: the evidence after the WHI reversal", "primer": "8.1", "group": "hormones", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "trt", "topic": "Testosterone replacement: evidence and risks", "primer": "8.2", "group": "hormones", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "gh-dhea", "topic": "Growth hormone and DHEA: why the evidence is negative", "primer": "8.3", "group": "hormones", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "nad-boosters", "topic": "NAD+ boosters (NMN, NR): what they do and the evidence", "primer": "9.1", "group": "supplements", "kinds": ["name", "explain", "grade"], "status": "v1"}
+{"id": "resveratrol", "topic": "Resveratrol: the cautionary tale", "primer": "9.2", "group": "supplements", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "creatine", "topic": "Creatine: muscle and brain", "primer": "9.3", "group": "supplements", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "urolithin-a", "topic": "Urolithin A and mitophagy", "primer": "9.3", "group": "supplements", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "omega3", "topic": "Omega-3 (fish oil): VITAL and DO-HEALTH", "primer": "9.3", "group": "supplements", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "vitamin-d", "topic": "Vitamin D: deficiency vs topping up (VITAL)", "primer": "9.3", "group": "supplements", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "taurine", "topic": "Taurine: the mouse paper and the human data", "primer": "9.3", "group": "supplements", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "supplement-prices", "topic": "Supplement prices and trends", "primer": "9.3", "group": "supplements", "kinds": ["fact"], "status": "after-m5"}
+{"id": "hbot", "topic": "Hyperbaric oxygen: approved uses vs ageing claims", "primer": "10.1", "group": "procedures", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "plasma-exchange", "topic": "Therapeutic plasma exchange", "primer": "10.1", "group": "procedures", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "stem-cells-exosomes", "topic": "Stem cell and exosome injections", "primer": "10.1", "group": "procedures", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "exercise", "topic": "Exercise: VO2 max, strength, zone 2", "primer": "10.2", "group": "lifestyle", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "sleep", "topic": "Sleep: length, regularity and health", "primer": "10.2", "group": "lifestyle", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "diet-cr-fasting", "topic": "Diet, calorie restriction and fasting", "primer": "10.2", "group": "lifestyle", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "social-other", "topic": "Other lifestyle factors (smoking, alcohol, social ties)", "primer": "10.2", "group": "lifestyle", "kinds": ["explain", "grade"], "status": "v1"}
+{"id": "blood-markers", "topic": "The blood markers that matter (ApoB, HbA1c, hs-CRP…)", "primer": "11.2", "group": "measurement", "kinds": ["name", "term", "explain"], "status": "v1"}
+{"id": "more-markers", "topic": "Why more markers isn't better (false positives)", "primer": "11.3", "group": "measurement", "kinds": ["explain"], "status": "v1"}
+{"id": "test-companies", "topic": "Blood-test companies and prices", "primer": "11.4-11.5", "group": "measurement", "kinds": ["fact"], "status": "after-m5"}
+{"id": "epigenetic-clocks", "topic": "How epigenetic clocks work; the three generations", "primer": "12.1-12.2", "group": "measurement", "kinds": ["name", "term", "explain"], "status": "v1"}
+{"id": "protein-clocks", "topic": "Protein (proteomic) clocks: age by organ", "primer": "12.3", "group": "measurement", "kinds": ["term", "explain"], "status": "v1"}
+{"id": "clock-reliability", "topic": "The reliability problem with ageing clocks", "primer": "12.5", "group": "measurement", "kinds": ["explain"], "status": "v1"}
+{"id": "full-body-mri", "topic": "Full-body MRI and the incidentaloma debate", "primer": "13.1-13.3", "group": "measurement", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "dexa", "topic": "DEXA scans: what they measure", "primer": "13.4", "group": "measurement", "kinds": ["term", "explain"], "status": "v1"}
+{"id": "heart-scans", "topic": "Heart scans: calcium score and CT angiography", "primer": "13.5", "group": "measurement", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "wearable-metrics", "topic": "Wearable metrics: HRV, resting heart rate, SpO2, sleep stages", "primer": "14.1", "group": "measurement", "kinds": ["term", "explain"], "status": "v1"}
+{"id": "wearable-companies", "topic": "Wearable companies and products", "primer": "14.2-14.5", "group": "measurement", "kinds": ["fact"], "status": "after-m5"}
+{"id": "cgm", "topic": "Continuous glucose monitors: who benefits", "primer": "15.1", "group": "measurement", "kinds": ["term", "explain", "grade"], "status": "v1"}
+{"id": "genetics", "topic": "Genetics and longevity (APOE, heritability)", "primer": "15.3", "group": "measurement", "kinds": ["name", "fact", "explain"], "status": "v1"}
+{"id": "data-plumbing", "topic": "How health data is coming together", "primer": "16", "group": "market", "kinds": [], "status": "read"}
+{"id": "pipeline-bets", "topic": "The seven bets for an ageing drug", "primer": "17.1", "group": "pipeline", "kinds": ["name", "explain"], "status": "v1"}
+{"id": "pipeline-companies", "topic": "The companies and their status", "primer": "17.2-17.5", "group": "pipeline", "kinds": ["fact"], "status": "after-m5"}
+{"id": "tame", "topic": "TAME: design and why it matters", "primer": "18.1", "group": "pipeline", "kinds": ["name", "explain"], "status": "v1"}
+{"id": "pearl", "topic": "PEARL: rapamycin in healthy people", "primer": "18.2", "group": "pipeline", "kinds": ["name", "fact", "explain"], "status": "v1"}
+{"id": "triad-dogs", "topic": "Rapamycin in dogs (TRIAD / Dog Aging Project)", "primer": "18.3", "group": "pipeline", "kinds": ["name", "explain"], "status": "v1"}
+{"id": "intrinsic-capacity", "topic": "Measuring ageing: intrinsic capacity", "primer": "18.6", "group": "pipeline", "kinds": ["term", "explain"], "status": "v1"}
+{"id": "prizes-funding", "topic": "XPRIZE Healthspan and ARPA-H PROSPR", "primer": "18.4-18.5", "group": "pipeline", "kinds": ["fact"], "status": "after-m5"}
+{"id": "regulators", "topic": "Regulators and the rules (FDA, MHRA, right-to-try)", "primer": "19", "group": "market", "kinds": ["fact"], "status": "after-m5"}
+{"id": "money", "topic": "Investment and deals", "primer": "20", "group": "market", "kinds": ["fact"], "status": "after-m5"}
+{"id": "whats-changed", "topic": "What changed in 2025-26 and the watch-list", "primer": "21", "group": "market", "kinds": [], "status": "read"}
+{"id": "news-sources", "topic": "Where longevity news lives", "primer": "22", "group": "market", "kinds": [], "status": "read"}
+{"id": "people-events-books", "topic": "People, events and books", "primer": "23", "group": "market", "kinds": [], "status": "read"}

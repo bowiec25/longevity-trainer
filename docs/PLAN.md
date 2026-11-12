@@ -20,7 +20,13 @@
   - [x] Copied HSK's `test-writer` + `block-reviewer` subagents and the Claude GitHub review workflow (⏳ needs the `CLAUDE_CODE_OAUTH_TOKEN` secret from the user)
   - [x] CI guards: `tests/test_process.py` (every module a block with a SPEC + its own tests) and `check_reviews.py` (PR must tick test-writer, block-reviewer, `/code-review`)
   - [x] Steps 6–7 redone through the loop: quizkit blocks `receipts` (quote check) and `jsonl_loader` (folder of records), longevity block `card_bank`; `longevity check-receipts` replaces `python -m longevity_trainer.receipts`
-- [ ] **M2 Sources in**
+- [ ] **M2 Sources in** (issue #11)
+  - [x] 1. Topic map: `docs/TOPIC_MAP.md` + `data/topics.jsonl`: 73 topics from the primer's sections; 59 quiz now (v1), 9 wait for M5 (dated), 5 read-don't-quiz; 9 groups for the fan-out
+  - [ ] 2. ADR 0007: trusted sources + licences
+  - [ ] 3. Pin 3 real sources by hand first (different tiers)
+  - [ ] 4. `source_vetter` block (quizkit), through the loop
+  - [ ] 5. Fan-out workflow: one agent per group finds sources; a script pins + vets
+  - [ ] 6. Coverage check: every v1 topic has a source or is marked
 - [ ] **M3 Questions with receipts**
 - [ ] **M4 First playable quiz**
 - [ ] **M5 Freshness**

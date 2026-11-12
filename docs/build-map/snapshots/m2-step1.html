@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Longevity Trainer Build Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Look copied from the HSK Trainer Build Map, so both maps read the same. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #1c2530;
+  --muted: #5d6a78;
+  --line: #d3dae2;
+  --accent: #b8322a;      /* seal red: the one highlight */
+  --pass: #2f7d5b;        /* semantic: done / green */
+  --warn: #a8690f;        /* semantic: automatic */
+  --info: #2f5f9e;        /* semantic: guidance */
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171d; --surface: #1a2129; --ink: #e3e8ee; --muted: #98a5b3; --line: #2e3843;
+    --accent: #e3645a; --pass: #58b48b; --warn: #d9a046; --info: #6f9ee0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171d; --surface: #1a2129; --ink: #e3e8ee; --muted: #98a5b3; --line: #2e3843;
+  --accent: #e3645a; --pass: #58b48b; --warn: #d9a046; --info: #6f9ee0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
+main { max-width: 1040px; margin: 0 auto; padding: 32px 20px 64px; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; letter-spacing: 0.01em; }
+h1 { font-size: 34px; line-height: 1.15; }
+h2 { font-size: 22px; margin-bottom: 6px; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); margin-top: 6px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+section { display: grid; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+
+/* Summary tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.tile b { display: block; font: 600 30px/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
+.tile span { color: var(--muted); font-size: 13px; }
+.tile.hi b { color: var(--accent); }
+
+/* Milestones */
+.milestones { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.ms { border-top: 4px solid var(--line); padding-top: 8px; font-size: 13px; }
+.ms b { display: block; font-family: var(--font-display); font-size: 15px; }
+.ms.done { border-color: var(--pass); }
+.ms.next { border-color: var(--accent); }
+.ms small { color: var(--muted); }
+@media (max-width: 640px) { .milestones { grid-template-columns: repeat(2, 1fr); } }
+
+/* Diagrams */
+figure { margin: 0; }
+.diagram { overflow-x: auto; }
+.diagram svg { display: block; width: 100%; min-width: 760px; height: auto; color: var(--ink); }
+figcaption { color: var(--muted); font-size: 13px; margin-top: 8px; max-width: 80ch; }
+
+/* Change gates */
+.gates { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; counter-reset: gate; }
+.gate { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
+.gate h3 { margin: 0; font: 600 15px/1.25 var(--font-display); }
+.gate h3::before { counter-increment: gate; content: counter(gate) "  "; color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+.gate ul { margin: 0; padding-left: 16px; font-size: 13px; color: var(--muted); }
+.gate.hard { border-top-color: var(--accent); }
+.gate.auto { border-top-color: var(--warn); }
+.gate.guide { border-top-color: var(--info); }
+.gate.you { border-top-color: var(--pass); }
+
+.chip { display: inline-block; font: 500 11px/1 var(--font-body); padding: 4px 7px; border-radius: 999px; border: 1px solid currentColor; letter-spacing: 0.02em; width: fit-content; }
+.chip.hard { color: var(--accent); }
+.chip.auto { color: var(--warn); }
+.chip.guide { color: var(--info); }
+.chip.habit { color: var(--muted); }
+.chip.you { color: var(--pass); }
+
+/* Block routine */
+.routine { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.step b { display: block; font: 600 14px/1.3 var(--font-display); margin-bottom: 2px; }
+.step .who { color: var(--muted); font-size: 12px; }
+.step.loop { border-color: var(--accent); }
+
+/* Tests table */
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+td.n { font-variant-numeric: tabular-nums; text-align: right; width: 44px; font-weight: 600; }
+td.bar { width: 28%; }
+.bar span { display: block; height: 8px; border-radius: 4px; background: var(--info); opacity: 0.8; }
+.bar span.real { background: var(--accent); }
+tfoot td { font-weight: 600; border-bottom: none; }
+.table-wrap { overflow-x: auto; }
+
+/* Strictness */
+.strict { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.strict .card { display: grid; gap: 8px; align-content: start; }
+.strict ul { margin: 0; padding-left: 16px; font-size: 13.5px; }
+.strict p { font-size: 13px; color: var(--muted); }
+
+/* Docs */
+.docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.doc { font-size: 13.5px; }
+.doc b { display: block; font-family: var(--font-mono); font-size: 12.5px; font-weight: 500; }
+.doc span { color: var(--muted); }
+
+footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 14px; }
+a { color: var(--info); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.timeline li { display: grid; grid-template-columns: 96px 150px 1fr; gap: 12px; padding: 9px 4px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.timeline li:first-child { border-left: 3px solid var(--accent); padding-left: 10px; }
+.timeline .when { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.timeline .what { font-weight: 600; }
+@media (max-width: 640px) { .timeline li { grid-template-columns: 1fr; gap: 2px; } }
+.later { opacity: 0.6; border-style: dashed; }
+details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--info); }
+</style>
+</head>
+<body>
+<main>
+<p style="margin:0;padding:10px 14px;border:1px dashed #b8322a;border-radius:8px;font-size:13px">📸 Frozen snapshot: <b>after M2 Step 1 (2026-11-12)</b>. <a href="../index.html">Open the latest map</a></p>
+<header>
+  <h1>Longevity Trainer Build Map</h1>
+  <p class="lede">What exists now, what's planned, and every check a change has to pass. A quiz that tests longevity knowledge, where every answer carries a receipt. Repo: <a class="mono" href="https://github.com/bowiec25/longevity-trainer">bowiec25/longevity-trainer</a> (public).</p>
+</header>
+
+<section aria-label="Summary">
+  <div class="tiles">
+    <div class="tile hi"><b>0</b><span>quiz cards (none until M3, on purpose)</span></div>
+    <div class="tile"><b>774</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
+    <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
+    <div class="tile"><b>5</b><span>decision records (ADRs)</span></div>
+    <div class="tile"><b>1 / 7</b><span>milestones done: M0 ✅</span></div>
+  </div>
+  <div class="milestones" aria-label="Milestones">
+    <div class="ms done"><b>M0</b>Plan + setup<br><small>done</small></div>
+    <div class="ms next"><b>M1</b>Foundations<br><small>next</small></div>
+    <div class="ms"><b>M2</b>Sources in</div>
+    <div class="ms"><b>M3</b>Cards with receipts</div>
+    <div class="ms"><b>M4</b>First quiz</div>
+    <div class="ms"><b>M5</b>Freshness</div>
+    <div class="ms"><b>M6</b>Smarts + web</div>
+  </div>
+</section>
+
+<section>
+  <div>
+    <h2>1. The big picture: from your primer to a quiz with receipts</h2>
+    <p class="lede">All planned (dashed). The primer says <b>what</b> to learn; trusted sources say <b>what's true</b>. A card only exists if a script finds its quote in a pinned source.</p>
+  </div>
+  <figure class="card diagram">
+    <svg viewBox="0 0 960 330" role="img" aria-label="Planned pipeline: the primer gives a topic map; trusted sources are pinned; a Claude agent writes cards with a quote; a script checks the quote is in the source; a read-only auditor checks meaning; checked cards go to the quiz, built from quizkit, which shows the receipt.">
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+      <g font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="12" fill="currentColor">
+        <text x="10" y="22" font-size="11" opacity="0.65" letter-spacing="0.06em">WHAT TO LEARN  ·  WHAT'S TRUE</text>
+        <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="6 4" stroke-opacity="0.6">
+          <rect x="10" y="36" width="160" height="62" rx="6"/>
+          <rect x="10" y="130" width="160" height="62" rx="6"/>
+          <rect x="230" y="83" width="150" height="62" rx="6"/>
+          <rect x="430" y="83" width="150" height="62" rx="6"/>
+          <rect x="630" y="83" width="150" height="62" rx="6"/>
+        </g>
+        <rect x="820" y="83" width="130" height="62" rx="6" fill="none" stroke="#b8322a" stroke-width="2" stroke-dasharray="6 4"/>
+        <text x="90" y="60" text-anchor="middle" font-weight="600">Your primer</text>
+        <text x="90" y="78" text-anchor="middle" font-size="11" opacity="0.7">syllabus → topic map (M2)</text>
+        <text x="90" y="154" text-anchor="middle" font-weight="600">Trusted sources</text>
+        <text x="90" y="172" text-anchor="middle" font-size="11" opacity="0.7">pinned: URL + SHA-256 (M2)</text>
+        <text x="305" y="107" text-anchor="middle" font-weight="600">card_writer</text>
+        <text x="305" y="125" text-anchor="middle" font-size="11" opacity="0.7">Claude agent (M3)</text>
+        <text x="505" y="107" text-anchor="middle" font-weight="600">quote check</text>
+        <text x="505" y="125" text-anchor="middle" font-size="11" opacity="0.7">script, word for word</text>
+        <text x="705" y="107" text-anchor="middle" font-weight="600">fact-auditor</text>
+        <text x="705" y="125" text-anchor="middle" font-size="11" opacity="0.7">read-only subagent</text>
+        <text x="885" y="107" text-anchor="middle" font-weight="600" fill="#b8322a">cards.jsonl</text>
+        <text x="885" y="125" text-anchor="middle" font-size="11" opacity="0.8">each with a receipt</text>
+        <g stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" opacity="0.7">
+          <line x1="170" y1="67" x2="227" y2="105"/>
+          <line x1="170" y1="161" x2="227" y2="125"/>
+          <line x1="380" y1="114" x2="427" y2="114"/>
+          <line x1="580" y1="114" x2="627" y2="114"/>
+          <line x1="780" y1="114" x2="817" y2="114"/>
+          <line x1="885" y1="145" x2="885" y2="247"/>
+        </g>
+        <text x="200" y="80" text-anchor="middle" font-size="10" opacity="0.7">topics</text>
+        <text x="200" y="158" text-anchor="middle" font-size="10" opacity="0.7">text</text>
+        <text x="405" y="76" text-anchor="middle" font-size="10" opacity="0.7">card + quote</text>
+        <text x="505" y="165" text-anchor="middle" font-size="10" opacity="0.7">quote not found = no card</text>
+        <text x="705" y="165" text-anchor="middle" font-size="10" opacity="0.7">flagged = removed</text>
+        <text x="10" y="232" font-size="11" opacity="0.65" letter-spacing="0.06em">QUIZKIT (COPIED FROM HSK ✅, 513 TESTS)</text>
+        <rect x="10" y="250" width="940" height="62" rx="8" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <text x="480" y="276" text-anchor="middle" font-weight="600" opacity="0.85">deck → engine → grader / Claude judge → Leitner progress   ·   new: list grader, receipt shown after each answer</text>
+        <text x="480" y="296" text-anchor="middle" font-size="11" opacity="0.65">the quiz (M4); M5 re-checks sources on a schedule and pulls cards whose source changed</text>
+      </g>
+    </svg>
+    <figcaption>Why so many checks? Longevity facts can be wrong, contested or stale. A script checks what code can decide (is the quote really there?); an AI auditor checks what it can't (does the answer follow from the quote?). Nobody approves cards by hand; you get a one-line summary.</figcaption>
+  </figure>
+  <details><summary>Walk me through it</summary>
+    <ul>
+      <li><b>Your primer</b>: the 92-page guide you wrote. It says what to learn, but it isn't proof.</li>
+      <li><b>Trusted sources</b>: guidelines and reviews from named bodies (NIH, WHO, Cochrane…), saved with a fingerprint so we notice if they change.</li>
+      <li><b>card_writer</b>: Claude writes a question, the answer, and the exact sentence from the source that backs it.</li>
+      <li><b>quote check</b>: a script searches the saved source for that sentence. Not found → no card.</li>
+      <li><b>fact-auditor</b>: a read-only Claude helper asks "does the answer really follow? Too strong? Missing a caveat?"</li>
+      <li><b>cards.jsonl</b>: the checked cards. The quiz only reads this file.</li>
+    </ul>
+  </details>
+</section>
+
+<section>
+  <div>
+    <h2>2. Kinds of card</h2>
+    <p class="lede">How to learn the whole primer, not just the easy facts. "Testable" = one clear answer, stated by a trusted source, true for about 2+ years.</p>
+  </div>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Kind</th><th>Example</th><th>Marked by</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td><b>Name &amp; recall ⭐ core</b></td><td>Name the 12 hallmarks · Rapamycin blocks which pathway? → mTOR</td><td>per item; lists order-free, partial score (new list grader)</td><td>v1</td></tr>
+        <tr><td>Fact recall</td><td>Death risk doubles about every __ years → 8</td><td>grader (exact / typo)</td><td>v1</td></tr>
+        <tr><td>Term</td><td>What is a senolytic?</td><td>Claude judge, gist rubric</td><td>v1</td></tr>
+        <tr><td>Explain the idea</td><td>Why would slowing ageing delay many diseases at once?</td><td>Claude judge vs the source</td><td>v1</td></tr>
+        <tr><td>Grade the evidence</td><td>Best evidence for NMN in healthy people? → C</td><td>exact (A–E)</td><td>v1</td></tr>
+        <tr class="later"><td>Dated fact</td><td>UK monthly cost of GLP-1s?</td><td>exact + "as of" date</td><td>after M5</td></tr>
+        <tr class="later"><td>Read, don't quiz</td><td>podcasts, events</td><td>not a card</td><td>never</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div>
+    <h2>3. The gates every change passes</h2>
+    <p class="lede">The colour on top says how strict each gate is. Dashed = arrives in a later step.</p>
+  </div>
+  <div class="gates">
+    <div class="gate guide"><h3>Local checks</h3><span class="chip guide">Rule in CLAUDE.md</span><ul><li><code>ruff check</code></li><li><code>ruff format --check</code></li><li><code>pytest</code> (24 tests)</li></ul></div>
+    <div class="gate guide"><h3>Branch + PR</h3><span class="chip guide">Rule + template</span><ul><li>one step = one branch</li><li>"Still the right thing?" section</li></ul></div>
+    <div class="gate auto"><h3>CI on GitHub</h3><span class="chip auto">Automatic</span><ul><li>PR check (an empty "Still the right thing?" fails)</li><li><code>uv sync --locked</code> + the 3 checks</li><li>live: first run green, 24 passed</li></ul></div>
+    <div class="gate hard"><h3>Push protection</h3><span class="chip hard">Hard stop, for everyone</span><ul><li>blocks uploads with known API keys</li><li>+ secret scanning (public repo)</li></ul></div>
+    <div class="gate hard"><h3>Protected main</h3><span class="chip hard">Hard stop, for everyone</span><ul><li>PR + green CI required</li><li>admins included, squash only</li><li>tested: a direct push was rejected</li></ul></div>
+    <div class="gate hard"><h3>The build loop</h3><span class="chip hard">Hard stop, CI</span><ul><li>every module is a block: SPEC + its own tests</li><li>tests by the <b>test-writer</b>, from the SPEC alone</li><li><b>block-reviewer</b> + <code>/code-review</code> ticked in the PR</li><li>ADR 0006</li></ul></div>
+    <div class="gate hard"><h3>Claude's safety rails</h3><span class="chip hard">Hard stop, Claude only</span><ul><li><code>.env</code> deny + hook</li><li>auto-format hook</li><li>19 tests; live test next session</li></ul></div>
+    <div class="gate you"><h3>You merge</h3><span class="chip you">Your call</span><ul><li><code>gh pr merge N --squash</code></li><li>Claude never merges</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <div>
+    <h2>4. What the 774 tests guard</h2>
+  </div>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Test file</th><th class="n">Tests</th><th></th><th>What it protects</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">test_cli.py</td><td class="n">7</td><td class="bar"><span style="width:2%"></span></td><td>the quiz: right answers score, typos forgiven, own mark y/n, blank is wrong, q quits and keeps the score, receipt shown</td></tr>
+        <tr><td class="mono">blocks/test_receipts.py</td><td class="n">114</td><td class="bar"><span style="width:22%"></span></td><td>quizkit block, tests by the test-writer: quote keys (IL-1α ≠ IL-1β, 1.5 ≠ 15), pinned sources, safe paths, every bad source → one line, never a crash</td></tr>
+        <tr><td class="mono">blocks/test_card_bank.py</td><td class="n">46</td><td class="bar"><span style="width:9%"></span></td><td>longevity block: every bad card line named by file and line; repeats; the real bank loads</td></tr>
+        <tr><td class="mono">blocks/test_jsonl_loader.py</td><td class="n">34</td><td class="bar"><span style="width:7%"></span></td><td>quizkit block: folder of records, editor-true line numbers, repeats, empty folder</td></tr>
+        <tr><td class="mono">test_process.py + test_check_reviews.py</td><td class="n">16</td><td class="bar"><span style="width:3%"></span></td><td>the build loop: code outside a block, a missing SPEC or tests, or unticked reviews fail CI</td></tr>
+        <tr><td class="mono">quizkit tests (16 files)</td><td class="n">513</td><td class="bar"><span style="width:100%"></span></td><td>marking, dealing, the quiz loop, the judge (fake Claude), Leitner boxes, progress, scaffold, reuse guard; copied from HSK</td></tr>
+        <tr><td class="mono">test_hooks.py</td><td class="n">19</td><td class="bar"><span style="width:4%"></span></td><td>the <code>.env</code> blocker and the auto-format hook (copied from HSK)</td></tr>
+        <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
+        <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
+      </tbody>
+      <tfoot><tr><td>Total</td><td class="n">774</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div>
+    <h2>5. Reused from HSK vs new here</h2>
+  </div>
+  <div class="docs">
+    <div class="doc card"><b>Copied, then adapted</b><span><code>ci.yml</code> (actions re-pinned: checkout v7.0.1, setup-uv v10.3.3), <code>check_pr_body.py</code> + 22 tests, PR template, issue form, <code>.gitignore</code>, <code>.gitattributes</code>, this map's look</span></div>
+    <div class="doc card"><b>Copied from HSK (M1)</b><span>✅ <code>quizkit</code> (cards, grader, deck, engine, judge, Leitner) + 513 tests + the capitals example · ✅ hooks + permissions</span></div>
+    <div class="doc card"><b>New here</b><span>the receipt rule, the primer as syllabus, kinds of card, <code>*.pdf</code> kept out of git; later: sources, quote check, fact-auditor, list grader</span></div>
+  </div>
+</section>
+
+<section>
+  <div>
+    <h2>6. Where the notes live</h2>
+  </div>
+  <div class="docs">
+    <div class="doc"><b>docs/PLAN.md</b><span>plan + "Where we are" checklist</span></div>
+    <div class="doc"><b>docs/SETUP_LOG.md</b><span>why each step, in plain words</span></div>
+    <div class="doc"><b>docs/TOPIC_MAP.md</b><span>73 topics from the primer: quiz now (59), after M5 (9), read only (5); data in <code>data/topics.jsonl</code></span></div>
+    <div class="doc"><b>docs/LEARNING_GOALS.md</b><span>what you want to learn + the question standard (the card writer must follow it)</span></div>
+    <div class="doc"><b>data/cards/ + data/sources/</b><span>15 hallmark cards with receipts; the pinned source (URL, size, SHA-256)</span></div>
+    <div class="doc"><b>docs/FUTURE.md</b><span>ideas for later</span></div>
+    <div class="doc"><b>docs/decisions/</b><span>6 ADRs: scope, script vs agent, quizkit copied, receipts, kinds of card, the build loop</span></div>
+    <div class="doc"><b>CLAUDE.md</b><span>Claude's briefing note</span></div>
+    <div class="doc"><b>docs/build-map/</b><span>this page + a frozen snapshot per step</span></div>
+  </div>
+</section>
+
+<section>
+  <div>
+    <h2>7. How it grew</h2>
+    <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
+  </div>
+  <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M2 Step 1: the topic map</span><span>73 topics from the primer's sections, each with its card kinds: 59 quiz now, 9 wait for M5 (dated), 5 read-don't-quiz; 9 groups, one fan-out agent each in Step 5. <a href="m2-step1.html">snapshot</a></span></li>
+    <li><span class="when">2026-11-12</span><span class="what">The build loop, enforced</span><span>You caught that steps 6–7 skipped HSK's loop. Now CI fails without it: SPEC → independent <b>test-writer</b> → build → <b>block-reviewer</b> + <code>/code-review</code>. Redone through it: quizkit blocks <code>receipts</code> + <code>jsonl_loader</code>, longevity block <code>card_bank</code>. The agents found 5 bugs my own tests missed. <a href="loop-enforced.html">snapshot</a></span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 7: play it</span><span><code>uv run longevity quiz</code>: the 15 cards in random order, the receipt after each answer. Names marked by the grader; explain answers by you (Claude judge in M4). 571 tests pass. <a href="m1-step7.html">snapshot</a></span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 6: 15 cards with receipts</span><span>Hallmark cards (names + how/why), each quoting the 2023 <i>Cell</i> review. A script finds every quote on its page: 15/15. The PDF is pinned by SHA-256, not committed. 564 tests pass. <a href="m1-step6.html">snapshot</a></span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 5: the question standard</span><span>Your call: define good questions before making any. Five questions per topic (what · how · how sure · catch · popularity); 10 examples you labelled (names are good vocabulary; trivia and overselling are not). The card writer must follow <code>docs/LEARNING_GOALS.md</code>.</span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 4: five ADRs</span><span>0001 scope · 0002 script vs agent (+ <code>-p</code> vs Agent SDK) · 0003 quizkit copied · 0004 every card carries a receipt · 0005 testable + kinds of card.</span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 3: Claude's safety rails</span><span><code>.env</code> block hook, auto-format hook, permissions, 19 tests; copied from HSK unchanged. You ran the copy (Claude can't edit its own <code>.claude/</code>). Live test waits for a session started in this folder.</span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 2: quizkit copied</span><span>From HSK <code>caa969a</code> with 513 tests; only <code>scaffold.py</code>'s package name changed. The reuse guard and the "no real Claude in tests" net came too. 537 tests pass. <a href="m1-step2.html">snapshot</a></span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M1 Step 1: one tool per milestone</span><span>M1 reuse + tests · M2 fan-out workflow · M3 Agent SDK + subagents · M4 <code>claude -p</code> + evals. First change through the full routine (issue #2, PR #3).</span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M0 done: <code>main</code> protected</span><span>HSK's settings mirrored (PR + green CI, admins included, squash only, branches auto-deleted, 0 approvals). A direct push was rejected; this step went in as the first PR. <a href="m0-done.html">snapshot</a></span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M0 Step 4: on GitHub</span><span>You created the public repo (Claude Code won't let Claude publish); 3 commits pushed; first CI run green, log checked (24 passed); push protection on. <a href="m0-step4.html">snapshot</a></span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M0 Step 3: skeleton + this map</span><span>Plumbing copied from HSK and adapted (CI, PR check + 22 tests, templates); versions looked up; README, CLAUDE.md, smoke test; first commit. The primer became the syllabus, with kinds of card; <b>name &amp; recall</b> is the core (your call). <a href="m0-step3.html">snapshot</a></span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M0 Step 2: project + git</span><span><code>uv init --package</code>; uv chose <code>master</code> again, renamed to <code>main</code>; <code>.gitattributes</code>.</span></li>
+    <li><span class="when">2026-11-12</span><span class="what">M0 Step 1: the plan</span><span>7 milestones; every answer carries a receipt; quizkit copied, not installed.</span></li>
+  </ol>
+</section>
+
+<footer>Source: <code>docs/build-map/index.html</code> in the repo. Updated after every step.</footer>
+</main>
+</body>
+</html>
