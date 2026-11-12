@@ -7,7 +7,6 @@ changed word still does.
 """
 
 import json
-import logging
 import re
 import unicodedata
 from collections.abc import Callable
@@ -16,6 +15,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from quizkit.blocks.base import BlockSpec
+from quizkit.blocks.source_text import FORMATS, text_pages
 from quizkit.download import DownloadError, download_verified, http_get
 
 BLOCK_SPEC = BlockSpec(
@@ -27,6 +27,7 @@ BLOCK_SPEC = BlockSpec(
         "root",
         "fetch",
         "pdf_path",
+        "format",
         "quote",
         "pages",
         "receipts",
@@ -80,13 +81,16 @@ def to_key(text: str) -> str:
 
 
 class Receipt(BaseModel):
-    """Proof for a card: which source, the word-for-word quote, and its PDF page."""
+    """Proof for a card: which source, the word-for-word quote, and its page."""
 
     model_config = ConfigDict(frozen=True, extra="forbid", str_strip_whitespace=True)
 
     source: str = Field(min_length=1)
     quote: str
-    page: int = Field(ge=1, description="PDF page, 1 = the file's first page")
+    page: int = Field(
+        ge=1,
+        description="PDF page (1 = the file's first page); always 1 for html or jats-xml",
+    )
 
     @field_validator("quote")
     @classmethod
@@ -107,6 +111,7 @@ class Source(BaseModel):
     size: int = Field(ge=1)
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     local_path: str = Field(min_length=1)
+    format: str = "pdf"  # one of source_text.FORMATS
 
     @field_validator("local_path")
     @classmethod
@@ -116,6 +121,13 @@ class Source(BaseModel):
         if win.drive or win.root or local_path.startswith("/") or ".." in parts:
             raise ValueError("local_path must be relative and must not contain '..'")
         return local_path
+
+    @field_validator("format")
+    @classmethod
+    def known_format(cls, format: str) -> str:
+        if format not in FORMATS:
+            raise ValueError(f"format must be one of {FORMATS}")
+        return format
 
     def path(self, root: Path) -> Path:
         root = Path(root)
@@ -140,15 +152,9 @@ def ensure_source(
     return dest
 
 
-def page_keys(pdf_path: Path) -> list[str]:
+def page_keys(pdf_path: Path, format: str = "pdf") -> list[str]:
     """The key of each page's text, in order (index 0 = page 1)."""
-    pdf_path = Path(pdf_path)
-    if not pdf_path.is_file():
-        raise FileNotFoundError(pdf_path)
-    from pypdf import PdfReader  # only needed for real documents
-
-    logging.getLogger("pypdf").setLevel(logging.ERROR)  # font warnings are noise
-    return [to_key(page.extract_text() or "") for page in PdfReader(pdf_path).pages]
+    return [to_key(text) for text in text_pages(pdf_path, format)]
 
 
 def find_quote(quote: str, pages: list[str]) -> int | None:
@@ -195,7 +201,7 @@ def check_all(
     """Load, fetch and read each source once, then check every receipt.
 
     A source that can't be used (no record, a record for another id, a bad record,
-    a failed download, an unreadable PDF) gives ONE problem line per receipt that
+    a failed download, an unreadable document) gives ONE problem line per receipt that
     cites it, never a traceback. [] = every quote found on its page.
     """
     pages: dict[str, list[str]] = {}
@@ -213,7 +219,8 @@ def check_all(
         try:
             if source.id != source_id:
                 raise ValueError(f"{record.name} is for {source.id!r}")
-            pages[source_id] = page_keys(ensure_source(source, root, fetch))
+            document = ensure_source(source, root, fetch)
+            pages[source_id] = page_keys(document, source.format)
         except (ValueError, DownloadError, OSError) as err:
             broken[source_id] = _one_line(f"source {source_id} unusable ({err})")
         except Exception as err:  # noqa: BLE001 (a corrupt PDF: pypdf raises its own errors)

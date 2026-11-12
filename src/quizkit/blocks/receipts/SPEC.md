@@ -17,10 +17,11 @@ PDF text is messy: ligatures (`ﬁ`), words split by a hyphen at a line end (`ma
 ## Inputs
 | Input | Type | Plain meaning |
 |---|---|---|
-| `source_file` | `Path` | A pinned source record, JSON: `id`, `title`, `url` (https), `size` (bytes), `sha256` (64 hex characters), `local_path` (where the document is kept, relative to the project root). Extra fields (authors, doi, licence note…) are allowed and kept out of the way |
+| `source_file` | `Path` | A pinned source record, JSON: `id`, `title`, `url` (https), `size` (bytes), `sha256` (64 hex characters), `local_path` (where the document is kept, relative to the project root), and optionally `format`: `pdf` (default), `html` or `jats-xml` (any other value is rejected). Extra fields (authors, doi, licence note…) are allowed and kept out of the way |
 | `root` | `Path` | The project root that `local_path` is relative to |
 | `fetch` | `Callable[[str], bytes]` | Downloads a URL (default: a real download with a generic User-Agent). Tests pass a fake |
-| `pdf_path` | `Path` | A downloaded PDF to read |
+| `pdf_path` | `Path` | A downloaded document to read (a PDF unless `format` says otherwise) |
+| `format` | `str` | The document's format for `page_keys`: `pdf` (default), `html` or `jats-xml` |
 | `quote` | `str` | The quote to find |
 | `pages` | `list[str]` | A document's page keys (from `page_keys`), index 0 = page 1 |
 | `receipts` | `list[tuple[str, Receipt]]` | What to check: (a label such as the card id, its receipt) |
@@ -34,7 +35,7 @@ Receipt(source="id", quote="...", page=9) # pydantic, frozen
 Source                                    # pydantic, frozen; .path(root) -> Path
 load_source(source_file) -> Source
 ensure_source(source, root, fetch=...) -> Path   # download if missing; always verify
-page_keys(pdf_path) -> list[str]
+page_keys(pdf_path, format="pdf") -> list[str]
 find_quote(quote, pages) -> int | None    # 1-based page, or None
 check_receipts(receipts, pages_by_source) -> list[str]   # problems; [] = all good
 check_all(receipts, sources_dir, root, fetch=...) -> list[str]  # load + fetch + read + check
@@ -45,19 +46,19 @@ check_all(receipts, sources_dir, root, fetch=...) -> list[str]  # load + fetch +
 |---|---|---|
 | `to_key` | `str` | The comparison key described in Goal: ligatures become letters, accents are dropped (`López` → `lopez`), Greek letters and `≥ ≤ < > % ± =` become words (`alpha`, `ge`, `le`, `lt`, `gt`, `pct`, `pm`, `eq`), a `.`/`,`/`·` between two digits becomes `dot`; spaces, hyphens, quotes and other punctuation disappear |
 | `Receipt` | pydantic model | `source` (non-empty), `quote` (its **key** has at least 20 characters, so a quote can't be a word or dots that match anywhere), `page` (≥ 1). Frozen; unknown fields rejected |
-| `Source` | pydantic model | The six fields above; extra fields in the record (authors, doi…) are **ignored** (not stored). `path(root)` = `root / local_path`, and raises `ValueError` if that resolves outside `root` (a second guard behind the `local_path` rule) |
+| `Source` | pydantic model | The six fields above plus `format` (default `"pdf"`); extra fields in the record (authors, doi…) are **ignored** (not stored). `path(root)` = `root / local_path`, and raises `ValueError` if that resolves outside `root` (a second guard behind the `local_path` rule) |
 | `ensure_source` | `Path` | Where the verified document now is (`source.path(root)`, the same path whether it downloaded or a correct copy was already there). Downloads only if it is missing or wrong |
-| `page_keys` | `list[str]` | One key per PDF page, in order. A page with no text gives `""` |
+| `page_keys` | `list[str]` | One key per page, in order, from `source_text.text_pages`: one per PDF page (a page with no text gives `""`); exactly one for `html` or `jats-xml`, so their receipts say `page` 1 |
 | `find_quote` | `int \| None` | The first page (1-based) whose key contains the quote's key; `None` if none does |
 | `check_receipts` | `list[str]` | One line per bad receipt, in the order given: `"<label>: quote not found in <source>"`, `"<label>: quote is on page <found>, receipt says <page>"`, or `"<label>: unknown source <source>"`. Empty list = every quote found on its page |
 
-| `check_all` | `list[str]` | Every receipt checked: each source record is loaded from `sources_dir`, fetched if needed, read once. Lines as `check_receipts`, plus, for every receipt citing a source that can't be used, one line `"<label>: <reason>"` (no record file: `"no source record <id>.json"`; a record whose `id` differs from its file name, a bad record, a failed download, an unreadable PDF: `"source <id> unusable (...)"` or `"... unreadable (...)"`). `<id>` is the source id the receipts cite (the record's file name). Never a traceback for a bad source, including a record that isn't valid JSON or fails validation |
+| `check_all` | `list[str]` | Every receipt checked: each source record is loaded from `sources_dir`, fetched if needed, read once in its record's `format`. Lines as `check_receipts`, plus, for every receipt citing a source that can't be used, one line `"<label>: <reason>"` (no record file: `"no source record <id>.json"`; a record whose `id` differs from its file name, a bad record, a failed download, an unreadable document (corrupt PDF, broken XML): `"source <id> unusable (...)"` or `"... unreadable (...)"`). `<id>` is the source id the receipts cite (the record's file name). Never a traceback for a bad source, including a record that isn't valid JSON or fails validation |
 
 Nothing is written except the downloaded document (at `source.path(root)`, via `quizkit.download.download_verified`).
 
 ## Tools
 - `unicodedata` (NFKD) for keys
-- `pypdf` (`PdfReader`) for page text; its font warnings are silenced (they are noise here)
+- `quizkit.blocks.source_text.text_pages` for page text (PDF via `pypdf`, HTML, JATS XML)
 - `quizkit.download.download_verified` for the pinned download (size + SHA-256)
 - `quizkit.download.http_get` as the default `fetch` (it sends the generic User-Agent `quizkit`, never personal details; some repositories refuse Python's default)
 - pydantic for `Receipt` and `Source`
@@ -69,7 +70,7 @@ Nothing is written except the downloaded document (at `source.path(root)`, via `
 | A quote that spans a page break | Not found (`None`): pages are checked one at a time, so pick a quote within one page |
 | The quote appears on several pages | The first page is returned |
 | `check_receipts` with a receipt whose source isn't in `pages_by_source` | A problem line `"<label>: unknown source <source>"`, not a crash |
-| A source record that is missing a field, has an empty or spaces-only `id`, `title` or `local_path`, a non-https URL, a SHA-256 that isn't 64 **lower-case** hex characters, or a size < 1 | **Raises** pydantic `ValidationError` from `load_source` |
+| A source record with an unknown `format`, or that is missing a field, has an empty or spaces-only `id`, `title` or `local_path`, a non-https URL, a SHA-256 that isn't 64 **lower-case** hex characters, or a size < 1 | **Raises** pydantic `ValidationError` from `load_source` |
 | A `local_path` that is absolute, has a Windows drive (`C:/x`, `C:x`) or is a network path (`\server\share`), or has a `..` path segment (`a/../b`; a name like `file..pdf` is fine) (it could escape `root`) | **Raises** `ValidationError`: a record can't make the download land outside the project |
 | The source record file isn't valid JSON | **Raises** `json.JSONDecodeError` (a `ValueError`) |
 | Trying to change a `Receipt` or `Source` after it is made | **Raises** `ValidationError` (both are frozen) |
@@ -79,6 +80,7 @@ Nothing is written except the downloaded document (at `source.path(root)`, via `
 | The download fails, or its size or SHA-256 doesn't match the pin | **Raises** `quizkit.download.DownloadError`; the bad download is not saved (an older wrong copy, if any, is left as it was and will be replaced on the next good download) |
 | The PDF exists but is corrupt or not a PDF | **Raises** pypdf's error (`pypdf.errors.PdfReadError` or similar), not swallowed: a broken source must be loud |
 | `pdf_path` doesn't exist | **Raises** `FileNotFoundError` |
+| An unknown `format` passed to `page_keys` | **Raises** `ValueError` |
 | A `Receipt` whose quote's key has < 20 characters (e.g. `"a . . . . . . . . . b"`), an empty or spaces-only source, page < 1, or an unknown field | **Raises** `ValidationError` |
 
 ## How to test
@@ -88,7 +90,8 @@ Automatic tests in `tests/blocks/test_receipts.py`, with **no network** (a fake 
 - **check_receipts:** all good → `[]`; wrong page → the "is on page" line; missing quote → the "not found" line; unknown source → the "unknown source" line; order kept
 - **Receipt / Source validation:** each rejected case in Failure modes
 - **ensure_source:** downloads when missing (fake fetch called once); doesn't call fetch when a correct copy is there; re-downloads a wrong copy; wrong size or SHA from fetch → `DownloadError` and no file saved
-- **page_keys:** a blank page gives `""`; the number of keys = the number of pages; missing file → `FileNotFoundError`
+- **page_keys:** a blank page gives `""`; the number of keys = the number of pages; missing file → `FileNotFoundError`; an html file with `format="html"` gives one key; unknown format → `ValueError`
+- **format:** a record without `format` loads as `pdf`; `format: "docx"` → `ValidationError`; `check_all` finds a quote in an html source (page 1)
 - **Contract test:** folder parts exist and `BLOCK_SPEC` matches this SPEC
 
 Manual check: `uv run longevity check-receipts` against the real pinned review (CI skips it: no download there; see FUTURE.md).
