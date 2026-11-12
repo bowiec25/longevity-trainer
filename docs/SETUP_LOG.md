@@ -13,6 +13,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M0.3a | Added the safety files and checks, mostly copied from the Mandarin project; folded the primer into the plan | Mistakes and leaks get caught early, and the plan covers what you actually want to learn |
 | M0.3b | Started the build map, a picture of the project, and made "name & recall" the core kind of card | You can see at a glance what exists; the quiz trains the building blocks first |
 | M0.4 | Uploaded to GitHub (public); CI ran green | Backup, and GitHub re-runs the checks on a fresh computer |
+| M0.5 | Locked `main`: changes only arrive through a PR with green CI, for everyone | Nothing broken or unreviewed can reach the main copy, by accident or in a hurry |
 
 ---
 
@@ -72,3 +73,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **First CI run green, and checked:** green isn't the same as checked (playbook M3 lesson), so I read the log: ruff ✅, format ✅, **24 passed**. The PR-description check was skipped, which is expected: it only runs on PRs.
 - **GitHub's own safety nets are on:** secret scanning + push protection (blocks uploads containing known API key formats).
 - **A notice to know about:** GitHub says `ubuntu-latest` moves to Ubuntu 26 from 19 Oct 2026. Nothing to do: CI follows it automatically, and `uv sync --locked` keeps our Python tools identical.
+
+## M0 Step 5: protect `main` (2026-11-12)
+
+> **In plain words:** a lock on the main copy. From now on, every change goes on a side branch, opens a PR, passes CI, and is squashed into one tidy commit. Applies to everyone, you included.
+
+- **Copied HSK's exact settings** (read them from its repo, not from memory): PR required, the `check` CI job must pass and the branch must be up to date with `main`, **admins included**, no force-push, no deleting `main`. Merges are squash-only, and branches are deleted after merging.
+- **0 approvals needed:** a PR is required, but no human sign-off on it (your "no human approval gates" rule). CI is the gate; you still choose when to merge.
+- **Tested, not assumed:** a direct push to `main` was **rejected** by GitHub. The commit with this step's docs then went up on a branch as the **first PR**, which is also the first real run of the "Still the right thing?" check.
+- **Hooks are different:** this lock is GitHub's, for everyone. Hooks (M1) are Claude-only scripts on your PC. Layers beat one lock.
