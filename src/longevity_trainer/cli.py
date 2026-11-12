@@ -3,10 +3,12 @@
 `quiz` plays the cards, with the receipt after each answer.
 `check-receipts` finds every card's quote in its pinned source (downloads it if needed).
 
-Marking (v1, free and instant):
+Marking:
 - name / fact cards: the quizkit grader (small typos forgiven).
-- explain / term cards, or any answer the grader calls wrong: you see the model
-  answer and mark yourself ("Count it as right? y/n"). The Claude judge comes in M4.
+- any answer the answer list calls wrong goes to Claude (the `marking` block):
+  word-level for names and facts, main idea for explanations. If Claude can't be
+  reached, or with --no-judge, you see the model answer and mark it yourself.
+  Claude's "no" is final for now (disputing a verdict is in docs/FUTURE.md).
 Progress isn't saved yet.
 """
 
@@ -17,9 +19,10 @@ import textwrap
 from collections.abc import Callable
 
 from longevity_trainer.blocks.card_bank import ROOT, LongevityCard, load_cards
+from longevity_trainer.blocks.marking import make_judge
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.receipts import check_all
-from quizkit.models import Question, Verdict
+from quizkit.models import Judge, Question, Verdict
 from quizkit.modes import Mode, build_question
 
 SELF_YES = Verdict(correct=True, reason="you marked it right", source="self")
@@ -64,10 +67,15 @@ def play(
     cards: list[LongevityCard],
     read: Read = _read,
     write: Callable[[str], None] = print,
+    judge: Judge | None = None,
 ) -> tuple[int, int]:
-    """Ask every card in order; return (right, answered)."""
+    """Ask every card in order; return (right, answered).
+
+    With a `judge`, Claude marks any answer the answer list calls wrong; if Claude
+    can't be reached, you mark it yourself."""
     by_id = {c.id: c for c in cards}
-    session = QuizSession([to_question(c) for c in cards])
+
+    session = QuizSession([to_question(c) for c in cards], judge=judge)
     write(f"Longevity quiz: {len(cards)} questions. Type q to stop.\n")
     number = 0
     while not session.done:
@@ -78,9 +86,21 @@ def play(
         if typed is None or typed.strip().lower() in QUIT_WORDS:
             break
         attempt: Attempt = session.answer(typed)
+        verdict = attempt.verdict
+        checked = verdict is not None and verdict.source != "not_checked"
         if attempt.correct:
-            write("   ✓ Right")
+            write(
+                _wrap(f"✓ Right (Claude: {verdict.reason})")
+                if checked
+                else "   ✓ Right"
+            )
+            if checked:
+                write(_wrap(f"Model answer: {card.answers[0]}"))
         else:
+            if checked:
+                write(_wrap(f"✗ Claude: {verdict.reason}"))
+            elif verdict is not None:  # Claude couldn't check
+                write(_wrap(f"(Claude: {verdict.reason})"))
             write(_wrap(f"Answer: {card.answers[0]}"))
             if typed.strip() and session.can_own_mark:
                 mark = _ask_yes_no(read, "   Count it as right? (y/n) ")
@@ -98,6 +118,7 @@ def play(
 
 
 SOURCES_DIR = ROOT / "data" / "sources"
+JUDGE_CACHE = ROOT / "data" / "judge_cache.jsonl"  # gitignored: your answers
 
 
 def check_all_receipts(write: Callable[[str], None] = print) -> int:
@@ -116,6 +137,9 @@ def main(argv: list[str] | None = None) -> int:
     quiz = sub.add_parser("quiz", help="play the cards")
     quiz.add_argument("-n", type=int, default=None, help="how many questions")
     quiz.add_argument("--seed", type=int, default=None, help="fixed order (testing)")
+    quiz.add_argument(
+        "--no-judge", action="store_true", help="mark open answers yourself, no Claude"
+    )
     sub.add_parser("check-receipts", help="find every quote in its pinned source")
     args = parser.parse_args(argv)
 
@@ -127,8 +151,14 @@ def main(argv: list[str] | None = None) -> int:
     random.Random(args.seed).shuffle(cards)
     if args.n is not None:
         cards = cards[: max(1, args.n)]
+    judge = None
+    if not args.no_judge:
+        judge = make_judge(
+            cache_file=JUDGE_CACHE,
+            before_asking=lambda: print("   asking Claude…", flush=True),
+        )
     try:
-        play(cards)
+        play(cards, judge=judge)
     except KeyboardInterrupt:
         print("\nStopped.")
     return 0

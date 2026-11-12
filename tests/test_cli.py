@@ -57,3 +57,59 @@ def test_main_runs_n_questions(monkeypatch, capsys):
     monkeypatch.setattr("builtins.input", lambda _prompt: next(replies))
     assert main(["quiz", "-n", "2", "--seed", "1"]) == 0
     assert "Score: 0 / 0" in capsys.readouterr().out
+
+
+def fake_judge(correct, source="claude", reason="gets the key idea"):
+    from quizkit.models import Verdict
+
+    calls = []
+
+    def judge(question, typed):
+        calls.append((question.mode, typed))
+        return Verdict(correct=correct, reason=reason, source=source)
+
+    judge.calls = calls
+    return judge
+
+
+def run_judged(cards, typed, judge):
+    replies = iter(typed)
+    lines = []
+    score = play(
+        cards, read=lambda _p: next(replies, None), write=lines.append, judge=judge
+    )
+    return score, "\n".join(lines)
+
+
+def test_claude_accepts_an_open_answer():
+    judge = fake_judge(True)
+    score, out = run_judged(
+        [card("hm-telomeres-why")], ["cells lack telomerase"], judge
+    )
+    assert score == (1, 1)
+    assert "Claude: gets the key idea" in out
+    assert "Count it as right" not in out  # Claude checked it: no own mark
+    assert judge.calls == [("explain", "cells lack telomerase")]  # kind is the mode
+
+
+def test_claude_rejects_and_says_why():
+    score, out = run_judged(
+        [card("hm-telomeres-why")],
+        ["too much sugar"],
+        fake_judge(False, reason="wrong"),
+    )
+    assert score == (0, 1)
+    assert "✗ Claude: wrong" in out and "Answer: Most body" in out
+
+
+def test_answer_list_hit_never_asks_claude():
+    judge = fake_judge(False)
+    score, _ = run_judged([card("hm-dysbiosis-name")], ["dysbiosis"], judge)
+    assert score == (1, 1) and judge.calls == []
+
+
+def test_claude_unreachable_falls_back_to_own_mark():
+    judge = fake_judge(False, source="not_checked", reason="couldn't check: offline")
+    score, out = run_judged([card("hm-telomeres-why")], ["no telomerase", "y"], judge)
+    assert score == (1, 1)
+    assert "(Claude: couldn't check: offline)" in out and "Counted" in out

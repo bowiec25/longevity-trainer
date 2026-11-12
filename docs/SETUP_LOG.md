@@ -25,6 +25,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M2.1 | Topic map: every primer section → topics → card kinds → quiz now / later / never | Decides what M2 needs sources for, and what M3 writes cards on |
 | M2.2 | ADR 0007: what counts as a trusted source, and what we may commit | The agents in Step 5 get a clear brief; a script can check it |
 | M2.3 | Pinned 3 real sources by hand and wrote down what goes wrong | Real pages before any SPEC (HSK lesson): Step 4 changed because of it |
+| M2.4 | Claude marks open answers in the quiz (source checker postponed) | User: fixed answer lists are "a nightmare" for open questions; the receipt work was taking all the time |
 
 ---
 
@@ -194,3 +195,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Europe PMC** (a free service for programs) gives open journal articles as clean XML, with the licence stated inside. It becomes the agents' first stop in Step 5.
 - **Also:** paywalled reviews are skipped; preprint copies (like PEARL's) are rejected; web pages change, which M5 will handle.
 - **Safety fix:** `data/raw/` is now ignored as a whole (before, only PDFs were), so downloaded pages can't be committed by accident.
+
+## M2 Step 4: Claude marks your answers (2026-11-12)
+
+> **In plain words:** like a teacher reading your answer instead of a key that only accepts exact words. If your answer isn't on the list, Claude decides if you meant the same thing.
+
+- **New block `marking`:** names and facts are marked word-level (synonyms, small slips OK); explanations are marked on the main idea, up to 400 characters. Rejects: missing parts, overselling ("reverses ageing"), and moving a mouse result to people.
+- **Answers are saved** in `data/judge_cache.jsonl` (gitignored), so the same answer is never asked twice.
+- **Offline-safe:** if Claude fails twice in a row, marking switches off for the run and you mark yourself.
+- **Changed plan:** the source-checker steps are postponed; the user found them the least useful part.
