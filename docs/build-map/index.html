@@ -141,8 +141,8 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section aria-label="Summary">
   <div class="tiles">
-    <div class="tile hi"><b>0</b><span>quiz cards (none until M3, on purpose)</span></div>
-    <div class="tile"><b>774</b><span>automatic tests, all passing</span></div>
+    <div class="tile hi"><b>15</b><span>quiz cards (hallmarks), marked by Claude</span></div>
+    <div class="tile"><b>828</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>5</b><span>decision records (ADRs)</span></div>
@@ -262,13 +262,14 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 774 tests guard</h2>
+    <h2>4. What the 828 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Test file</th><th class="n">Tests</th><th></th><th>What it protects</th></tr></thead>
       <tbody>
-        <tr><td class="mono">test_cli.py</td><td class="n">7</td><td class="bar"><span style="width:2%"></span></td><td>the quiz: right answers score, typos forgiven, own mark y/n, blank is wrong, q quits and keeps the score, receipt shown</td></tr>
+        <tr><td class="mono">test_cli.py</td><td class="n">11</td><td class="bar"><span style="width:2%"></span></td><td>the quiz: right answers score, typos forgiven, Claude's mark shown (fake Claude), own mark y/n when Claude can't check, q quits and keeps the score, receipt shown</td></tr>
+        <tr><td class="mono">blocks/test_marking.py</td><td class="n">51</td><td class="bar"><span style="width:10%"></span></td><td>longevity block, by the test-writer: names vs explanations get the right marking rules, length limits, cache, "asking Claude" only on real calls, offline switch-off after 2 failures</td></tr>
         <tr><td class="mono">blocks/test_receipts.py</td><td class="n">114</td><td class="bar"><span style="width:22%"></span></td><td>quizkit block, tests by the test-writer: quote keys (IL-1α ≠ IL-1β, 1.5 ≠ 15), pinned sources, safe paths, every bad source → one line, never a crash</td></tr>
         <tr><td class="mono">blocks/test_card_bank.py</td><td class="n">46</td><td class="bar"><span style="width:9%"></span></td><td>longevity block: every bad card line named by file and line; repeats; the real bank loads</td></tr>
         <tr><td class="mono">blocks/test_jsonl_loader.py</td><td class="n">34</td><td class="bar"><span style="width:7%"></span></td><td>quizkit block: folder of records, editor-true line numbers, repeats, empty folder</td></tr>
@@ -278,7 +279,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">774</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">828</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -318,6 +319,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M2 Step 4 (changed): Claude marks your answers</span><span>You said the receipt work was taking all the time, so the source checker is postponed. New block <code>marking</code>: if your answer isn't on the list, Claude judges it (word-level for names, main idea for explanations; rejects missing parts, overselling, mice→people). Saved locally, never asked twice; switches off if offline. <a href="snapshots/m2-step4-marking.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M2 Step 3: real sources first</span><span>Pinned a WHO page, an Aging Cell review and the PEARL paper by hand. Found: many official sites block programs (skipped), three formats (PDF, HTML, journal XML), Europe PMC as the road to open articles. Step 4 split in two because of it. <a href="snapshots/m2-step3.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M2 Step 2: trusted sources</span><span>ADR 0007: A guidelines · B major-journal reviews · C a study only for claims about itself. Never news, company sites, preprints or the primer. Commit records + short quotes, never documents. <a href="snapshots/m2-step2.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M2 Step 1: the topic map</span><span>73 topics from the primer's sections, each with its card kinds: 59 quiz now, 9 wait for M5 (dated), 5 read-don't-quiz; 9 groups, one fan-out agent each in Step 5. <a href="snapshots/m2-step1.html">snapshot</a></span></li>
