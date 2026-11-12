@@ -1,4 +1,7 @@
-"""`longevity quiz`: play the cards in the terminal, with the receipt after each answer.
+"""The terminal front end: `longevity quiz` and `longevity check-receipts`.
+
+`quiz` plays the cards, with the receipt after each answer.
+`check-receipts` finds every card's quote in its pinned source (downloads it if needed).
 
 Marking (v1, free and instant):
 - name / fact cards: the quizkit grader (small typos forgiven).
@@ -13,9 +16,11 @@ import sys
 import textwrap
 from collections.abc import Callable
 
-from longevity_trainer.cards import LongevityCard, load_cards
+from longevity_trainer.blocks.card_bank import ROOT, LongevityCard, load_cards
 from quizkit.blocks.engine import Attempt, QuizSession
+from quizkit.blocks.receipts import check_all
 from quizkit.models import Question, Verdict
+from quizkit.modes import Mode, build_question
 
 SELF_YES = Verdict(correct=True, reason="you marked it right", source="self")
 SELF_NO = Verdict(correct=False, reason="you marked it wrong", source="self")
@@ -32,12 +37,9 @@ def _read(prompt: str) -> str | None:
 
 
 def to_question(card: LongevityCard) -> Question:
-    return Question(
-        card_id=card.id,
-        mode=card.kind,
-        shown={"question": card.question},
-        accepted_answers=card.answers,
-    )
+    """The card as a question; its kind (name, fact, term, explain) is the mode, so
+    saved progress and the judge can tell kinds apart."""
+    return build_question(card.to_quizkit(), Mode(name=card.kind, show=["question"]))
 
 
 def _wrap(text: str, indent: str = "   ") -> str:
@@ -95,16 +97,32 @@ def play(
     return result.correct, result.answered
 
 
+SOURCES_DIR = ROOT / "data" / "sources"
+
+
+def check_all_receipts(write: Callable[[str], None] = print) -> int:
+    """Check every card's quote; one line per problem, then a one-line summary."""
+    cards = load_cards()
+    problems = check_all([(c.id, c.receipt) for c in cards], SOURCES_DIR, ROOT)
+    for line in problems:
+        write(line)
+    write(f"receipts: {len(cards) - len(problems)}/{len(cards)} quotes found")
+    return 1 if problems else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="longevity")
     sub = parser.add_subparsers(dest="command", required=True)
     quiz = sub.add_parser("quiz", help="play the cards")
     quiz.add_argument("-n", type=int, default=None, help="how many questions")
     quiz.add_argument("--seed", type=int, default=None, help="fixed order (testing)")
+    sub.add_parser("check-receipts", help="find every quote in its pinned source")
     args = parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):  # Windows consoles: show ✓ and quotes
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if args.command == "check-receipts":
+        return check_all_receipts()
     cards = load_cards()
     random.Random(args.seed).shuffle(cards)
     if args.n is not None:

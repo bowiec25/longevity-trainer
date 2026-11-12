@@ -15,9 +15,15 @@ class DownloadError(RuntimeError):
     """The download failed, or the file isn't the one we expected."""
 
 
+USER_AGENT = (
+    "quizkit"  # generic: some sites refuse Python's default; never personal info
+)
+
+
 def http_get(url: str) -> bytes:
     """Fetch a URL and return its bytes (the real, internet-using downloader)."""
-    with urllib.request.urlopen(url, timeout=30) as response:  # pinned https URLs only
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=60) as response:  # pinned https URLs
         return response.read()
 
 

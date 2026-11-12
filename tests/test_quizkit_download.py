@@ -118,3 +118,24 @@ def test_write_failing_halfway_leaves_no_temp_file(tmp_path, monkeypatch):
     with pytest.raises(DownloadError, match="words.json"):
         download_verified(URL, dest, size=SIZE, sha256=SHA, fetch=FakeFetch())
     assert list(tmp_path.iterdir()) == []
+
+
+def test_http_get_sends_generic_user_agent(monkeypatch):
+    """The real downloader identifies itself as 'quizkit' (no network: urlopen faked)."""
+    import io
+    import urllib.request
+
+    from quizkit.download import http_get
+
+    seen = []
+
+    def fake_urlopen(request, *args, **kwargs):
+        seen.append(request)
+        return io.BytesIO(b"payload")
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    assert http_get(URL) == b"payload"
+    request = seen[0]
+    assert isinstance(request, urllib.request.Request)
+    assert request.full_url == URL
+    assert request.get_header("User-agent") == "quizkit"

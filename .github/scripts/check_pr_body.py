@@ -19,7 +19,7 @@ def is_our_heading(line: str) -> bool:
     return line.strip().startswith("#") and title.startswith("still the right thing")
 
 
-def sections(body: str) -> list[str]:
+def sections(body: str, is_heading=is_our_heading) -> list[str]:
     """The text under each "Still the right thing?" heading, up to the next heading.
 
     Lines inside ``` code blocks are never treated as headings.
@@ -31,7 +31,7 @@ def sections(body: str) -> list[str]:
         if line.strip().startswith("```"):
             in_fence = not in_fence
         elif not in_fence and re.match(r"\s*#", line):  # a heading
-            current = [] if is_our_heading(line) else None
+            current = [] if is_heading(line) else None
             if current is not None:
                 found.append(current)
             continue
