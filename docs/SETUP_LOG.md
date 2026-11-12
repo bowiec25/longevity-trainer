@@ -11,6 +11,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M0.1 | Wrote the plan (milestones, where questions come from, how to share quizkit) | Decide what "done" looks like before building |
 | M0.2 | Made the folder a Python project with a change history (git) on `main` | The code has a home, and every change can be undone |
 | M0.3a | Added the safety files and checks, mostly copied from the Mandarin project; folded the primer into the plan | Mistakes and leaks get caught early, and the plan covers what you actually want to learn |
+| M0.3b | Started the build map, a picture of the project, and made "name & recall" the core kind of card | You can see at a glance what exists; the quiz trains the building blocks first |
 
 ---
 
@@ -52,3 +53,11 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Kinds of card** (fact, term, explain-the-idea, grade-the-evidence, dated fact, read-don't-quiz) are how to learn the whole doc. v1 = mechanisms, science, history.
 
 **Checks:** ruff ✅, format ✅, pytest 24 passed. First commit made by naming each file (not `git add -A`).
+
+## M0 Step 3b: the build map + "name & recall" (2026-11-12)
+
+> **In plain words:** a one-page picture of the project: what exists, what's planned, which checks guard a change. It's updated after every step, and keeps a frozen copy of each version.
+
+- **Same look as the HSK map** (its stylesheet copied), so the two read alike. Sections: the planned pipeline (primer → sources → card_writer → quote check → fact-auditor → cards), kinds of card, the gates, tests, reused vs new, where notes live, "How it grew".
+- **Kept in git** (`docs/build-map/index.html` + `snapshots/m0-step3.html`) and **published** as the "Longevity Trainer Build Map" artifact. Playbook lesson: an artifact that lives only in a chat session gets lost. The slug is in `CLAUDE.md`, so every step can republish it.
+- **Your steer: naming and recall underpin the work** (the 12 hallmarks, pathways, drugs and what they do). That's now the core v1 kind of card. One thing it needs that quizkit lacks: a **list grader** ("name the 12 hallmarks" = order-free, partial score). Planned for when we build the quiz.

@@ -5,7 +5,7 @@
   - [x] 1. Plan written: `docs/PLAN.md`, `docs/SETUP_LOG.md`, `docs/FUTURE.md`
   - [x] 2. Project + git: `uv init --package` (Python 3.13; hello runs), branch renamed `master` → `main`, `.gitattributes` (LF + `data/raw/**` byte-for-byte)
   - [x] 3a. Skeleton (copied from HSK, then adapted): `.gitignore` (+ `*.pdf`), `.env.example` (no keys needed), README, `CLAUDE.md`, ruff + pytest, smoke test, CI (versions looked up: checkout v7.0.1 + setup-uv v10.3.3, both pinned to SHAs), PR template + "Still the right thing?" issue form + PR check (22 tests); 24 tests green; first commit
-  - [ ] 3b. Build map started (`docs/build-map/`, new artifact)
+  - [x] 3b. Build map started: `docs/build-map/index.html` (HSK's look) + snapshot `m0-step3.html`, published as the "Longevity Trainer Build Map" artifact; plus the **name & recall** card kind (user: naming drugs, hallmarks etc. underpins the work)
   - [ ] 4. GitHub repo `bowiec25/longevity-trainer` (public), first push, CI green
   - [ ] 5. Protect `main` (PR + green CI, admins included, squash-only, auto-delete branches); test a direct push is rejected
 - [ ] **M1 Foundations**
@@ -50,6 +50,7 @@ After each answer the quiz shows the receipt: source, year, quote.
 
 | Kind | Example | Marked by | Primer parts | When |
 |---|---|---|---|---|
+| **Name & recall** ⭐ the core (user, 2026-11-12) | "Name the 12 hallmarks of ageing" · "Rapamycin blocks which pathway?" → mTOR · "Semaglutide is which class?" → GLP-1 | grader per item; lists are order-free with a partial score (a **list grader is new**: quizkit marks one answer at a time) | 2 (hallmarks, nutrient-sensing dials), 3, 6–9 (drugs, supplements) | v1 |
 | Fact recall | "Death risk doubles about every __ years" → 8 | grader (exact/typo) | 1, history, numbers | v1 |
 | Term | "What is a senolytic?" | Claude judge, gist rubric (in quizkit) | Glossary, 1–4 | v1 |
 | Explain the idea | "Why does geroscience expect to delay many diseases at once?" | judge, gist rubric vs the source | 1–3 | v1 |
@@ -57,7 +58,7 @@ After each answer the quiz shows the receipt: source, year, quote.
 | Dated fact | "UK monthly cost of GLP-1s?" | exact + "as of" date, expires | 3–5 | after M5 |
 | Read, don't quiz | podcasts, events | not a card | 5 | never |
 
-**v1 focus (user, 2026-11-12):** mechanisms, science and history: sections 01–04, the science in 06–10, some of the testing in 11–13. "Think about how best to learn everything in the doc" → the card kinds above; dated industry facts wait for M5.
+**v1 focus (user, 2026-11-12):** naming and recalling the building blocks (hallmarks, pathways, drugs and what they do) underpins everything; then mechanisms, science and history: sections 01–04, the science in 06–10, some of the testing in 11–13. "Think about how best to learn everything in the doc" → the card kinds above; dated industry facts wait for M5.
 
 M1 adds an ADR "what's testable + kinds of card". M2 starts with a **topic map of the primer** (each section → card kinds → testable or not), then picks sources that can back those topics.
 
