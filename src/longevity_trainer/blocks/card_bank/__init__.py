@@ -11,14 +11,22 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from quizkit.blocks.base import BlockSpec
 from quizkit.blocks.jsonl_loader import load_jsonl_dir
 from quizkit.blocks.receipts import Receipt
-from quizkit.models import Card
+from quizkit.models import Card, Question
+from quizkit.modes import Mode, build_question
 
 BLOCK_SPEC = BlockSpec(
     name="card_bank",
     kind="script",
     goal="Load the longevity cards (question, answers, receipt) from data/cards and turn them into quizkit cards.",
     inputs=["cards_dir"],
-    outputs=["LongevityCard", "load_cards", "to_quizkit", "ROOT", "CARDS_DIR"],
+    outputs=[
+        "LongevityCard",
+        "load_cards",
+        "to_quizkit",
+        "to_question",
+        "ROOT",
+        "CARDS_DIR",
+    ],
 )
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -58,6 +66,13 @@ class LongevityCard(BaseModel):
             fields={"question": self.question, "kind": self.kind, "topic": self.topic},
             answers=self.answers,
             level=1,
+        )
+
+    def to_question(self) -> Question:
+        """The card as the quiz asks it; its kind (name, fact, term, explain) is the
+        mode, so saved progress and the judge can tell kinds apart."""
+        return build_question(
+            self.to_quizkit(), Mode(name=self.kind, show=["question"])
         )
 
 

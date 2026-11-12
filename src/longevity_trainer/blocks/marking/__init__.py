@@ -3,13 +3,19 @@
 See SPEC.md in this folder (ADR 0003).
 """
 
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import get_args
 
-from longevity_trainer.blocks.card_bank import Kind
+from pydantic import BaseModel, ConfigDict, Field
+
+from longevity_trainer.blocks.card_bank import ROOT, Kind, LongevityCard
 from quizkit.blocks.base import BlockSpec
+from quizkit.blocks.engine import QuizSession
+from quizkit.blocks.jsonl_loader import load_jsonl_file
 from quizkit.blocks.judge import WORD_RUBRIC, ClaudeJudge
+from quizkit.blocks.judge.eval import EvalReport, ScoreItem, score, verdict_mark
 from quizkit.claude import ClaudeError, ask_claude
 from quizkit.models import Judge, Question, Verdict
 
@@ -17,8 +23,26 @@ BLOCK_SPEC = BlockSpec(
     name="marking",
     kind="agent",
     goal="Mark a typed answer with Claude when the answer list says no: word-level for names and facts, main-idea for explanations.",
-    inputs=["question", "typed", "cache_file", "ask", "before_asking"],
-    outputs=["make_judge", "SUBJECT", "CONCEPT_RUBRIC", "Verdict"],
+    inputs=[
+        "question",
+        "typed",
+        "cache_file",
+        "ask",
+        "before_asking",
+        "cases",
+        "cards",
+    ],
+    outputs=[
+        "make_judge",
+        "SUBJECT",
+        "CONCEPT_RUBRIC",
+        "Verdict",
+        "MarkingCase",
+        "MARKING_EVAL_FILE",
+        "load_marking_cases",
+        "check_card_ids",
+        "run_marking_eval",
+    ],
 )
 
 SUBJECT = (
@@ -106,3 +130,70 @@ def make_judge(
         raise ValueError(f"no marking rule for card kind {question.mode!r}")
 
     return judge
+
+
+# --- the eval: how often Claude's marking agrees with the user's labels ----------
+
+MARKING_EVAL_FILE = ROOT / "tests" / "data" / "marking_eval.jsonl"
+
+
+class MarkingCase(BaseModel):
+    """One answer the user labelled: should it count as right?"""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    card_id: str = Field(min_length=1)
+    typed: str
+    expected: bool
+    why: str = ""
+
+    def model_post_init(self, _context: object) -> None:
+        if not self.typed.strip():
+            raise ValueError("typed must not be blank")
+
+
+def load_marking_cases(path: Path = MARKING_EVAL_FILE) -> list[MarkingCase]:
+    """One case per non-blank line; a bad line raises ValueError with its number."""
+    return load_jsonl_file(path, MarkingCase, id_field=None, what="marking eval cases")
+
+
+def check_card_ids(cases: list[MarkingCase], cards: list[LongevityCard]) -> None:
+    """Raise ValueError naming every case's card_id that isn't in the bank."""
+    known = {c.id for c in cards}
+    unknown = [case.card_id for case in cases if case.card_id not in known]
+    if unknown:
+        raise ValueError(f"eval cases name cards not in the bank: {', '.join(unknown)}")
+
+
+def _mark_as_quiz(
+    card: LongevityCard, typed: str, judge: Judge
+) -> tuple[bool | None, str]:
+    """Mark like the quiz: the answer list first, the judge only when it says wrong."""
+    attempt = QuizSession([card.to_question()], judge=judge).answer(typed)
+    if attempt.verdict is not None:
+        return verdict_mark(attempt.verdict)
+    # No verdict means the answer list said yes: the quiz asks the judge for every
+    # wrong, non-blank answer, and MarkingCase never has a blank one.
+    return True, f"accepted by the answer list ({attempt.grade.matched!r})"
+
+
+def run_marking_eval(
+    cases: list[MarkingCase],
+    cards: list[LongevityCard],
+    judge: Judge,
+    show: Callable[[str], None] = print,
+    clock: Callable[[], float] = time.perf_counter,
+) -> EvalReport:
+    """Mark every case and count agreement with the labels (quizkit's EvalReport)."""
+    check_card_ids(cases, cards)
+    by_id = {c.id: c for c in cards}
+    items = [
+        ScoreItem(
+            case.card_id,
+            case.typed,
+            case.expected,
+            lambda case=case: _mark_as_quiz(by_id[case.card_id], case.typed, judge),
+        )
+        for case in cases
+    ]
+    return score(items, show=show, clock=clock)

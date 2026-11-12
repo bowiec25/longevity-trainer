@@ -303,3 +303,143 @@ def test_unhashable_id_field_raises_value_error_not_type_error(tmp_path, field):
     with pytest.raises(ValueError, match="hashable") as err:
         block.load_jsonl_dir(tmp_path, Tagged, id_field=field)
     assert not isinstance(err.value, TypeError)
+
+
+# --- load_jsonl_file: one file, same reading rules and errors ---------------
+
+
+def test_file_loads_one_file_in_line_order(tmp_path):
+    path = _write(tmp_path, "x.jsonl", '{"id": "b", "n": 2}\n{"id": "a", "n": 1}\n')
+    _write(tmp_path, "other.jsonl", '{"id": "c", "n": 3}\n')
+    rows = block.load_jsonl_file(path, Row)
+    assert _ids(rows) == ["b", "a"]
+    assert all(isinstance(r, Row) for r in rows)
+
+
+def test_file_skips_blank_lines(tmp_path):
+    path = _write(
+        tmp_path, "x.jsonl", '\n{"id": "a", "n": 1}\n   \n{"id": "b", "n": 2}'
+    )
+    assert _ids(block.load_jsonl_file(path, Row)) == ["a", "b"]
+
+
+def test_file_bom_is_fine(tmp_path):
+    path = tmp_path / "x.jsonl"
+    path.write_bytes("﻿".encode() + b'{"id": "a", "n": 1}\n')
+    assert _ids(block.load_jsonl_file(path, Row)) == ["a"]
+
+
+def test_file_crlf_is_fine_and_lines_still_counted(tmp_path):
+    path = tmp_path / "x.jsonl"
+    path.write_bytes(b'{"id": "a", "n": 1}\r\n{"id": "b", "n": 2}\r\n')
+    assert _ids(block.load_jsonl_file(path, Row)) == ["a", "b"]
+    path.write_bytes(b'{"id": "a", "n": 1}\r\n\r\n{bad\r\n')
+    with pytest.raises(ValueError) as err:
+        block.load_jsonl_file(path, Row)
+    assert str(err.value).startswith("x.jsonl line 3: ")
+
+
+def test_file_splits_on_newline_only(tmp_path):
+    good = json.dumps({"id": "a b", "n": 1}, ensure_ascii=False)
+    path = _write(tmp_path, "x.jsonl", good + "\n{bad\n")
+    with pytest.raises(ValueError) as err:
+        block.load_jsonl_file(path, Row)
+    assert str(err.value).startswith("x.jsonl line 2: ")
+
+
+@pytest.mark.parametrize("bad", ["{not json", '{"id": "y", "n": "lots"}'])
+def test_file_bad_line_names_file_and_line(tmp_path, bad):
+    path = _write(tmp_path, "x.jsonl", '{"id": "a", "n": 1}\n\n' + bad + "\n")
+    with pytest.raises(ValueError) as err:
+        block.load_jsonl_file(path, Row)
+    msg = str(err.value)
+    assert msg.startswith("x.jsonl line 3: ")
+    assert len(msg) > len("x.jsonl line 3: ")
+    assert str(tmp_path) not in msg  # the bare file name, not the full path
+
+
+def test_file_not_utf8_raises_value_error_naming_file(tmp_path):
+    path = tmp_path / "x.jsonl"
+    path.write_bytes(b'{"id": "\xff\xfe", "n": 1}\n')
+    with pytest.raises(ValueError) as err:
+        block.load_jsonl_file(path, Row)
+    assert not isinstance(err.value, UnicodeDecodeError)
+    assert str(err.value).startswith("x.jsonl: ")
+
+
+@pytest.mark.parametrize("text", ["", "\n   \n\n"])
+def test_file_with_no_records_says_no_records_found_in_its_name(tmp_path, text):
+    path = _write(tmp_path, "x.jsonl", text)
+    with pytest.raises(ValueError) as err:
+        block.load_jsonl_file(path, Row)
+    assert "no records found" in str(err.value)
+    assert "x.jsonl" in str(err.value)
+
+
+def test_file_what_word_is_used(tmp_path):
+    path = _write(tmp_path, "x.jsonl", "\n")
+    with pytest.raises(ValueError, match="no cases found"):
+        block.load_jsonl_file(path, Row, what="cases")
+
+
+def test_file_repeats_are_caught(tmp_path):
+    path = _write(
+        tmp_path,
+        "x.jsonl",
+        '{"id": "zeta", "n": 1}\n{"id": "alpha", "n": 2}\n{"id": "zeta", "n": 3}\n'
+        '{"id": "alpha", "n": 4}\n{"id": "solo", "n": 5}\n',
+    )
+    with pytest.raises(ValueError) as err:
+        block.load_jsonl_file(path, Row)
+    msg = str(err.value)
+    assert "alpha" in msg and "zeta" in msg and "solo" not in msg
+    assert msg.index("alpha") < msg.index("zeta")
+
+
+def test_file_id_field_none_allows_repeats(tmp_path):
+    path = _write(tmp_path, "x.jsonl", '{"id": "a", "n": 1}\n{"id": "a", "n": 2}\n')
+    assert [r.n for r in block.load_jsonl_file(path, Row, id_field=None)] == [1, 2]
+
+
+def test_file_custom_id_field_is_checked(tmp_path):
+    path = _write(tmp_path, "x.jsonl", '{"id": "a", "n": 7}\n{"id": "b", "n": 7}\n')
+    with pytest.raises(ValueError, match="7"):
+        block.load_jsonl_file(path, Row, id_field="n")
+
+
+def test_file_unknown_id_field_raises_has_no_field(tmp_path):
+    path = _write(tmp_path, "x.jsonl", '{"id": "a", "n": 1}\n')
+    with pytest.raises(ValueError, match="has no field"):
+        block.load_jsonl_file(path, Row, id_field="slug")
+
+
+def test_file_unhashable_id_field_raises_value_error(tmp_path):
+    path = _write(
+        tmp_path,
+        "x.jsonl",
+        '{"id": "x", "tags": ["a"], "meta": {"k": 1}}\n'
+        '{"id": "y", "tags": ["b"], "meta": {"k": 2}}\n',
+    )
+    with pytest.raises(ValueError, match="hashable"):
+        block.load_jsonl_file(path, Tagged, id_field="tags")
+
+
+def test_file_missing_raises_file_not_found(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        block.load_jsonl_file(tmp_path / "nope.jsonl", Row)
+
+
+def test_file_that_is_a_folder_raises_file_not_found(tmp_path):
+    folder = tmp_path / "x.jsonl"
+    folder.mkdir()
+    with pytest.raises(FileNotFoundError):
+        block.load_jsonl_file(folder, Row)
+
+
+def test_file_and_dir_read_the_same_way(tmp_path):
+    """SPEC: load_jsonl_dir reads each file like load_jsonl_file, so they never drift."""
+    path = tmp_path / "x.jsonl"
+    path.write_bytes(
+        "﻿".encode() + b'{"id": "a", "n": 1}\r\n\r\n  \n{"id": "b", "n": 2}'
+    )
+    assert block.load_jsonl_file(path, Row) == block.load_jsonl_dir(tmp_path, Row)

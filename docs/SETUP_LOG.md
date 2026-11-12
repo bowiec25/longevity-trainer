@@ -32,6 +32,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M3.4 | Card writer (Claude Sonnet): drafts cards from a source; code and the checker keep only the good ones | Writing a question needs judgment; the gates make sure nothing unchecked reaches the bank |
 | M3.5–6 | First bank of 63 cards; `--pages` for long sources; `--add` to grow topics over time | A bank you never update goes stale (your steer); long reviews need one section at a time |
 | M4.1 | The quiz remembers: spaced repetition and saved progress, from quizkit's blocks | A daily quiz must bring back what you miss and leave what you know; quizkit already had it |
+| M4.2 | Marking eval: 23 answers you labelled; Claude agrees on 21, never says yes to a wrong one | An AI marker needs an exam too, or we're just hoping it's fair |
 
 ---
 
@@ -289,3 +290,15 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **The bug the reviewer caught:** dealing filled a 10-card quiz with cards not due yet, and a right answer moves a card up a box whether it was due or not, so a small topic would race to the top box in a week. Now only due and new cards are dealt; `--practise` reviews anything without saving.
 - **Your data is safe from tests:** a test had written an (empty) `data/progress.db`; now a guard in `tests/conftest.py` points every test at a temp file.
 - **Commands:** `uv run longevity quiz` (10 cards; `-n`, `--topic hallmarks`, `--practise`, `--no-save`), `uv run longevity stats`.
+
+## M4 Step 2: an exam for the marker (2026-11-12)
+
+> **In plain words:** before trusting a new teacher to mark your homework, you mark 23 answers yourself and see if they agree with you. They agreed on 21, and never passed an answer you'd fail.
+
+- **Your labels:** 23 borderline answers across names, facts, terms and explanations (synonyms, half answers, mice→people, wrong order). You checked them ("answers I think okay").
+- **Marked like the real quiz:** the answer list first (typos forgiven), Claude only when it says no. `/code-review` spotted that my first version skipped the answer list, so a near-typo of a right answer could have been passed in the quiz but never tested.
+- **Result, two runs with real Claude (Haiku):** 21/23 both times, no wrong "yes", PASSED. Both misses were answers you'd accept that Claude found too short: "inflammation that gets worse with age" (no "chronic, body-wide") and just "inflammation" (no fibrosis). Strict on the safe side, so no rule change yet. Under 1 cent a run.
+- **Reuse, not copies (block-reviewer):** the counting of right / wrong yes / wrong no was copied from quizkit's HSK eval; it's now one shared `score` in quizkit that both use. Reading one JSONL file moved into quizkit's loader (so a Windows BOM is fine). A card turns into a question in one place, `card.to_question()`, for the quiz, the eval and the coming web page. **To port back to HSK:** `score`, `ScoreItem`, `verdict_mark` and `load_jsonl_file`.
+- **Your 👎:** the sedentary-behaviour card ("a shit Q") is gone (62 cards) and is now example 12 in LEARNING_GOALS, so the writer learns from it.
+- **Command:** `uv run longevity check-marking-eval` (`--dry-run`, `--limit N`). Re-run when the marking rules or model change.
+

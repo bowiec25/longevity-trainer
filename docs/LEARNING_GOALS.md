@@ -65,6 +65,7 @@ A bad question: is trivia (user: 👎 #8), is vague or oversells (user: 👎 #9)
 | 10 | Which hallmark is the shortening of chromosome ends with each division? | Telomere attrition | name | 👎 tests a name, not how | 👍 names are good vocabulary |
 
 | 11 | Is rapamycin use growing, flat or falling, and why? (as of Oct 2026) | Flat: plateaued after the 2022–24 hype | Popularity | added by the user's steer | 👍 (kind requested) |
+| 12 | What is sedentary behaviour, according to WHO? | Any period of low-energy expenditure while awake, such as sitting, reclining or lying | term | 👍 (passed the card checker) | 👎 (2026-11-12; my reading of why: a definition of an everyday idea, not longevity science worth knowing) |
 
 The user's labels became rules 1 and 7 in section 2, and the labelled questions become the card writer's eval set (M3).
 

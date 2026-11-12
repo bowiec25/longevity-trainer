@@ -35,7 +35,8 @@
   - [x] 6. Grow the bank as we go (user, 2026-11-12: "come up with new cards as we go, not just a bank we never update"): `write-cards --add` appends new cards to a topic and skips questions already in the bank (and the writer is shown them, so it doesn't reword them); every card that passes the gates is saved, and a coverage line says which asks a topic still needs. M5 then runs it on a schedule
 - [ ] **M4 A quiz you can use every day** (issue #23)
   - [x] 1. Saved progress + spaced repetition: new block `study` wraps quizkit's `deck_builder`, `leitner`, `progress_store` and `progress`. `longevity quiz` deals due cards, then new ones (never cards not due yet: answering early would move them up a box early); "Nothing due, next card due …" otherwise; `--topic hallmarks`, `--practise` (review anything, nothing saved), `--no-save`; `longevity stats` per topic group. Your progress lives in `data/progress.db` (gitignored); tests can't touch it
-  - [ ] 2. Marking eval: borderline answers you label; Claude's marking must match (≥90%, no wrong "yes")
+  - [x] 2. Marking eval: 23 borderline answers you labelled (`tests/data/marking_eval.jsonl`), marked exactly as the quiz marks (answer list first, then Claude). Two real runs: **21/23 both times, no wrong "yes": PASSED** (bar ≥90%, no wrong "yes"). The 2 misses are answers you'd accept that Claude found too short (strict on the safe side). `uv run longevity check-marking-eval`. Your 👎 on the sedentary-behaviour card removed it (bank: 62) and became LEARNING_GOALS example 12. Reuse: quizkit gained a shared eval scorer and a one-file JSONL loader; a card becomes a question in one place (`card.to_question()`)
+  - [ ] 3. A web page to play on (Streamlit, like HSK's `hsk web`): the quiz, the receipt after each answer, and stats, on the same blocks (user, 2026-11-12: "I'm gonna wait for the Streamlit setup to play")
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
 

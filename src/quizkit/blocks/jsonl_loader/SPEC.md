@@ -16,6 +16,7 @@ It exists because every quiz keeps its content as "one JSON record per line, sev
 | Input | Type | Plain meaning |
 |---|---|---|
 | `folder` | `Path` | A folder of `*.jsonl` files. Only `*.jsonl` files directly in it are read, in name order; other files and subfolders are ignored |
+| `path` | `Path` | `load_jsonl_file` only: one `.jsonl` file |
 | `model` | a pydantic `BaseModel` class | What each line becomes, e.g. `LongevityCard` |
 | `id_field` | `str \| None` | The field that must be unique across all files (default `"id"`). `None` = no uniqueness check |
 | `what` | `str` | The plural word for the records in messages (default `"records"`; a quiz passes `"cards"`) |
@@ -27,6 +28,7 @@ Each file is read as UTF-8; a UTF-8 byte-order mark at the start (common from Wi
 from quizkit.blocks.jsonl_loader import load_jsonl_dir
 
 cards = load_jsonl_dir(Path("data/cards"), LongevityCard)  # unique "id"
+cases = load_jsonl_file(Path("tests/data/x.jsonl"), Case, id_field=None)  # one file
 rows = load_jsonl_dir(Path("data/x"), Row, id_field=None)  # no id check
 ```
 
@@ -34,6 +36,7 @@ rows = load_jsonl_dir(Path("data/x"), Row, id_field=None)  # no id check
 | Output | Type | Plain meaning |
 |---|---|---|
 | `load_jsonl_dir` | `list[model]` | Every record, in file-name order then line order |
+| `load_jsonl_file(path, model, id_field="id", what="records")` | `list[model]` | The same for **one** file (e.g. an eval set): same reading rules (BOM ignored, `\r\n` fine, blank lines skipped but counted, split on `\n` only) and the same errors, with "no <what> found in <file name>" when it has no records. `load_jsonl_dir` reads each file the same way, so the two never drift |
 
 Nothing is written.
 
@@ -53,12 +56,14 @@ Errors name the file by its bare name (`cards.jsonl`, not the full path). Loadin
 | No records at all (no `.jsonl` files, or only blank lines) | **Raises `ValueError`** containing "no <what> found" (default "no records found") |
 | `id_field` values that can't be compared for repeats (a list or dict) | **Raises `ValueError`** ("… must be hashable …"), never a bare `TypeError` |
 | The folder doesn't exist (or is a file) | **Raises `FileNotFoundError`** |
+| `load_jsonl_file`: the file doesn't exist (or is a folder) | **Raises `FileNotFoundError`** |
 
 ## How to test
 Automatic tests in `tests/blocks/test_jsonl_loader.py`, with a tiny model defined in the test (e.g. `id: str`, `n: int`) and files in `tmp_path`. No network.
 - **Loads:** two files in name order, lines in order; blank and spaces-only lines skipped; non-`.jsonl` files and subfolders ignored; a BOM at the start of a file is fine
 - **Line numbers** count blank lines
 - **Each failure mode** above, checking the message starts with the file name (and line where stated)
+- **`load_jsonl_file`:** loads one file in line order; BOM and `\r\n` fine; bad line → `ValueError` starting `"<file name> line <n>: "`; not UTF-8 → `ValueError` starting with the file name; only blank lines → "no <what> found"; repeats caught unless `id_field=None`; a missing file → `FileNotFoundError`
 - **`id_field=None`** allows repeats; a custom `id_field` (e.g. `"n"`) is checked instead of `"id"`
 - **Contract test:** folder parts exist and `BLOCK_SPEC` matches this SPEC
 

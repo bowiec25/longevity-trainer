@@ -13,9 +13,29 @@ BLOCK_SPEC = BlockSpec(
     name="jsonl_loader",
     kind="script",
     goal="Load every record from a folder of .jsonl files into a pydantic model, failing loudly (file and line) on any bad record or repeated id.",
-    inputs=["folder", "model", "id_field", "what"],
-    outputs=["load_jsonl_dir"],
+    inputs=["folder", "path", "model", "id_field", "what"],
+    outputs=["load_jsonl_dir", "load_jsonl_file"],
 )
+
+
+def _read_file[M: BaseModel](path: Path, model: type[M]) -> list[M]:
+    """One file's records, in line order; a bad line names the file and line."""
+    try:
+        text = path.read_text(encoding="utf-8-sig")  # -sig: a BOM is ignored
+    except UnicodeDecodeError as err:
+        raise ValueError(f"{path.name}: not valid UTF-8 ({err})") from err
+    # Split on "\n" only: splitlines() also breaks on U+2028 etc., which JSON
+    # allows inside strings, and would shift every later line number.
+    records: list[M] = []
+    for number, line in enumerate(text.split("\n"), start=1):
+        line = line.removesuffix("\r")
+        if not line.strip():
+            continue
+        try:
+            records.append(model.model_validate_json(line))
+        except ValidationError as err:
+            raise ValueError(f"{path.name} line {number}: {err}") from err
+    return records
 
 
 def load_jsonl_dir[M: BaseModel](
@@ -27,22 +47,30 @@ def load_jsonl_dir[M: BaseModel](
         raise FileNotFoundError(folder)
     records: list[M] = []
     for path in sorted(p for p in folder.glob("*.jsonl") if p.is_file()):
-        try:
-            text = path.read_text(encoding="utf-8-sig")  # -sig: a BOM is ignored
-        except UnicodeDecodeError as err:
-            raise ValueError(f"{path.name}: not valid UTF-8 ({err})") from err
-        # Split on "\n" only: splitlines() also breaks on U+2028 etc., which JSON
-        # allows inside strings, and would shift every later line number.
-        for number, line in enumerate(text.split("\n"), start=1):
-            line = line.removesuffix("\r")
-            if not line.strip():
-                continue
-            try:
-                records.append(model.model_validate_json(line))
-            except ValidationError as err:
-                raise ValueError(f"{path.name} line {number}: {err}") from err
+        records.extend(_read_file(path, model))
     if not records:
         raise ValueError(f"no {what} found in {folder}")
+    _check_repeats(records, model, id_field)
+    return records
+
+
+def load_jsonl_file[M: BaseModel](
+    path: Path, model: type[M], id_field: str | None = "id", what: str = "records"
+) -> list[M]:
+    """Every record in one .jsonl file (line order) as `model`, same rules."""
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    records = _read_file(path, model)
+    if not records:
+        raise ValueError(f"no {what} found in {path.name}")
+    _check_repeats(records, model, id_field)
+    return records
+
+
+def _check_repeats(
+    records: list[BaseModel], model: type[BaseModel], id_field: str | None
+) -> None:
     if id_field is not None:
         if id_field not in type(records[0]).model_fields:
             raise ValueError(f"{model.__name__} has no field {id_field!r}")
@@ -56,4 +84,3 @@ def load_jsonl_dir[M: BaseModel](
                 raise ValueError(f"{id_field} values must be hashable ({err})") from err
         if repeated:
             raise ValueError(f"repeated {id_field} values: {sorted(repeated, key=str)}")
-    return records

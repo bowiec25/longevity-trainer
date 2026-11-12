@@ -13,14 +13,14 @@ Run by hand, not in CI; re-run whenever the prompt or the model changes.
 import argparse
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from quizkit.blocks.judge import GIST_MAX_CHARS, GIST_RUBRIC, ClaudeJudge, Judge
-from quizkit.models import Question
+from quizkit.models import Question, Verdict
 
 PASS_RATE = 0.9
 RUBRICS = {"gist": GIST_RUBRIC}  # a case's rubric name -> its text ("words" = default)
@@ -83,6 +83,64 @@ def load_cases(path: Path) -> list[EvalCase]:
     return [EvalCase.model_validate_json(line) for line in lines if line.strip()]
 
 
+class ScoreItem(NamedTuple):
+    """One case to score: `mark()` returns (said, reason); said None = not checked."""
+
+    card_id: str
+    typed: str
+    expected: bool
+    mark: Callable[[], tuple[bool | None, str]]
+
+
+def score(
+    items: Iterable[ScoreItem],
+    show: Callable[[str], None] = print,
+    clock: Callable[[], float] = time.perf_counter,
+) -> EvalReport:
+    """Mark every item once, in order, and count how the marking did.
+
+    Shared by every quiz's eval, so the counting, markers and bar never drift."""
+    total = right = wrong_yes = wrong_no = not_checked = 0
+    spent = 0.0
+    for item in items:
+        total += 1
+        start = clock()
+        said, reason = item.mark()
+        took = clock() - start
+        spent += took
+        if said is None:
+            not_checked += 1
+            mark = "?"
+        elif said == item.expected:
+            right += 1
+            mark = "✓"
+        elif said:
+            wrong_yes += 1
+            mark = "✗ WRONG YES"
+        else:
+            wrong_no += 1
+            mark = "✗ wrong no"
+        show(
+            f"{mark} {item.card_id} {item.typed!r}: {'yes' if said else 'no'} "
+            f"(want {'yes' if item.expected else 'no'}, {took:.1f} s) {reason}"
+        )
+    return EvalReport(
+        total=total,
+        right=right,
+        wrong_yes=wrong_yes,
+        wrong_no=wrong_no,
+        not_checked=not_checked,
+        seconds=spent / total if total else 0.0,
+    )
+
+
+def verdict_mark(verdict: Verdict) -> tuple[bool | None, str]:
+    """A judge's verdict as (said, reason) for `score`: not_checked -> None."""
+    if verdict.source == "not_checked":
+        return None, verdict.reason
+    return verdict.correct, verdict.reason
+
+
 def run_eval(
     cases: list[EvalCase],
     make_judge: Callable[..., Judge],
@@ -95,47 +153,23 @@ def run_eval(
     `make_judge(subject, rubric=GIST_RUBRIC)` (the rubric's text) for gist cases.
     """
     judges: dict[tuple[str, str], Judge] = {}
-    right = wrong_yes = wrong_no = not_checked = 0
-    spent = 0.0
-    for case in cases:
+
+    def judge_for(case: EvalCase) -> Judge:
         which = (case.subject, case.rubric)
         if which not in judges:
             if case.rubric == "words":
                 judges[which] = make_judge(case.subject)
             else:
                 judges[which] = make_judge(case.subject, rubric=RUBRICS[case.rubric])
-        judge = judges[which]
-        start = clock()
-        verdict = judge(case.question(), case.typed)
-        took = clock() - start
-        spent += took
-        if verdict.source == "not_checked":
-            not_checked += 1
-            mark = "?"
-        elif verdict.correct == case.expected:
-            right += 1
-            mark = "✓"
-        elif verdict.correct:
-            wrong_yes += 1
-            mark = "✗ WRONG YES"
-        else:
-            wrong_no += 1
-            mark = "✗ wrong no"
-        said = "yes" if verdict.correct else "no"
-        want = "yes" if case.expected else "no"
-        show(
-            f"{mark} {case.card_id} {case.typed!r}: {said} (want {want}, "
-            f"{took:.1f} s) {verdict.reason}"
-        )
-    total = len(cases)
-    return EvalReport(
-        total=total,
-        right=right,
-        wrong_yes=wrong_yes,
-        wrong_no=wrong_no,
-        not_checked=not_checked,
-        seconds=spent / total if total else 0.0,
-    )
+        return judges[which]
+
+    def item(case: EvalCase) -> ScoreItem:
+        def mark() -> tuple[bool | None, str]:
+            return verdict_mark(judge_for(case)(case.question(), case.typed))
+
+        return ScoreItem(case.card_id, case.typed, case.expected, mark)
+
+    return score((item(case) for case in cases), show=show, clock=clock)
 
 
 def main(argv: list[str] | None = None) -> int:
