@@ -28,7 +28,7 @@
   - ⏸ Postponed (see FUTURE.md): `source_vetter`, the fan-out source finder, the coverage check (`source_text` moved into M3 Step 1)
 - [ ] **M3 Questions with receipts** (issue #17): an agent writes cards, a checker agent applies the LEARNING_GOALS rules, both measured on labelled eval sets. `claude -p` (subscription), not the Agent SDK + API key: one structured call per card needs no tools
   - [x] 1. `source_text` block (quizkit): plain text from PDF, HTML and journal XML; `receipts` now checks quotes in any format (source records gain `format`). Leaves out hidden page parts, reference lists, author notes and formula code
-  - [ ] 2. Card eval set before any agent: ~25 labelled cards (your 11 + planted bad ones per rule); bar: every bad card caught, ≤1 good flagged
+  - [x] 2. Card eval set before any agent: 29 labelled cards in `tests/data/card_eval.jsonl` (13 good, 16 bad; your labels + planted bad ones per rule; every quote checked). An independent review fixed 11 unfair labels. Your steer became rule 4: for a trial, know what it meant, not its sample size. Bar: every bad card caught, ≤1 good flagged
   - [ ] 3. `card_checker` agent block, scored on the eval set (twice; Haiku vs Sonnet)
   - [ ] 4. `card_writer` agent block + script gate + checker; writer eval on 3 topics + your spot-check
   - [ ] 5. First bank of ~50 cards

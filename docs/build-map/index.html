@@ -142,7 +142,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>15</b><span>quiz cards (hallmarks), marked by Claude</span></div>
-    <div class="tile"><b>899</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>904</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>5</b><span>decision records (ADRs)</span></div>
@@ -262,7 +262,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 899 tests guard</h2>
+    <h2>4. What the 904 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
@@ -280,7 +280,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">899</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">904</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -320,6 +320,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M3 Step 2: the exam before the student</span><span>29 labelled cards (13 good, 16 bad) for the card checker, with the bar set first: catch every bad card, flag at most one good one. Every quote is checked; an independent review fixed 11 unfair labels. Your steer became a rule: know what a trial meant, not its sample size. <a href="snapshots/m3-step2.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M3 Step 1: reading any source</span><span>New quizkit block <code>source_text</code>: plain text from PDFs, web pages and journal XML, so quotes can be checked in any format and the card writer can read them. Leaves out reference lists (PEARL hides one in the body), hidden page parts and author notes. <a href="snapshots/m3-step1.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M2 Step 4 (changed): Claude marks your answers</span><span>You said the receipt work was taking all the time, so the source checker is postponed. New block <code>marking</code>: if your answer isn't on the list, Claude judges it (word-level for names, main idea for explanations; rejects missing parts, overselling, mice→people). Saved locally, never asked twice; switches off if offline. <a href="snapshots/m2-step4-marking.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M2 Step 3: real sources first</span><span>Pinned a WHO page, an Aging Cell review and the PEARL paper by hand. Found: many official sites block programs (skipped), three formats (PDF, HTML, journal XML), Europe PMC as the road to open articles. Step 4 split in two because of it. <a href="snapshots/m2-step3.html">snapshot</a></span></li>
