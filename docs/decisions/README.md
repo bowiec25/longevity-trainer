@@ -13,6 +13,7 @@ One file per big decision, numbered in order. Never deleted or rewritten: if a d
 | [0004](0004-every-card-carries-a-receipt.md) | Every card carries a receipt: a pinned trusted source + a quote a script finds in it | Accepted |
 | [0005](0005-testable-and-kinds-of-card.md) | What counts as testable, and the kinds of card | Accepted |
 | [0006](0006-the-build-loop-enforced.md) | The build loop (SPEC → test-writer → build → reviewers → PR), enforced by CI | Accepted |
+| [0007](0007-trusted-sources-and-licences.md) | Trusted sources: guidelines (A), major-journal reviews (B), a study only for itself (C); commit records + short quotes, never documents | Accepted |
 
 ## Template
 ```markdown

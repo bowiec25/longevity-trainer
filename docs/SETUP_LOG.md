@@ -23,6 +23,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M1.7 | `longevity quiz`: play the 15 cards, see the receipt after each | The first thing you can actually use |
 | Loop | The build loop restored and enforced: SPEC → independent test-writer → build → reviewers → PR | Steps 6–7 skipped it; now CI fails if anyone does |
 | M2.1 | Topic map: every primer section → topics → card kinds → quiz now / later / never | Decides what M2 needs sources for, and what M3 writes cards on |
+| M2.2 | ADR 0007: what counts as a trusted source, and what we may commit | The agents in Step 5 get a clear brief; a script can check it |
 
 ---
 
@@ -173,3 +174,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Groups:** the 59 are split into 9 groups; in Step 5 one agent per group looks for trusted sources.
 - **Public repo:** only topic names and primer section numbers are committed, never the primer's text.
 - **No code in this step**, so the PR's reviews are "n/a" (the CI check accepts n/a with a reason).
+
+## M2 Step 2: trusted sources and licences (2026-11-12)
+
+> **In plain words:** a written rule for which sources a card may quote, so the agents that look for sources (Step 5) and the script that checks them (Step 4) agree.
+
+- **Three tiers:** A official guidelines (NIH, NHS, WHO, Cochrane…), B review articles in major journals (Cell, Lancet…), C a study's own paper, but only for claims about that study.
+- **Never:** news, blogs, company or clinic sites, preprints, Wikipedia, AI answers, or the primer.
+- **Mice ≠ people:** a mouse study can't back a human claim; when tiers disagree, the higher one wins and the card says so.
+- **Licences, one rule:** commit the source's record and short quotes, never the document (it downloads locally, checked by its fingerprint).

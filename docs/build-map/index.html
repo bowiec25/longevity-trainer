@@ -305,7 +305,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <div class="doc"><b>docs/LEARNING_GOALS.md</b><span>what you want to learn + the question standard (the card writer must follow it)</span></div>
     <div class="doc"><b>data/cards/ + data/sources/</b><span>15 hallmark cards with receipts; the pinned source (URL, size, SHA-256)</span></div>
     <div class="doc"><b>docs/FUTURE.md</b><span>ideas for later</span></div>
-    <div class="doc"><b>docs/decisions/</b><span>6 ADRs: scope, script vs agent, quizkit copied, receipts, kinds of card, the build loop</span></div>
+    <div class="doc"><b>docs/decisions/</b><span>7 ADRs: scope, script vs agent, quizkit copied, receipts, kinds of card, the build loop, trusted sources</span></div>
     <div class="doc"><b>CLAUDE.md</b><span>Claude's briefing note</span></div>
     <div class="doc"><b>docs/build-map/</b><span>this page + a frozen snapshot per step</span></div>
   </div>
@@ -317,6 +317,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M2 Step 2: trusted sources</span><span>ADR 0007: A guidelines · B major-journal reviews · C a study only for claims about itself. Never news, company sites, preprints or the primer. Commit records + short quotes, never documents. <a href="snapshots/m2-step2.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M2 Step 1: the topic map</span><span>73 topics from the primer's sections, each with its card kinds: 59 quiz now, 9 wait for M5 (dated), 5 read-don't-quiz; 9 groups, one fan-out agent each in Step 5. <a href="snapshots/m2-step1.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">The build loop, enforced</span><span>You caught that steps 6–7 skipped HSK's loop. Now CI fails without it: SPEC → independent <b>test-writer</b> → build → <b>block-reviewer</b> + <code>/code-review</code>. Redone through it: quizkit blocks <code>receipts</code> + <code>jsonl_loader</code>, longevity block <code>card_bank</code>. The agents found 5 bugs my own tests missed. <a href="snapshots/loop-enforced.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M1 Step 7: play it</span><span><code>uv run longevity quiz</code>: the 15 cards in random order, the receipt after each answer. Names marked by the grader; explain answers by you (Claude judge in M4). 571 tests pass. <a href="snapshots/m1-step7.html">snapshot</a></span></li>
