@@ -142,10 +142,10 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>15</b><span>quiz cards (hallmarks), marked by Claude</span></div>
-    <div class="tile"><b>984</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>1068</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
-    <div class="tile"><b>5</b><span>decision records (ADRs)</span></div>
+    <div class="tile"><b>8</b><span>decision records (ADRs)</span></div>
     <div class="tile"><b>1 / 7</b><span>milestones done: M0 ✅</span></div>
   </div>
   <div class="milestones" aria-label="Milestones">
@@ -262,7 +262,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 984 tests guard</h2>
+    <h2>4. What the 1068 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
@@ -270,6 +270,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
       <tbody>
         <tr><td class="mono">test_cli.py</td><td class="n">11</td><td class="bar"><span style="width:2%"></span></td><td>the quiz: right answers score, typos forgiven, Claude's mark shown (fake Claude), own mark y/n when Claude can't check, q quits and keeps the score, receipt shown</td></tr>
         <tr><td class="mono">blocks/test_source_text.py</td><td class="n">65</td><td class="bar"><span style="width:12%"></span></td><td>quizkit block, by the test-writer: text from web pages and journal XML; hidden parts, reference lists and author notes left out; all 4 real sources read</td></tr>
+        <tr><td class="mono">blocks/test_card_writer.py</td><td class="n">84</td><td class="bar"><span style="width:16%"></span></td><td>longevity block, tests written <b>before</b> the code: the writer's prompt carries your whole standard; each gate (shape, quote in the source, repeats, checker) drops the right drafts; ids never clash with the bank; the bar; the write-cards command (dry run, --replace, a broken bank stops it, cost line)</td></tr>
         <tr><td class="mono">blocks/test_card_checker.py</td><td class="n">74</td><td class="bar"><span style="width:14%"></span></td><td>longevity block, by the test-writer: the checker's prompt carries your rules word for word; bad replies rejected; exam scoring and the bar; the exam command (dry run, limit, held-out)</td></tr>
         <tr><td class="mono">blocks/test_marking.py</td><td class="n">51</td><td class="bar"><span style="width:10%"></span></td><td>longevity block, by the test-writer: names vs explanations get the right marking rules, length limits, cache, "asking Claude" only on real calls, offline switch-off after 2 failures</td></tr>
         <tr><td class="mono">blocks/test_receipts.py</td><td class="n">114</td><td class="bar"><span style="width:22%"></span></td><td>quizkit block, tests by the test-writer: quote keys (IL-1α ≠ IL-1β, 1.5 ≠ 15), pinned sources, safe paths, every bad source → one line, never a crash</td></tr>
@@ -321,6 +322,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M3 Step 4: the student who writes flashcards</span><span>New block <code>card_writer</code> (Claude Sonnet) drafts cards from one source; code checks each quote is really there and drops repeats, then the strict teacher checks the rules. It never invented a quote; telling it "the quote alone must back the whole card" lifted kept cards from about a third to about five in eight. You spot-checked 10: all 👍. <a href="snapshots/m3-step4.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M3 Step 3: the strict teacher</span><span>New block <code>card_checker</code> (Claude Haiku) reads each card against your rules. 14 real runs, including 12 fresh cards it was never tuned on: no bad card got through; about 30% of good ones rejected (fine for now: the writer just redrafts). It also caught 4 real flaws in our own exam. <a href="snapshots/m3-step3.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M3 Step 2: the exam before the student</span><span>29 labelled cards (13 good, 16 bad) for the card checker, with the bar set first: catch every bad card, flag at most one good one. Every quote is checked; an independent review fixed 11 unfair labels. Your steer became a rule: know what a trial meant, not its sample size. <a href="snapshots/m3-step2.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M3 Step 1: reading any source</span><span>New quizkit block <code>source_text</code>: plain text from PDFs, web pages and journal XML, so quotes can be checked in any format and the card writer can read them. Leaves out reference lists (PEARL hides one in the body), hidden page parts and author notes. <a href="snapshots/m3-step1.html">snapshot</a></span></li>

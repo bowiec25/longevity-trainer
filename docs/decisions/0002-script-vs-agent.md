@@ -1,6 +1,6 @@
 # 0002: Script vs agent
 
-- **Status:** Accepted (2026-11-12), same rule as mandarin-hsk-trainer's ADR 0002
+- **Status:** Accepted (2026-11-12), same rule as mandarin-hsk-trainer's ADR 0002. Guardrail 5 superseded by [0008](0008-card-writer-uses-claude-p.md) for the card writer
 - **In plain words:** if code can **check** the answer is right, write a **script**. If the job needs **judgment** (writing a good question, marking a free-text answer), use an **AI agent**, and a script always checks what the agent made.
 
 ## Context

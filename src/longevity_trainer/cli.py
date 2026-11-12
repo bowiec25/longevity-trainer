@@ -4,6 +4,8 @@
 `check-receipts` finds every card's quote in its pinned source (downloads it if needed).
 `check-cards-exam` scores the card checker on the labelled exam (real Claude;
 --holdout for the never-tuned-on cards, --limit, --dry-run).
+`write-cards` drafts cards on a topic from a pinned source, gates them (quote found,
+no repeats, card checker) and saves the survivors to data/cards/<topic>.jsonl.
 
 Marking:
 - name / fact cards: the quizkit grader (small typos forgiven).
@@ -15,12 +17,21 @@ Progress isn't saved yet.
 """
 
 import argparse
+import os
 import random
+import shutil
 import sys
+import tempfile
 import textwrap
 from collections.abc import Callable
+from pathlib import Path
 
-from longevity_trainer.blocks.card_bank import ROOT, LongevityCard, load_cards
+from longevity_trainer.blocks.card_bank import (
+    CARDS_DIR,
+    ROOT,
+    LongevityCard,
+    load_cards,
+)
 from longevity_trainer.blocks.card_checker import (
     EXAM_FILE,
     HOLDOUT_FILE,
@@ -28,10 +39,12 @@ from longevity_trainer.blocks.card_checker import (
     load_exam,
     run_exam,
 )
+from longevity_trainer.blocks.card_writer import slug, write_cards
 from longevity_trainer.blocks.marking import make_judge
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.receipts import check_all
-from quizkit.claude import ask_claude
+from quizkit.claude import ClaudeError, ask_claude
+from quizkit.download import DownloadError
 from quizkit.models import Judge, Question, Verdict
 from quizkit.modes import Mode, build_question
 
@@ -141,6 +154,109 @@ def check_all_receipts(write: Callable[[str], None] = print) -> int:
     return 1 if problems else 0
 
 
+def _counting_ask() -> tuple[Callable[..., object], list]:
+    """ask_claude that keeps every reply, for the calls / tokens / cost line."""
+    replies: list = []
+
+    def ask(prompt: str, **kwargs: object) -> object:
+        reply = ask_claude(prompt, **kwargs)
+        replies.append(reply)
+        return reply
+
+    return ask, replies
+
+
+def _cost_line(replies: list) -> str:
+    cost = sum(r.cost_usd or 0 for r in replies)
+    tokens = sum(r.input_tokens + r.output_tokens for r in replies)
+    return f"{len(replies)} Claude calls, {tokens} tokens, ${cost:.4f}"
+
+
+def _taken_ids(out: Path) -> set[str]:
+    """Ids in every card file except `out` (the file being written, whose old ids
+    are free again). No cards yet = empty; a bad line or repeated id raises
+    ValueError, so new ids can't clash with a bank we couldn't read."""
+    others = sorted(p for p in CARDS_DIR.glob("*.jsonl") if p.is_file() and p != out)
+    if not others:
+        return set()
+    with tempfile.TemporaryDirectory() as tmp:  # the shared loader reads a folder
+        for path in others:
+            shutil.copy(path, tmp)
+        try:
+            return {c.id for c in load_cards(Path(tmp))}
+        except ValueError as err:
+            if str(err).startswith("no cards found"):  # only blank files
+                return set()
+            raise
+
+
+def write_cards_command(
+    topic: str,
+    source: str,
+    n: int,
+    model: str,
+    dry_run: bool,
+    replace: bool,
+    write: Callable[[str], None] = print,
+) -> int:
+    """Draft, gate and (unless --dry-run) save cards; exit code 0 = the bar is met."""
+    out = CARDS_DIR / f"{slug(topic)}.jsonl"
+    if out.exists() and not replace and not dry_run:
+        write(f"{out.name} already exists: use --replace to overwrite it")
+        return 1
+    try:
+        taken = _taken_ids(out)
+    except ValueError as err:  # a bad line or repeated id: ids could clash
+        write(f"the card bank has a problem, fix it first: {str(err).splitlines()[0]}")
+        return 1
+    ask, replies = _counting_ask()
+    try:
+        result = write_cards(
+            topic,
+            source,
+            n=n,
+            model=model,
+            taken_ids=taken,
+            ask=ask,
+            check=lambda card: check_card(card, ask=ask),
+        )
+    except (OSError, ValueError, DownloadError, ClaudeError) as err:
+        write(str(err).splitlines()[0])
+        return 1
+    for card in result.kept:
+        write(_wrap(f"✓ {card.id}: {card.question} → {card.answers[0]}"))
+    for drop in result.drops:
+        write(_wrap(f"✗ {drop.gate}: {drop.question} ({drop.reason})"))
+    r = result.report
+    write(
+        f"\n{r.model} (prompt v{r.prompt_version}): kept {r.kept}/{r.drafted}; "
+        f"dropped shape {r.dropped_shape}, quote {r.dropped_quote}, "
+        f"repeat {r.dropped_repeat}, checker {r.dropped_checker}; "
+        f"asks kept {r.asks_kept} -> {'PASSED' if r.passed else 'NOT PASSED'}"
+    )
+    write(_cost_line(replies))
+    if not r.passed or not result.kept:
+        write("nothing written")
+        return 1
+    if dry_run:
+        write("dry run: nothing written")
+        return 0
+    try:  # write a temp file, then swap it in: a failed write keeps the old cards
+        out.parent.mkdir(parents=True, exist_ok=True)
+        tmp = out.with_name(out.name + ".tmp")
+        tmp.write_text(
+            "".join(card.model_dump_json() + "\n" for card in result.kept),
+            "utf-8",
+            newline="\n",
+        )
+        os.replace(tmp, out)
+    except OSError as err:
+        write(f"couldn't write {out.name}: {err}")
+        return 1
+    write(f"wrote {len(result.kept)} cards to {out}")
+    return 0
+
+
 def cards_exam(model: str, holdout: bool, limit: int | None, dry_run: bool) -> int:
     """Score the card checker on the exam; exit code 0 = the bar is met."""
     try:
@@ -155,19 +271,11 @@ def cards_exam(model: str, holdout: bool, limit: int | None, dry_run: bool) -> i
             print(f"{case.id}: expected {case.expected} {case.rules or ''}".rstrip())
         print(f"{len(cases)} cards; no Claude calls (dry run)")
         return 0
-    replies = []
-
-    def ask(prompt: str, **kwargs: object) -> object:
-        reply = ask_claude(prompt, **kwargs)
-        replies.append(reply)
-        return reply
-
+    ask, replies = _counting_ask()
     report = run_exam(
         cases, check=lambda card: check_card(card, ask=ask, model=model), model=model
     )
-    cost = sum(r.cost_usd or 0 for r in replies)
-    tokens = sum(r.input_tokens + r.output_tokens for r in replies)
-    print(f"{len(replies)} Claude calls, {tokens} tokens, ${cost:.4f}")
+    print(_cost_line(replies))
     return 0 if report.passed else 1
 
 
@@ -193,6 +301,19 @@ def main(argv: list[str] | None = None) -> int:
     exam.add_argument(
         "--dry-run", action="store_true", help="list the cards; don't call Claude"
     )
+    writer = sub.add_parser(
+        "write-cards", help="draft cards on a topic from a pinned source (real Claude)"
+    )
+    writer.add_argument("--topic", required=True, help='e.g. "rapamycin"')
+    writer.add_argument("--source", required=True, help="source id in data/sources")
+    writer.add_argument("--n", type=int, default=8, help="cards to draft (1-20)")
+    writer.add_argument("--model", default="sonnet", help="the writer's Claude model")
+    writer.add_argument(
+        "--dry-run", action="store_true", help="draft and gate, but write nothing"
+    )
+    writer.add_argument(
+        "--replace", action="store_true", help="overwrite the topic's card file"
+    )
     args = parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):  # Windows consoles: show ✓ and quotes
@@ -201,6 +322,10 @@ def main(argv: list[str] | None = None) -> int:
         return check_all_receipts()
     if args.command == "check-cards-exam":
         return cards_exam(args.model, args.holdout, args.limit, args.dry_run)
+    if args.command == "write-cards":
+        return write_cards_command(
+            args.topic, args.source, args.n, args.model, args.dry_run, args.replace
+        )
     cards = load_cards()
     random.Random(args.seed).shuffle(cards)
     if args.n is not None:
