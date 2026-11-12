@@ -16,6 +16,9 @@ wheels/
 # (M2 may un-ignore pinned source PDFs under data/raw/ with a "!" line, if their licence allows.)
 *.pdf
 
+# Downloaded sources (any format: pdf, html, xml): pinned by SHA-256, never committed (ADR 0007)
+data/raw/
+
 # Local data (personal progress, not shared; used from M4)
 data/progress.db
 data/judge_cache.jsonl

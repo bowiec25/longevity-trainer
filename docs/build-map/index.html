@@ -301,6 +301,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
   <div class="docs">
     <div class="doc"><b>docs/PLAN.md</b><span>plan + "Where we are" checklist</span></div>
     <div class="doc"><b>docs/SETUP_LOG.md</b><span>why each step, in plain words</span></div>
+    <div class="doc"><b>docs/SOURCE_FORMATS.md</b><span>what real sources look like: blocked sites, PDF vs HTML vs journal XML, Europe PMC</span></div>
     <div class="doc"><b>docs/TOPIC_MAP.md</b><span>73 topics from the primer: quiz now (59), after M5 (9), read only (5); data in <code>data/topics.jsonl</code></span></div>
     <div class="doc"><b>docs/LEARNING_GOALS.md</b><span>what you want to learn + the question standard (the card writer must follow it)</span></div>
     <div class="doc"><b>data/cards/ + data/sources/</b><span>15 hallmark cards with receipts; the pinned source (URL, size, SHA-256)</span></div>
@@ -317,6 +318,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M2 Step 3: real sources first</span><span>Pinned a WHO page, an Aging Cell review and the PEARL paper by hand. Found: many official sites block programs (skipped), three formats (PDF, HTML, journal XML), Europe PMC as the road to open articles. Step 4 split in two because of it. <a href="snapshots/m2-step3.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M2 Step 2: trusted sources</span><span>ADR 0007: A guidelines · B major-journal reviews · C a study only for claims about itself. Never news, company sites, preprints or the primer. Commit records + short quotes, never documents. <a href="snapshots/m2-step2.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M2 Step 1: the topic map</span><span>73 topics from the primer's sections, each with its card kinds: 59 quiz now, 9 wait for M5 (dated), 5 read-don't-quiz; 9 groups, one fan-out agent each in Step 5. <a href="snapshots/m2-step1.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">The build loop, enforced</span><span>You caught that steps 6–7 skipped HSK's loop. Now CI fails without it: SPEC → independent <b>test-writer</b> → build → <b>block-reviewer</b> + <code>/code-review</code>. Redone through it: quizkit blocks <code>receipts</code> + <code>jsonl_loader</code>, longevity block <code>card_bank</code>. The agents found 5 bugs my own tests missed. <a href="snapshots/loop-enforced.html">snapshot</a></span></li>

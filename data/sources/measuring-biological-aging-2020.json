@@ -1,0 +1,22 @@
+{
+  "id": "measuring-biological-aging-2020",
+  "title": "Measuring biological aging in humans: A quest",
+  "authors": "Ferrucci L, Gonzalez-Freire M, Fabbri E, et al.",
+  "publisher": "Wiley (Aging Cell)",
+  "journal": "Aging Cell 19(2):e13080",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2020,
+  "doi": "10.1111/acel.13080",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6996955/fullTextXML",
+  "retrieved": "2026-11-12",
+  "size": 414594,
+  "sha256": "2fa7a1c36f149f23bfb217ad959c3ab001ab22e6bf3604c811ba40632253f364",
+  "local_path": "data/raw/measuring-biological-aging-2020.xml",
+  "topics": [
+    "epigenetic-clocks",
+    "clock-reliability",
+    "biomarkers-surrogates"
+  ],
+  "licence_note": "CC BY 4.0 (stated in the article's own licence field). Not committed anyway: one rule for all sources (ADR 0007)."
+}

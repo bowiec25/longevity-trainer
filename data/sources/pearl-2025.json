@@ -1,0 +1,21 @@
+{
+  "id": "pearl-2025",
+  "title": "Influence of rapamycin on safety and healthspan metrics after one year: PEARL trial results",
+  "authors": "Moel M, Harinath G, Lee V, et al.",
+  "publisher": "Impact Journals (Aging)",
+  "journal": "Aging (Albany NY) 2025",
+  "tier": "C",
+  "format": "jats-xml",
+  "year": 2025,
+  "doi": "10.18632/aging.206235",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12074816/fullTextXML",
+  "retrieved": "2026-11-12",
+  "size": 247624,
+  "sha256": "432ee5707d2ceca63e65ae119397b8a7dc3739c592930fca2c877e71288b444b",
+  "local_path": "data/raw/pearl-2025.xml",
+  "topics": [
+    "pearl",
+    "rapamycin"
+  ],
+  "licence_note": "CC BY 4.0 (article licence field). Tier C: only for claims about PEARL itself. The earlier medRxiv preprint (10.1101/2024.08.21.24312372) is NOT a source."
+}
