@@ -14,8 +14,12 @@
   - [x] 3. Copied the Claude safety rails from HSK, unchanged (the user ran the copy: Claude Code blocks Claude editing its own `.claude/` settings): `.env` block hook, auto-format hook, allow/deny permissions, 19 hook tests. ⏳ Live test (Claude tries `.env`, is blocked) in the next session started inside this folder
   - [x] 4. ADRs 0001–0005 in `docs/decisions/`: scope, script vs agent, quizkit copied, receipts, testable + kinds of card
   - [x] 5. Learning goals + the question standard (`docs/LEARNING_GOALS.md`; user's steer: define what a good question is before making any): five questions per topic (what, how, how sure, catch, popularity); 11 examples labelled by the user
-  - [x] 6. 15 hand-made hallmark cards with receipts (`data/cards/hallmarks.jsonl`), pinned source (`data/sources/`), quote check `python -m longevity_trainer.receipts` (15/15 found)
+  - [x] 6. 15 hand-made hallmark cards with receipts (`data/cards/hallmarks.jsonl`), pinned source (`data/sources/`), quote check `uv run longevity check-receipts` (15/15 found)
   - [x] 7. Play them: `uv run longevity quiz` (grader for names; you mark explain answers yourself; receipt after each answer). Your play-test closes M1
+- [x] **The build loop, restored and enforced** (ADR 0006; caught by the user after M1: steps 6–7 skipped HSK's loop)
+  - [x] Copied HSK's `test-writer` + `block-reviewer` subagents and the Claude GitHub review workflow (⏳ needs the `CLAUDE_CODE_OAUTH_TOKEN` secret from the user)
+  - [x] CI guards: `tests/test_process.py` (every module a block with a SPEC + its own tests) and `check_reviews.py` (PR must tick test-writer, block-reviewer, `/code-review`)
+  - [x] Steps 6–7 redone through the loop: quizkit blocks `receipts` (quote check) and `jsonl_loader` (folder of records), longevity block `card_bank`; `longevity check-receipts` replaces `python -m longevity_trainer.receipts`
 - [ ] **M2 Sources in**
 - [ ] **M3 Questions with receipts**
 - [ ] **M4 First playable quiz**

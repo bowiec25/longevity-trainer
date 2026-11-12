@@ -21,6 +21,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M1.5 | Defined what you want to learn and what a good question is | Cards (and the agent that writes them later) follow your standard, not my guesses |
 | M1.6 | 15 hallmark cards, each with a quote a script finds in the pinned review | Proves the receipt idea on real content before any agent writes cards |
 | M1.7 | `longevity quiz`: play the 15 cards, see the receipt after each | The first thing you can actually use |
+| Loop | The build loop restored and enforced: SPEC → independent test-writer → build → reviewers → PR | Steps 6–7 skipped it; now CI fails if anyone does |
 
 ---
 
@@ -142,7 +143,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **The source is pinned, not committed:** `data/sources/hallmarks-of-aging-2023.json` has the URL, size and SHA-256. The PDF downloads to `data/raw/` (gitignored), because its licence is unclear (the repository says CC BY-NC-ND, the PDF says © Elsevier).
 - **Quote matching ignores PDF mess** (ligatures, hyphens at line ends, curly quotes, accents) by comparing letters and digits only. Changing one word still fails (a test checks this).
 - **Following your standard:** 10 name/fact cards (vocabulary) and 5 how/why/term cards (mechanism).
-- **In CI** the real-PDF test skips (no download there); the format tests run. Locally: `uv run python -m longevity_trainer.receipts` → `15/15 quotes found`.
+- **In CI** the real-PDF test skips (no download there); the format tests run. Locally: `uv run longevity check-receipts` → `15/15 quotes found`.
 
 ## M1 Step 7: play the cards (2026-11-12)
 
@@ -151,3 +152,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Marking is free and instant for now:** names and facts are checked by quizkit's grader (small typos forgiven). For "explain" answers, or any answer it calls wrong, you see the model answer and mark yourself (y/n). The Claude judge comes in M4, with an eval set to test its marking.
 - **Reuse:** the quiz loop is quizkit's `QuizSession`, including its "own mark" feature from HSK; this step only added the screen code (`cli.py`).
 - **Not yet:** progress isn't saved (Leitner boxes come later).
+
+## The build loop, restored and enforced (2026-11-12)
+
+> **In plain words:** in HSK, a separate Claude wrote each block's tests from its job description (SPEC), and another reviewed it, before any PR. I didn't copy that here, so steps 6–7 were built and tested by me alone. You caught it. Now it's back, and CI fails if it's skipped.
+
+- **Your steer:** "don't save in memory, you always forget: work out how we embed this properly". So the guard is a failing check, not a note: `tests/test_process.py` (code must be a block with a SPEC and its own tests) and `check_reviews.py` (the PR must tick the three reviews).
+- **Redone through the loop:** the quote checker and the folder loader are now quizkit blocks any quiz can use; the cards are a longevity block.
+- **What the independent agents found** (none caught by my own tests): a card kind with spaces was rejected; the quote key treated `IL-1α` = `IL-1β` and `1.5` = `15`; a "quote" of dots could match anything; a line splitter that shifted error line numbers; a path that could land a download outside the project.
+- **Still to do:** the Claude GitHub review needs a token from you (`CLAUDE_CODE_OAUTH_TOKEN`).

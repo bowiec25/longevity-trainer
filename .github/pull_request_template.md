@@ -7,6 +7,12 @@
 ## Still the right thing?
 <!-- Required (CI fails if empty). What changed from the plan, and why? Or "Nothing changed, because ...". -->
 
+## Reviews
+<!-- Required (CI fails otherwise). Tick each, or write "n/a: <reason>" (e.g. "n/a: docs only, no code"). -->
+- [ ] test-writer: tests written from the SPEC, before the code
+- [ ] block-reviewer: report pasted below or summarised (✅ ready)
+- [ ] /code-review: findings fixed (or none)
+
 ## How tested
 <!-- Commands run, what you checked by hand. -->
 

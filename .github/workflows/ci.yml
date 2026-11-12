@@ -28,6 +28,13 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: python3 .github/scripts/check_pr_body.py
 
+      # The build loop (CLAUDE.md): test-writer, block-reviewer and /code-review ticked.
+      - name: PR description shows the reviews were done
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python3 .github/scripts/check_reviews.py
+
       - name: Install uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3 (pinned SHA: third-party action)
         with:

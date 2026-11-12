@@ -1,6 +1,6 @@
 """`longevity quiz`: fake typing in, collected lines out. No real keyboard, no Claude."""
 
-from longevity_trainer.cards import load_cards
+from longevity_trainer.blocks.card_bank import load_cards
 from longevity_trainer.cli import main, play
 
 
