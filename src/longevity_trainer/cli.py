@@ -19,7 +19,6 @@ Progress isn't saved yet.
 import argparse
 import os
 import random
-import shutil
 import sys
 import tempfile
 import textwrap
@@ -39,7 +38,12 @@ from longevity_trainer.blocks.card_checker import (
     load_exam,
     run_exam,
 )
-from longevity_trainer.blocks.card_writer import slug, write_cards
+from longevity_trainer.blocks.card_writer import (
+    ASKS,
+    REQUIRED_ASKS,
+    slug,
+    write_cards,
+)
 from longevity_trainer.blocks.marking import make_judge
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.receipts import check_all
@@ -172,22 +176,65 @@ def _cost_line(replies: list) -> str:
     return f"{len(replies)} Claude calls, {tokens} tokens, ${cost:.4f}"
 
 
-def _taken_ids(out: Path) -> set[str]:
-    """Ids in every card file except `out` (the file being written, whose old ids
-    are free again). No cards yet = empty; a bad line or repeated id raises
-    ValueError, so new ids can't clash with a bank we couldn't read."""
-    others = sorted(p for p in CARDS_DIR.glob("*.jsonl") if p.is_file() and p != out)
-    if not others:
-        return set()
-    with tempfile.TemporaryDirectory() as tmp:  # the shared loader reads a folder
-        for path in others:
-            shutil.copy(path, tmp)
+def _load_texts(texts: dict[str, str]) -> list[LongevityCard]:
+    """Cards from {file name: file text}, through the shared loader (which reads a
+    folder). No cards = empty; a bad line or repeated id raises ValueError."""
+    if not texts:
+        return []
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, text in texts.items():
+            (Path(tmp) / name).write_text(text, "utf-8", newline="")
         try:
-            return {c.id for c in load_cards(Path(tmp))}
+            return load_cards(Path(tmp))
         except ValueError as err:
             if str(err).startswith("no cards found"):  # only blank files
-                return set()
+                return []
             raise
+
+
+def _bank(
+    out: Path, with_topic: bool
+) -> tuple[list[LongevityCard], str | None, list[str]]:
+    """(cards in the bank, the topic file's text or None, its card ids), reading each file
+    once. The topic file `out` counts only `with_topic` (--add, or a dry run);
+    otherwise it's not read, so a broken one can still be replaced."""
+    texts = {
+        p.name: p.read_text("utf-8-sig")
+        for p in sorted(CARDS_DIR.glob("*.jsonl"))
+        if p.is_file() and (with_topic or p != out)
+    }
+    topic_text = texts.get(out.name) if with_topic else None
+    bank = _load_texts(texts)
+    topic_ids = [c.id for c in _load_texts({out.name: topic_text or ""})]
+    return bank, topic_text, topic_ids
+
+
+def _coverage(topic_slug: str, ids: list[str]) -> str:
+    """Which asks a topic's cards cover (read from ids `<slug>-<ask>-<k>`)."""
+    found = set()
+    for card_id in ids:
+        rest = card_id.removeprefix(f"{topic_slug}-")
+        ask = rest.rpartition("-")[0].replace("-", "_")
+        if rest != card_id and ask in ASKS:
+            found.add(ask)
+    covered = [a for a in ASKS if a in found]
+    missing = [a for a in ASKS if a in REQUIRED_ASKS and a not in found]
+    line = f"topic {topic_slug} covers: {', '.join(covered) or 'nothing yet'}; "
+    if missing:
+        return line + f"missing: {', '.join(missing)} (run again with --add)"
+    return line + "nothing missing"
+
+
+def _page_range(text: str) -> tuple[int, int]:
+    """`--pages 17-20` -> (17, 20); `--pages 5` -> (5, 5)."""
+    first, dash, last = text.partition("-")
+    try:
+        pages = (int(first), int(last) if dash else int(first))
+    except ValueError:
+        pages = (0, 0)
+    if pages[0] < 1 or pages[1] < pages[0]:
+        raise argparse.ArgumentTypeError(f"{text!r}: use A-B (e.g. 17-20) or one page")
+    return pages
 
 
 def write_cards_command(
@@ -198,15 +245,21 @@ def write_cards_command(
     dry_run: bool,
     replace: bool,
     write: Callable[[str], None] = print,
+    pages: tuple[int, int] | None = None,
+    add: bool = False,
 ) -> int:
     """Draft, gate and (unless --dry-run) save cards; exit code 0 = the bar is met."""
     out = CARDS_DIR / f"{slug(topic)}.jsonl"
-    if out.exists() and not replace and not dry_run:
-        write(f"{out.name} already exists: use --replace to overwrite it")
+    if out.exists() and not (replace or add or dry_run):
+        write(
+            f"{out.name} already exists: use --add to add cards to it, "
+            "or --replace to overwrite it"
+        )
         return 1
+    with_topic = add or (dry_run and not replace)
     try:
-        taken = _taken_ids(out)
-    except ValueError as err:  # a bad line or repeated id: ids could clash
+        bank, old, topic_ids = _bank(out, with_topic)
+    except ValueError as err:  # bad line, repeated id, not UTF-8: ids could clash
         write(f"the card bank has a problem, fix it first: {str(err).splitlines()[0]}")
         return 1
     ask, replies = _counting_ask()
@@ -216,7 +269,9 @@ def write_cards_command(
             source,
             n=n,
             model=model,
-            taken_ids=taken,
+            taken_ids={c.id for c in bank},
+            taken_questions={c.question for c in bank},
+            pages=pages,
             ask=ask,
             check=lambda card: check_card(card, ask=ask),
         )
@@ -235,17 +290,29 @@ def write_cards_command(
         f"asks kept {r.asks_kept} -> {'PASSED' if r.passed else 'NOT PASSED'}"
     )
     write(_cost_line(replies))
-    if not r.passed or not result.kept:
+    ok = r.passed and bool(result.kept)
+    new_ids = [c.id for c in result.kept] if ok else []
+    coverage = _coverage(slug(topic), topic_ids + new_ids)
+    if not ok:
+        write(coverage)
         write("nothing written")
         return 1
     if dry_run:
+        write(coverage)
         write("dry run: nothing written")
         return 0
+    now = out.read_text("utf-8-sig") if out.exists() else None
+    if not replace and now != old:  # old: the text read before the run (None = no file)
+        write(f"{out.name} changed during the run (another run or an edit): run again")
+        return 1
+    old = old or ""
+    if old and not old.endswith("\n"):
+        old += "\n"
     try:  # write a temp file, then swap it in: a failed write keeps the old cards
         out.parent.mkdir(parents=True, exist_ok=True)
         tmp = out.with_name(out.name + ".tmp")
         tmp.write_text(
-            "".join(card.model_dump_json() + "\n" for card in result.kept),
+            old + "".join(card.model_dump_json() + "\n" for card in result.kept),
             "utf-8",
             newline="\n",
         )
@@ -253,6 +320,7 @@ def write_cards_command(
     except OSError as err:
         write(f"couldn't write {out.name}: {err}")
         return 1
+    write(coverage)
     write(f"wrote {len(result.kept)} cards to {out}")
     return 0
 
@@ -309,9 +377,16 @@ def main(argv: list[str] | None = None) -> int:
     writer.add_argument("--n", type=int, default=8, help="cards to draft (1-20)")
     writer.add_argument("--model", default="sonnet", help="the writer's Claude model")
     writer.add_argument(
-        "--dry-run", action="store_true", help="draft and gate, but write nothing"
+        "--pages", type=_page_range, default=None, help="only these pages, e.g. 17-20"
     )
     writer.add_argument(
+        "--dry-run", action="store_true", help="draft and gate, but write nothing"
+    )
+    grow = writer.add_mutually_exclusive_group()
+    grow.add_argument(
+        "--add", action="store_true", help="add cards to the topic's card file"
+    )
+    grow.add_argument(
         "--replace", action="store_true", help="overwrite the topic's card file"
     )
     args = parser.parse_args(argv)
@@ -324,7 +399,14 @@ def main(argv: list[str] | None = None) -> int:
         return cards_exam(args.model, args.holdout, args.limit, args.dry_run)
     if args.command == "write-cards":
         return write_cards_command(
-            args.topic, args.source, args.n, args.model, args.dry_run, args.replace
+            args.topic,
+            args.source,
+            args.n,
+            args.model,
+            args.dry_run,
+            args.replace,
+            pages=args.pages,
+            add=args.add,
         )
     cards = load_cards()
     random.Random(args.seed).shuffle(cards)
