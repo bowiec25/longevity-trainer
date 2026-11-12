@@ -8,7 +8,13 @@
   - [x] 3b. Build map started: `docs/build-map/index.html` (HSK's look) + snapshot `m0-step3.html`, published as the "Longevity Trainer Build Map" artifact; plus the **name & recall** card kind (user: naming drugs, hallmarks etc. underpins the work)
   - [x] 4. GitHub repo created by the user (`! gh repo create`, public: github.com/bowiec25/longevity-trainer; Claude Code blocks Claude from making public repos), 3 commits pushed, first CI run green (log checked: 24 passed); push protection + secret scanning on
   - [x] 5. Protect `main` (mirrors HSK: PR + green `check` required, up to date with main, admins included, 0 approvals, no force-push / delete; squash-only, auto-delete branches); a direct push was rejected; this step's docs went in as the first PR
-- [ ] **M1 Foundations**
+- [ ] **M1 Foundations + first playable slice** (issue #2)
+  - [x] 1. Plan update: one tool to learn per milestone
+  - [ ] 2. Copy quizkit + its tests (HSK `caa969a`)
+  - [ ] 3. Copy the Claude safety rails (hooks, permissions) + tests
+  - [ ] 4. ADRs 0001–0005
+  - [ ] 5. 15 hand-made hallmark cards with receipts + quote-check script
+  - [ ] 6. Play them: `longevity quiz`
 - [ ] **M2 Sources in**
 - [ ] **M3 Questions with receipts**
 - [ ] **M4 First playable quiz**
@@ -75,6 +81,16 @@ Copy `src/quizkit/` (about 2,100 lines; needs only `pydantic` + `rapidfuzz`) and
 - **Later:** extract quizkit into its own repo, installed by both (see `docs/FUTURE.md`).
 
 ## Milestones
+
+**The user's goal (2026-11-12):** learn the tools, and build a useful way of learning that scales. So each milestone is useful on its own **and** teaches one new tool:
+
+| Milestone | Useful result | Tool to learn |
+|---|---|---|
+| M1 | 15 hallmark cards, playable | reuse + tests |
+| M2 | trusted sources for every topic | a fan-out workflow (one agent per topic) |
+| M3 | cards written automatically | the **Agent SDK** + subagents (API key, small spend) |
+| M4 | answers marked well | `claude -p` + eval sets |
+
 | # | Name | "Done" looks like |
 |---|---|---|
 | M0 | Plan + setup | Public repo, CI green, `main` protected, docs + build map |
