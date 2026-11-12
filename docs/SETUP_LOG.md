@@ -14,6 +14,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M0.3b | Started the build map, a picture of the project, and made "name & recall" the core kind of card | You can see at a glance what exists; the quiz trains the building blocks first |
 | M0.4 | Uploaded to GitHub (public); CI ran green | Backup, and GitHub re-runs the checks on a fresh computer |
 | M0.5 | Locked `main`: changes only arrive through a PR with green CI, for everyone | Nothing broken or unreviewed can reach the main copy, by accident or in a hurry |
+| M1.1 | Gave each milestone one tool to learn | Your goal: learn the tools while building something useful |
 
 ---
 
@@ -82,3 +83,9 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **0 approvals needed:** a PR is required, but no human sign-off on it (your "no human approval gates" rule). CI is the gate; you still choose when to merge.
 - **Tested, not assumed:** a direct push to `main` was **rejected** by GitHub. The commit with this step's docs then went up on a branch as the **first PR**, which is also the first real run of the "Still the right thing?" check.
 - **Hooks are different:** this lock is GitHub's, for everyone. Hooks (M1) are Claude-only scripts on your PC. Layers beat one lock.
+
+## M1 Step 1: one tool per milestone (2026-11-12)
+
+> **In plain words:** each milestone now gives you something useful *and* teaches one new tool: M1 reuse + tests, M2 a fan-out workflow, M3 the Agent SDK + subagents, M4 `claude -p` + evals.
+
+- First change through the full routine: issue #2 → branch → PR → CI → you merge.
