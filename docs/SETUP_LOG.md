@@ -30,6 +30,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M3.2 | An exam for the card checker, written before the checker | Set the bar before building (HSK lesson), so the result can't be bent to fit |
 | M3.3 | Card checker (Claude Haiku) measured on the exam and on fresh held-out cards | A judgment needs an eval, and an eval you tuned on overstates the score |
 | M3.4 | Card writer (Claude Sonnet): drafts cards from a source; code and the checker keep only the good ones | Writing a question needs judgment; the gates make sure nothing unchecked reaches the bank |
+| M3.5–6 | First bank of 63 cards; `--pages` for long sources; `--add` to grow topics over time | A bank you never update goes stale (your steer); long reviews need one section at a time |
 
 ---
 
@@ -259,3 +260,21 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Reviews caught:** a broken card file could make new ids clash with old ones (now it stops and says so); a rejected question blocked a later good draft of the same question; quotes across a PDF page break could never be found (prompt v3 marks pages; the eval sources were all one page, so the v2 numbers stand); no cost line (now: calls, tokens, cost); `--replace` could lose cards if the write failed (now temp file + swap).
 - **ADR 0008:** the writer uses `claude -p` (one call, JSON reply, no tools), not the Agent SDK that ADR 0002 planned: no API key, no extra cost.
 - **Variance:** the "how" card is the one most often missing; a run that misses the bar writes nothing, so you just run it again.
+
+## M3 Steps 5–6: the first bank, and a bank that grows (2026-11-12)
+
+> **In plain words:** the flashcard box got its first real load, and a way to keep adding to it. `--add` is like topping up a box: new cards go in, and any question the box already holds is skipped.
+
+| Topic | Source | Cards | Runs |
+|---|---|---|---|
+| Physical activity | WHO fact sheet | 7 | 1 |
+| Rapamycin | PEARL trial | 8 (no "how" yet) | 6 (3 saved) |
+| Epigenetic clocks | Measuring biological ageing review | 8 | 5 (2 saved) |
+| Hallmarks, 4 sections | Hallmarks of aging 2023, `--pages` | 25 | 6 (5 saved) |
+| Hallmarks (hand-made, M1) | same | 15 | |
+
+- **Your steer, "a bank we update as we go":** `write-cards --add` tops up a topic. The writer is shown the questions already in the bank so it asks about new facts (prompt v4: 0 repeats in its first run, against 3 in the run before).
+- **The bar changed:** runs kept 3–4 cards that passed every check and then threw them away for missing one kind of question. Now every card that passes is saved; "covers what / how / how sure" is a goal for the topic, shown after each run ("missing: how, run again with --add"). The writer eval keeps the stricter bar, because it measures the prompt, not whether cards may be saved.
+- **`--pages`:** the hallmarks review (215,000 characters) is too long for one call, and one run would only skim it. Four runs of 3–9 pages each cover all 12 hallmarks. Receipt pages still match `check-receipts`.
+- **The strict checker costs runs:** it rejects about half the drafts, mostly for small wording slips (dropping "fully" or "probably" from the source). Nothing bad gets in, but topics need 2–3 runs. Cost: about $0.03–0.12 a run.
+- **Reviews caught:** a receipt page could disagree with `check-receipts` when a sentence appears twice; the coverage line ignored cards already in the file; the topic file was read twice (two runs could hand out the same id; now it stops if the file changed during the run).

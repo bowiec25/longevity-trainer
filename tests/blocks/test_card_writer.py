@@ -6,6 +6,7 @@ is a fake `check`, and sources are tiny html/PDF files pinned in a temp folder.
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -56,9 +57,11 @@ def test_block_spec_lists_spec_inputs_and_outputs():
         "model",
         "check",
         "taken_ids",
+        "taken_questions",
         "sources_dir",
         "root",
         "fetch",
+        "pages",
     }
     assert set(block.BLOCK_SPEC.outputs) == {
         "write_cards",
@@ -67,6 +70,8 @@ def test_block_spec_lists_spec_inputs_and_outputs():
         "WriterReport",
         "PROMPT_VERSION",
         "slug",
+        "ASKS",
+        "REQUIRED_ASKS",
     }
 
 
@@ -513,14 +518,25 @@ def test_counts_add_up_with_every_kind_of_drop(env):
     assert_counts_add_up(r, result)
 
 
-def test_fails_when_how_sure_missing(env):
+def test_passes_when_how_sure_missing(env):
+    """New bar (2026-11-12): coverage is a topic goal over runs, not a run gate."""
     drafts = [d for d in good_drafts() if d["asks"] != "how_sure"]
     result, _ = env(drafts)
     assert "how_sure" not in result.report.asks_kept
-    assert result.report.passed is False
+    assert result.report.passed is True
 
 
-def test_fails_when_3_of_10_quotes_missing(env):
+def test_passes_when_only_one_ask_kept(env):
+    drafts = [
+        draft("what", "What does rapamycin inhibit in the cell?", quote=S_WHAT),
+        draft("what", "What kind of molecule is rapamycin?", quote=S_WHAT),
+    ]
+    result, _ = env(drafts)
+    assert result.report.asks_kept == ["what"]
+    assert result.report.passed is True
+
+
+def three_of_ten_quotes_missing(env):
     fake = "Rapamycin doubled the lifespan of every human volunteer tested."
     extra = [
         draft("what", f"What else is true of rapamycin, number {i}?", quote=S_WHAT)
@@ -531,6 +547,12 @@ def test_fails_when_3_of_10_quotes_missing(env):
         for i in range(3)
     ]
     result, _ = env([*good_drafts(), *extra, *missing], n=10)
+    return result
+
+
+def test_fails_when_3_of_10_quotes_missing(env):
+    """Fails even though 7 cards were kept: a writer inventing quotes isn't trusted."""
+    result = three_of_ten_quotes_missing(env)
     r = result.report
     assert (r.drafted, r.kept, r.dropped_quote) == (10, 7, 3)
     assert r.passed is False
@@ -551,7 +573,8 @@ def test_two_of_10_quotes_missing_still_passes(env):
     assert result.report.passed is True
 
 
-def test_fails_when_fewer_than_half_kept(env):
+def test_passes_when_fewer_than_half_kept(env):
+    """New bar: kept cards passed every gate, so a run keeping few still saves them."""
     bad = [
         draft("what", f"What breaks the checker, number {i}?", quote=S_WHAT)
         for i in range(5)
@@ -559,7 +582,18 @@ def test_fails_when_fewer_than_half_kept(env):
     result, _ = env([*good_drafts()[:3], *bad], check=fake_check({"breaks": 3}))
     r = result.report
     assert (r.drafted, r.kept) == (8, 3)
-    assert r.passed is False
+    assert r.passed is True
+
+
+def test_passes_when_1_of_8_kept(env):
+    bad = [
+        draft("what", f"What breaks the checker, number {i}?", quote=S_WHAT)
+        for i in range(7)
+    ]
+    result, _ = env([*good_drafts()[:1], *bad], check=fake_check({"breaks": 3}))
+    r = result.report
+    assert (r.drafted, r.kept, r.dropped_quote) == (8, 1, 0)
+    assert r.passed is True
 
 
 def test_exactly_half_kept_passes(env):
@@ -707,7 +741,7 @@ def test_draft_model_accepts_a_valid_draft():
 def results(env):
     """Genuine WriterResults from write_cards: passing, failing-with-kept, empty."""
     passing, _ = env()
-    failing, _ = env([d for d in good_drafts() if d["asks"] != "how_sure"])
+    failing = three_of_ten_quotes_missing(env)  # misses the bar with 7 kept
     empty, _ = env(check=fake_check({"": 3}))
     assert passing.report.passed and not failing.report.passed and not empty.kept
     return {"pass": passing, "fail": failing, "empty": empty}
@@ -763,12 +797,17 @@ def test_cli_dry_run_writes_nothing(cli, results):
     assert list(cli.cards_dir.iterdir()) == []
 
 
-def test_cli_existing_file_without_replace_exits_1_before_drafting(cli, results):
+def test_cli_existing_file_without_add_or_replace_exits_1_before_drafting(
+    cli, results, capsys
+):
     out = cli.cards_dir / "rapamycin.jsonl"
     out.write_text("old\n", encoding="utf-8")
     assert cli(results["pass"]) == 1
     assert cli.calls == []
     assert out.read_text(encoding="utf-8") == "old\n"
+    captured = capsys.readouterr()
+    text = captured.out + captured.err
+    assert "--add" in text and "--replace" in text
 
 
 def test_cli_replace_overwrites_existing_file(cli, results):
@@ -818,8 +857,8 @@ def test_cli_prints_a_line_per_draft_and_the_report(cli, results, capsys):
 # ---- Added after the SPEC review (PROMPT_VERSION 3, page markers, CLI bank) -------
 
 
-def test_prompt_version_is_3():
-    assert block.PROMPT_VERSION == "3"
+def test_prompt_version_is_4():
+    assert block.PROMPT_VERSION == "4"
 
 
 def test_checker_rejected_question_does_not_block_a_later_same_question(env):
@@ -916,10 +955,11 @@ def renamed(cards, prefix: str):
 
 def test_cli_dry_run_with_existing_file_still_drafts_and_writes_nothing(cli, results):
     out = cli.cards_dir / "rapamycin.jsonl"
-    out.write_text("old\n", encoding="utf-8")
+    write_card_file(out, old_cards(results["pass"].kept))
+    before = out.read_text(encoding="utf-8")
     cli(results["pass"], "--dry-run")
     assert len(cli.calls) == 1
-    assert out.read_text(encoding="utf-8") == "old\n"
+    assert out.read_text(encoding="utf-8") == before
     assert [p.name for p in cli.cards_dir.iterdir()] == ["rapamycin.jsonl"]
 
 
@@ -958,3 +998,450 @@ def test_cli_leaves_no_tmp_file(cli, results):
 def test_cli_prints_claude_calls_line(cli, results, capsys):
     cli(results["pass"], "--dry-run")
     assert "Claude calls" in capsys.readouterr().out
+
+
+# ---- Added for `pages` (SPEC: Inputs row, Receipts, CLI `--pages`) ------------------
+
+PAGE_1 = "Rapamycin is a drug that inhibits the kinase mTOR"
+PAGE_2 = "Rapamycin works by blocking mTORC1 signalling in cells"
+PAGE_3 = "In mice rapamycin extended lifespan but human data are few"
+
+
+def test_block_spec_lists_pages_input():
+    assert "pages" in block.BLOCK_SPEC.inputs
+
+
+@pytest.fixture
+def paged(tmp_path):
+    """A pinned 3-page PDF source; `run(drafts, pages=..., texts=...)` calls write_cards."""
+
+    def run(drafts=None, texts=(PAGE_1, PAGE_2, PAGE_3), ask=None, **kwargs):
+        data = make_text_pdf(tmp_path / "paged.pdf", list(texts)).read_bytes()
+        sources_dir = tmp_path / "sources"
+        pin_source(sources_dir, data, fmt="pdf", sid="paged-src")
+        calls = None
+        if ask is None:
+            ask, calls = fake_ask(drafts or [])
+        result = block.write_cards(
+            "rapamycin",
+            "paged-src",
+            ask=ask,
+            check=fake_check(),
+            sources_dir=sources_dir,
+            root=tmp_path,
+            fetch=lambda url: data,
+            **kwargs,
+        )
+        return result, calls
+
+    return run
+
+
+def test_pages_prompt_has_only_chosen_pages_with_real_numbers(paged):
+    _, calls = paged(pages=(2, 3))
+    prompt = calls[0]["prompt"]
+    assert PAGE_1 not in prompt
+    assert "[page 1]" not in prompt
+    i2, t2, i3, t3 = (prompt.find(s) for s in ("[page 2]", PAGE_2, "[page 3]", PAGE_3))
+    assert -1 not in (i2, t2, i3, t3)
+    assert i2 < t2 < i3 < t3
+
+
+def test_pages_quote_only_on_an_unchosen_page_dropped_at_quote(paged):
+    drafts = [
+        draft("what", "What does rapamycin inhibit?", quote=PAGE_1),
+        draft("how", "How does rapamycin act in cells?", quote=PAGE_2),
+    ]
+    result, _ = paged(drafts, pages=(2, 3))
+    assert gates(result) == ["quote"]
+    assert result.drops[0].question == "What does rapamycin inhibit?"
+    assert [c.question for c in result.kept] == ["How does rapamycin act in cells?"]
+
+
+def test_pages_receipt_page_is_the_real_page_number(paged):
+    drafts = [
+        draft("how", "How does rapamycin act in cells?", quote=PAGE_2),
+        draft("how_sure", "How strong is the lifespan evidence?", quote=PAGE_3),
+    ]
+    result, _ = paged(drafts, pages=(2, 3))
+    assert [c.receipt.page for c in result.kept] == [2, 3]
+
+
+def test_pages_single_page_sends_one_page_without_marker(paged):
+    _, calls = paged(pages=(2, 2))
+    prompt = calls[0]["prompt"]
+    assert PAGE_2 in prompt
+    assert PAGE_1 not in prompt and PAGE_3 not in prompt
+    assert "[page" not in prompt
+
+
+def test_pages_none_sends_the_whole_source(paged):
+    _, calls = paged(pages=None)
+    prompt = calls[0]["prompt"]
+    for text in (PAGE_1, PAGE_2, PAGE_3):
+        assert text in prompt
+
+
+@pytest.mark.parametrize("pages", [(0, 1), (2, 1), (1, 4)])
+def test_pages_out_of_range_raises_naming_page_count_before_claude(paged, pages):
+    ask, calls = fake_ask(good_drafts())
+    with pytest.raises(ValueError, match="3"):
+        paged(ask=ask, pages=pages)
+    assert calls == []
+
+
+def test_pages_size_limit_is_on_the_chosen_pages_only(paged):
+    filler = "Filler words about ageing research " * 6000
+    assert len(filler) > 200_000
+    _, calls = paged(texts=(filler, PAGE_2, PAGE_3), pages=(2, 3))
+    assert len(calls) == 1
+    assert PAGE_2 in calls[0]["prompt"]
+
+
+def test_pages_whole_source_over_limit_still_raises(paged):
+    filler = "Filler words about ageing research " * 6000
+    ask, calls = fake_ask(good_drafts())
+    with pytest.raises(ValueError, match="source too long"):
+        paged(ask=ask, texts=(filler, PAGE_2, PAGE_3))
+    assert calls == []
+
+
+# -- CLI `--pages` -------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("flag, expected", [("17-20", (17, 20)), ("5", (5, 5))])
+def test_cli_pages_flag_is_passed_as_a_tuple(cli, results, flag, expected):
+    cli(results["pass"], "--pages", flag, "--dry-run")
+    ((_args, kwargs),) = cli.calls
+    assert tuple(kwargs["pages"]) == expected
+
+
+def test_cli_without_pages_passes_none(cli, results):
+    cli(results["pass"], "--dry-run")
+    ((_args, kwargs),) = cli.calls
+    assert kwargs.get("pages") is None
+
+
+@pytest.mark.parametrize("flag", ["x", "5-", "0-3", "9-4"])
+def test_cli_bad_pages_exits_2_without_calling_write_cards(cli, results, flag):
+    with pytest.raises(SystemExit) as exc:
+        cli(results["pass"], "--pages", flag, "--dry-run")
+    assert exc.value.code == 2
+    assert cli.calls == []
+
+
+# ---- Added for the new bar, `taken_questions` and `--add` (SPEC 2026-11-12) -------
+
+
+def test_taken_question_dropped_at_repeat_before_the_checker(env):
+    check = fake_check()
+    taken = {"  what DOES rapamycin   inhibit in the CELL? "}
+    result, _ = env(check=check, taken_questions=taken)
+    assert gates(result) == ["repeat"]
+    assert "already in the bank" in result.drops[0].reason
+    assert result.drops[0].question == good_drafts()[0]["question"]
+    assert result.report.dropped_repeat == 1
+    assert good_drafts()[0]["question"] not in [c.question for c in check.calls]
+    assert len(check.calls) == 3
+
+
+def test_repeat_within_run_says_earlier_card(env):
+    first = draft("what", "What does rapamycin inhibit?", quote=S_WHAT)
+    again = draft("what", "WHAT does rapamycin  inhibit?", quote=S_WHAT)
+    result, _ = env([first, again])
+    assert gates(result) == ["repeat"]
+    assert "same question as an earlier card" in result.drops[0].reason
+
+
+def test_taken_questions_default_is_empty(env):
+    result, _ = env()
+    assert result.report.dropped_repeat == 0
+
+
+def old_cards(kept, n: int = 2):
+    """Cards for an existing topic file: ids and questions unlike the new ones."""
+    return [
+        c.model_copy(
+            update={"id": f"rapamycin-old-{i}", "question": f"Old question {i}?"}
+        )
+        for i, c in enumerate(kept[:n])
+    ]
+
+
+def test_cli_add_keeps_old_lines_first_and_appends(cli, results):
+    out = cli.cards_dir / "rapamycin.jsonl"
+    old = old_cards(results["pass"].kept)
+    write_card_file(out, old)
+    old_text = out.read_text(encoding="utf-8")
+    assert cli(results["pass"], "--add") == 0
+    assert out.read_text(encoding="utf-8").startswith(old_text)
+    loaded = load_cards(cli.cards_dir)
+    assert [c.id for c in loaded] == [c.id for c in old] + [
+        c.id for c in results["pass"].kept
+    ]
+    assert [p.name for p in cli.cards_dir.iterdir()] == ["rapamycin.jsonl"]
+
+
+def test_cli_add_taken_includes_topic_file_and_other_files(cli, results):
+    kept = results["pass"].kept
+    other = [
+        c.model_copy(update={"id": "other-0", "question": "Other question zero?"})
+        for c in kept[:1]
+    ]
+    write_card_file(cli.cards_dir / "aaa.jsonl", other)
+    write_card_file(cli.cards_dir / "rapamycin.jsonl", old_cards(kept))
+    assert cli(results["pass"], "--add") == 0
+    ((_args, kwargs),) = cli.calls
+    assert set(kwargs["taken_ids"]) == {"other-0", "rapamycin-old-0", "rapamycin-old-1"}
+    assert set(kwargs["taken_questions"]) == {
+        "Other question zero?",
+        "Old question 0?",
+        "Old question 1?",
+    }
+
+
+def test_cli_without_add_taken_questions_are_other_files_only(cli, results):
+    kept = results["pass"].kept
+    other = [
+        c.model_copy(update={"id": "other-0", "question": "Other question zero?"})
+        for c in kept[:1]
+    ]
+    write_card_file(cli.cards_dir / "aaa.jsonl", other)
+    write_card_file(cli.cards_dir / "rapamycin.jsonl", old_cards(kept))
+    assert cli(results["pass"], "--replace") == 0
+    ((_args, kwargs),) = cli.calls
+    assert set(kwargs["taken_questions"]) == {"Other question zero?"}
+    assert set(kwargs["taken_ids"]) == {"other-0"}
+
+
+def test_cli_no_cards_yet_passes_empty_taken_questions(cli, results):
+    cli(results["pass"], "--dry-run")
+    ((_args, kwargs),) = cli.calls
+    assert set(kwargs.get("taken_questions") or set()) == set()
+
+
+def test_cli_add_with_no_file_yet_writes_it(cli, results):
+    assert cli(results["pass"], "--add") == 0
+    assert [c.id for c in load_cards(cli.cards_dir)] == [
+        c.id for c in results["pass"].kept
+    ]
+
+
+def test_cli_add_and_replace_together_exit_2(cli, results):
+    with pytest.raises(SystemExit) as exc:
+        cli(results["pass"], "--add", "--replace")
+    assert exc.value.code == 2
+    assert cli.calls == []
+
+
+def test_cli_add_with_broken_topic_file_exits_1_before_drafting(cli, results):
+    out = cli.cards_dir / "rapamycin.jsonl"
+    out.write_text("this is broken {\n", encoding="utf-8")
+    assert cli(results["pass"], "--add") == 1
+    assert cli.calls == []
+    assert out.read_text(encoding="utf-8") == "this is broken {\n"
+
+
+def test_cli_add_when_report_fails_leaves_file_unchanged(cli, results):
+    out = cli.cards_dir / "rapamycin.jsonl"
+    write_card_file(out, old_cards(results["pass"].kept))
+    before = out.read_text(encoding="utf-8")
+    assert cli(results["fail"], "--add") == 1
+    assert out.read_text(encoding="utf-8") == before
+
+
+def missing_part(out: str) -> str:
+    """The text after "missing" on the coverage line."""
+    lines = [ln for ln in out.splitlines() if "missing" in ln.lower()]
+    assert lines, f"no coverage line saying what's missing in:\n{out}"
+    return lines[-1].lower().split("missing", 1)[1]
+
+
+def test_cli_coverage_line_names_what_is_missing(cli, env, capsys):
+    drafts = [
+        draft("what", "What does rapamycin inhibit in the cell?", quote=S_WHAT),
+        draft("how_sure", "How strong is the lifespan evidence?", quote=S_SURE),
+    ]
+    result, _ = env(drafts)
+    assert [c.id for c in result.kept] == ["rapamycin-what-1", "rapamycin-how-sure-1"]
+    assert cli(result) == 0
+    out = capsys.readouterr().out
+    tail = missing_part(out)
+    assert re.search(r"\bhow\b(?![_-]sure)", tail)
+    assert "what" not in tail
+    assert "sure" not in tail
+    assert "catch" not in tail  # catch is covered-or-not, never "missing"
+    assert "--add" in out
+
+
+def test_cli_coverage_counts_the_existing_file_with_add(cli, env, capsys):
+    """Old file has how; new run adds what + how_sure: nothing of the three missing."""
+    result, _ = env(
+        [
+            draft("what", "What does rapamycin inhibit in the cell?", quote=S_WHAT),
+            draft("how_sure", "How strong is the lifespan evidence?", quote=S_SURE),
+        ]
+    )
+    how = env([draft("how", "How does rapamycin slow cell growth?", quote=S_HOW)])[0]
+    old = [how.kept[0].model_copy(update={"id": "rapamycin-how-7"})]
+    write_card_file(cli.cards_dir / "rapamycin.jsonl", old)
+    assert cli(result, "--add") == 0
+    out = capsys.readouterr().out
+    missing_lines = [
+        ln.lower().split("missing", 1)[1]
+        for ln in out.splitlines()
+        if "missing" in ln.lower()
+    ]
+    for tail in missing_lines:
+        assert not re.search(r"\b(what|how|how[_-]sure)\b", tail)
+
+
+# ---- Added after the SPEC review (PROMPT_VERSION 4, one read, coverage) -----------
+
+
+def test_asks_are_the_four_in_order():
+    assert block.ASKS == ("what", "how", "how_sure", "catch")
+
+
+def test_required_asks_are_what_how_how_sure():
+    assert block.REQUIRED_ASKS == {"what", "how", "how_sure"}
+
+
+def test_prompt_lists_every_taken_question(env):
+    taken = {"Which enzyme does metformin target?", "What is a senolytic drug?"}
+    _, calls = env(taken_questions=taken)
+    prompt = calls[0]["prompt"]
+    for q in taken:
+        assert q in prompt
+    assert "bank" in prompt.lower()
+
+
+def test_prompt_has_no_taken_list_without_taken_questions(env):
+    """Assumes the list's heading mentions "the bank" (SPEC: "already in the bank")."""
+    _, calls = env()
+    assert "bank" not in calls[0]["prompt"].lower()
+
+
+def test_pages_receipt_page_is_first_page_in_whole_source(paged):
+    d = draft("what", "What does rapamycin inhibit?", quote=PAGE_1)
+    result, _ = paged([d], texts=(PAGE_1, PAGE_2, PAGE_1), pages=(3, 3))
+    assert gates(result) == []
+    assert [c.receipt.page for c in result.kept] == [1]
+
+
+def test_pages_quote_only_on_page_1_dropped_with_pages_3(paged):
+    d = draft("what", "What does rapamycin inhibit?", quote=PAGE_1)
+    result, _ = paged([d], pages=(3, 3))
+    assert gates(result) == ["quote"]
+    assert result.kept == []
+
+
+def test_kept_0_with_every_draft_dropped_at_shape_fails(env):
+    drafts = [
+        draft(a, question="Why??", quote=q)
+        for a, q in zip(
+            ["what", "how", "how_sure", "catch"], [S_WHAT, S_HOW, S_SURE, S_CATCH]
+        )
+    ]
+    result, _ = env(drafts)
+    assert gates(result) == ["shape"] * 4
+    assert result.report.kept == 0
+    assert result.report.dropped_quote == 0
+    assert result.report.passed is False
+
+
+def what_and_how_sure(env):
+    result, _ = env(
+        [
+            draft("what", "What does rapamycin inhibit in the cell?", quote=S_WHAT),
+            draft("how_sure", "How strong is the lifespan evidence?", quote=S_SURE),
+        ]
+    )
+    return result
+
+
+def how_file(env, cli):
+    """A topic file with one valid -how- card; returns its path."""
+    how = env([draft("how", "How does rapamycin slow cell growth?", quote=S_HOW)])[0]
+    card = how.kept[0].model_copy(update={"id": "rapamycin-how-7"})
+    out = cli.cards_dir / "rapamycin.jsonl"
+    write_card_file(out, [card])
+    return out, card
+
+
+def test_cli_dry_run_counts_existing_file_like_add(cli, env, capsys):
+    """Dry run, no --add: the file's how card counts, and its id/question are taken."""
+    _, card = how_file(env, cli)
+    assert cli(what_and_how_sure(env), "--dry-run") == 0
+    ((_args, kwargs),) = cli.calls
+    assert "rapamycin-how-7" in set(kwargs["taken_ids"])
+    assert card.question in set(kwargs["taken_questions"])
+    out = capsys.readouterr().out
+    for ln in out.splitlines():
+        if "missing" in ln.lower():
+            tail = ln.lower().split("missing", 1)[1]
+            assert not re.search(r"\b(what|how|how[_-]sure)\b", tail)
+
+
+def test_cli_replace_coverage_counts_only_kept_cards(cli, env, capsys):
+    how_file(env, cli)
+    assert cli(what_and_how_sure(env), "--replace") == 0
+    tail = missing_part(capsys.readouterr().out)
+    assert re.search(r"\bhow\b(?![_-]sure)", tail)
+
+
+def test_cli_failing_run_still_prints_coverage_of_unchanged_file(
+    cli, env, results, capsys
+):
+    """File has only how; the failing run's kept cards don't count."""
+    out, _ = how_file(env, cli)
+    before = out.read_text(encoding="utf-8")
+    assert cli(results["fail"], "--add") == 1
+    assert out.read_text(encoding="utf-8") == before
+    tail = missing_part(capsys.readouterr().out)
+    assert "what" in tail
+    assert re.search(r"how[_ -]sure", tail)
+
+
+def test_cli_failing_run_with_no_file_prints_coverage(cli, results, capsys):
+    assert cli(results["fail"]) == 1
+    tail = missing_part(capsys.readouterr().out)
+    assert "what" in tail and re.search(r"how[_ -]sure", tail)
+
+
+def test_cli_failed_write_prints_no_coverage_line(cli, env, capsys):
+    """The <file>.tmp path is a folder, so the write fails: exit 1, no coverage."""
+    (cli.cards_dir / "rapamycin.jsonl.tmp").mkdir()
+    assert cli(what_and_how_sure(env)) == 1
+    captured = capsys.readouterr()
+    assert not (cli.cards_dir / "rapamycin.jsonl").exists()
+    text = captured.out + captured.err
+    assert not [ln for ln in text.splitlines() if "missing" in ln.lower()]
+
+
+def test_cli_topic_file_changed_during_run_writes_nothing(
+    cli, env, results, monkeypatch, capsys
+):
+    from longevity_trainer import cli as cli_module
+
+    out, card = how_file(env, cli)
+    edited = card.model_copy(
+        update={"id": "rapamycin-how-8", "question": "An edited question here?"}
+    )
+
+    def fake_write_cards(*a, **k):
+        write_card_file(out, [card, edited])  # another run / a hand edit
+        return results["pass"]
+
+    monkeypatch.setattr(cli_module, "write_cards", fake_write_cards)
+    argv = ["write-cards", "--topic", "rapamycin", "--source", SOURCE_ID, "--add"]
+    assert cli_module.main(argv) == 1
+    after_edit = out.read_text(encoding="utf-8")
+    assert [c.id for c in load_cards(cli.cards_dir)] == [
+        "rapamycin-how-7",
+        "rapamycin-how-8",
+    ]
+    assert after_edit.count("\n") == 2
+    captured = capsys.readouterr()
+    assert "changed" in (captured.out + captured.err).lower()
+    assert [p.name for p in cli.cards_dir.iterdir()] == ["rapamycin.jsonl"]

@@ -41,14 +41,25 @@ BLOCK_SPEC = BlockSpec(
         "model",
         "check",
         "taken_ids",
+        "taken_questions",
         "sources_dir",
         "root",
         "fetch",
+        "pages",
     ],
-    outputs=["write_cards", "Draft", "Drop", "WriterReport", "PROMPT_VERSION", "slug"],
+    outputs=[
+        "write_cards",
+        "Draft",
+        "Drop",
+        "WriterReport",
+        "PROMPT_VERSION",
+        "slug",
+        "ASKS",
+        "REQUIRED_ASKS",
+    ],
 )
 
-PROMPT_VERSION = "3"
+PROMPT_VERSION = "4"
 SOURCES_DIR = ROOT / "data" / "sources"
 MAX_SOURCE_CHARS = 200_000
 ASKS = ("what", "how", "how_sure", "catch")
@@ -160,8 +171,8 @@ class WriterReport(BaseModel):
         return (
             self.drafted > 0
             and self.dropped_quote <= self.drafted * 0.2
-            and self.kept >= self.drafted / 2
-            and REQUIRED_ASKS <= set(self.asks_kept)
+            # coverage of the asks is a goal for the topic, over runs (--add)
+            and self.kept >= 1
         )
 
 
@@ -183,22 +194,36 @@ def _norm(question: str) -> str:
 
 
 def _source_text(
-    source_id: str, sources_dir: Path, root: Path, fetch: Callable[[str], bytes]
-) -> tuple[str, list[str], str]:
-    """(title, page texts, joined text) of a pinned source; raises before any Claude call."""
+    source_id: str,
+    sources_dir: Path,
+    root: Path,
+    fetch: Callable[[str], bytes],
+    pages: tuple[int, int] | None = None,
+) -> tuple[str, list[str], list[tuple[int, str]], str]:
+    """(title, every page's text, chosen (page number, text) pairs, prompt text)
+    of a pinned source; raises before any Claude call."""
     source = load_source(Path(sources_dir) / f"{source_id}.json")
     if source.id != source_id:
         raise ValueError(f"{source_id}.json is for {source.id!r}")
-    pages = text_pages(ensure_source(source, root, fetch), source.format)
-    if len(pages) == 1:
-        text = pages[0]
+    path = ensure_source(source, root, fetch)
+    every = text_pages(path, source.format)
+    numbered = list(enumerate(every, 1))
+    if pages is not None:
+        first, last = pages
+        if first < 1 or last < first or last > len(numbered):
+            raise ValueError(
+                f"pages {first}-{last} don't fit: {source_id} has {len(numbered)} pages"
+            )
+        numbered = numbered[first - 1 : last]
+    if len(numbered) == 1:
+        text = numbered[0][1]
     else:  # mark page breaks, so quotes stay inside one page (find_quote is per page)
-        text = "\n\n".join(f"[page {i}]\n{page}" for i, page in enumerate(pages, 1))
+        text = "\n\n".join(f"[page {i}]\n{page}" for i, page in numbered)
     if len(text) > MAX_SOURCE_CHARS:
         raise ValueError(
             f"source too long ({len(text):,} characters, max {MAX_SOURCE_CHARS:,})"
         )
-    return source.title, pages, text
+    return source.title, every, numbered, text
 
 
 def _drafts(reply_text: str) -> list[Draft]:
@@ -219,9 +244,11 @@ def write_cards(
     model: str = "sonnet",
     check: Callable[[LongevityCard], CardVerdict] = check_card,
     taken_ids: set[str] | None = None,
+    taken_questions: set[str] | None = None,
     sources_dir: Path = SOURCES_DIR,
     root: Path = ROOT,
     fetch: Callable[[str], bytes] = http_get,
+    pages: tuple[int, int] | None = None,
 ) -> WriterResult:
     """Draft `n` cards, run them through the gates, return what survived and why."""
     topic_slug = slug(topic)
@@ -229,10 +256,20 @@ def write_cards(
         raise ValueError(f"topic {topic!r} has no letters or digits")
     if not 1 <= n <= 20:
         raise ValueError(f"n must be 1-20, not {n}")
-    title, pages, text = _source_text(source_id, sources_dir, root, fetch)
-    keys = [to_key(page) for page in pages]
+    title, every, chosen, text = _source_text(
+        source_id, sources_dir, root, fetch, pages
+    )
+    keys = [to_key(page) for _, page in chosen]
+    all_keys = [to_key(page) for page in every]
+    known = ""
+    if taken_questions:
+        listed = "\n".join(f"- {q}" for q in sorted(taken_questions))
+        known = (
+            "Questions already in the bank: don't ask any of these again, "
+            f"even in other words; ask about other facts:\n{listed}\n\n"
+        )
     reply = ask(
-        f"Topic: {topic}\nNumber of cards: {n}\nSource: {title}\n\n"
+        f"Topic: {topic}\nNumber of cards: {n}\nSource: {title}\n\n{known}"
         f"Source text:\n{text}",
         model=model,
         system=SYSTEM,
@@ -244,6 +281,7 @@ def write_cards(
     survivors: list[tuple[Draft, LongevityCard]] = []
     drops: list[Drop] = []
     seen: set[str] = set()
+    in_bank = {_norm(q) for q in taken_questions or ()}
     checker_errors = 0
     for number, draft in enumerate(drafts, start=1):
         provisional = f"{topic_slug}-draft-{number}"
@@ -268,8 +306,7 @@ def write_cards(
                 )
             )
             continue
-        page = find_quote(draft.quote, keys)
-        if page is None:
+        if find_quote(draft.quote, keys) is None:  # must be on a chosen page
             drops.append(
                 Drop(
                     question=draft.question,
@@ -279,8 +316,21 @@ def write_cards(
             )
             continue
         card = card.model_copy(
-            update={"receipt": receipt.model_copy(update={"page": page})}
+            update={
+                "receipt": receipt.model_copy(
+                    update={"page": find_quote(draft.quote, all_keys)}
+                )
+            }
         )
+        if _norm(card.question) in in_bank:
+            drops.append(
+                Drop(
+                    question=draft.question,
+                    gate="repeat",
+                    reason="already in the bank",
+                )
+            )
+            continue
         if _norm(card.question) in seen:
             drops.append(
                 Drop(
