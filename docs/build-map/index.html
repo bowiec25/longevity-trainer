@@ -136,7 +136,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <main>
 <header>
   <h1>Longevity Trainer Build Map</h1>
-  <p class="lede">What exists now, what's planned, and every check a change has to pass. A quiz that tests longevity knowledge, where every answer carries a receipt. Repo (from M0 Step 4): <span class="mono">bowiec25/longevity-trainer</span>.</p>
+  <p class="lede">What exists now, what's planned, and every check a change has to pass. A quiz that tests longevity knowledge, where every answer carries a receipt. Repo: <a class="mono" href="https://github.com/bowiec25/longevity-trainer">bowiec25/longevity-trainer</a> (public).</p>
 </header>
 
 <section aria-label="Summary">
@@ -144,8 +144,8 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <div class="tile hi"><b>0</b><span>quiz cards (none until M3, on purpose)</span></div>
     <div class="tile"><b>24</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
-    <div class="tile"><b>1</b><span>commit on <code>main</code></span></div>
-    <div class="tile"><b>0 / 7</b><span>milestones done (M0: 3 of 5 steps)</span></div>
+    <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
+    <div class="tile"><b>0 / 7</b><span>milestones done (M0: 4 of 5 steps)</span></div>
   </div>
   <div class="milestones" aria-label="Milestones">
     <div class="ms next"><b>M0</b>Plan + setup<br><small>now</small></div>
@@ -250,7 +250,8 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
   <div class="gates">
     <div class="gate guide"><h3>Local checks</h3><span class="chip guide">Rule in CLAUDE.md</span><ul><li><code>ruff check</code></li><li><code>ruff format --check</code></li><li><code>pytest</code> (24 tests)</li></ul></div>
     <div class="gate guide later"><h3>Branch + PR</h3><span class="chip guide">Rule + template</span><ul><li>one step = one branch</li><li>"Still the right thing?" section</li><li>from M0 Step 5</li></ul></div>
-    <div class="gate auto later"><h3>CI on GitHub</h3><span class="chip auto">Automatic</span><ul><li>PR check (an empty "Still the right thing?" fails)</li><li><code>uv sync --locked</code> + the 3 checks</li><li>first run in M0 Step 4</li></ul></div>
+    <div class="gate auto"><h3>CI on GitHub</h3><span class="chip auto">Automatic</span><ul><li>PR check (an empty "Still the right thing?" fails)</li><li><code>uv sync --locked</code> + the 3 checks</li><li>live: first run green, 24 passed</li></ul></div>
+    <div class="gate hard"><h3>Push protection</h3><span class="chip hard">Hard stop, for everyone</span><ul><li>blocks uploads with known API keys</li><li>+ secret scanning (public repo)</li></ul></div>
     <div class="gate hard later"><h3>Protected main</h3><span class="chip hard">Hard stop, for everyone</span><ul><li>PR + green CI required</li><li>admins included, squash only</li><li>M0 Step 5</li></ul></div>
     <div class="gate hard later"><h3>Claude's safety rails</h3><span class="chip hard">Hard stop</span><ul><li><code>.env</code> deny + hook</li><li>auto-format hook</li><li>copied from HSK in M1</li></ul></div>
     <div class="gate you"><h3>You merge</h3><span class="chip you">Your call</span><ul><li><code>gh pr merge N --squash</code></li><li>Claude never merges</li></ul></div>
@@ -268,7 +269,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:100%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:9%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">24</td><td></td><td>run locally now, and by CI from Step 4</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">24</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -303,6 +304,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M0 Step 4: on GitHub</span><span>You created the public repo (Claude Code won't let Claude publish); 3 commits pushed; first CI run green, log checked (24 passed); push protection on. <a href="snapshots/m0-step4.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M0 Step 3: skeleton + this map</span><span>Plumbing copied from HSK and adapted (CI, PR check + 22 tests, templates); versions looked up; README, CLAUDE.md, smoke test; first commit. The primer became the syllabus, with kinds of card; <b>name &amp; recall</b> is the core (your call). <a href="snapshots/m0-step3.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M0 Step 2: project + git</span><span><code>uv init --package</code>; uv chose <code>master</code> again, renamed to <code>main</code>; <code>.gitattributes</code>.</span></li>
     <li><span class="when">2026-11-12</span><span class="what">M0 Step 1: the plan</span><span>7 milestones; every answer carries a receipt; quizkit copied, not installed.</span></li>

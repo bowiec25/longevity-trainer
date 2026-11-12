@@ -12,6 +12,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M0.2 | Made the folder a Python project with a change history (git) on `main` | The code has a home, and every change can be undone |
 | M0.3a | Added the safety files and checks, mostly copied from the Mandarin project; folded the primer into the plan | Mistakes and leaks get caught early, and the plan covers what you actually want to learn |
 | M0.3b | Started the build map, a picture of the project, and made "name & recall" the core kind of card | You can see at a glance what exists; the quiz trains the building blocks first |
+| M0.4 | Uploaded to GitHub (public); CI ran green | Backup, and GitHub re-runs the checks on a fresh computer |
 
 ---
 
@@ -61,3 +62,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Same look as the HSK map** (its stylesheet copied), so the two read alike. Sections: the planned pipeline (primer → sources → card_writer → quote check → fact-auditor → cards), kinds of card, the gates, tests, reused vs new, where notes live, "How it grew".
 - **Kept in git** (`docs/build-map/index.html` + `snapshots/m0-step3.html`) and **published** as the "Longevity Trainer Build Map" artifact. Playbook lesson: an artifact that lives only in a chat session gets lost. The slug is in `CLAUDE.md`, so every step can republish it.
 - **Your steer: naming and recall underpin the work** (the 12 hallmarks, pathways, drugs and what they do). That's now the core v1 kind of card. One thing it needs that quizkit lacks: a **list grader** ("name the 12 hallmarks" = order-free, partial score). Planned for when we build the quiz.
+
+## M0 Step 4: GitHub repo + first CI run (2026-11-12)
+
+> **In plain words:** the project now has a home online. Every upload is re-checked by GitHub on a fresh computer, and it passed first time.
+
+- **You ran it, not me:** Claude Code's safety check blocked me from creating a *public* repo (publishing is outward-facing). So you ran `! gh repo create ... --public --source . --push`. That's the right split: anything that makes things public is your call.
+- **Why public:** on GitHub's free plan, branch protection (Step 5) only works on public repos. Nothing private is in it (no `.env`, the primer is ignored).
+- **First CI run green, and checked:** green isn't the same as checked (playbook M3 lesson), so I read the log: ruff ✅, format ✅, **24 passed**. The PR-description check was skipped, which is expected: it only runs on PRs.
+- **GitHub's own safety nets are on:** secret scanning + push protection (blocks uploads containing known API key formats).
+- **A notice to know about:** GitHub says `ubuntu-latest` moves to Ubuntu 26 from 19 Oct 2026. Nothing to do: CI follows it automatically, and `uv sync --locked` keeps our Python tools identical.

@@ -6,7 +6,7 @@
   - [x] 2. Project + git: `uv init --package` (Python 3.13; hello runs), branch renamed `master` → `main`, `.gitattributes` (LF + `data/raw/**` byte-for-byte)
   - [x] 3a. Skeleton (copied from HSK, then adapted): `.gitignore` (+ `*.pdf`), `.env.example` (no keys needed), README, `CLAUDE.md`, ruff + pytest, smoke test, CI (versions looked up: checkout v7.0.1 + setup-uv v10.3.3, both pinned to SHAs), PR template + "Still the right thing?" issue form + PR check (22 tests); 24 tests green; first commit
   - [x] 3b. Build map started: `docs/build-map/index.html` (HSK's look) + snapshot `m0-step3.html`, published as the "Longevity Trainer Build Map" artifact; plus the **name & recall** card kind (user: naming drugs, hallmarks etc. underpins the work)
-  - [ ] 4. GitHub repo `bowiec25/longevity-trainer` (public), first push, CI green
+  - [x] 4. GitHub repo created by the user (`! gh repo create`, public: github.com/bowiec25/longevity-trainer; Claude Code blocks Claude from making public repos), 3 commits pushed, first CI run green (log checked: 24 passed); push protection + secret scanning on
   - [ ] 5. Protect `main` (PR + green CI, admins included, squash-only, auto-delete branches); test a direct push is rejected
 - [ ] **M1 Foundations**
 - [ ] **M2 Sources in**
