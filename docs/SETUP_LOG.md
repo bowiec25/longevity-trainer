@@ -16,6 +16,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M0.5 | Locked `main`: changes only arrive through a PR with green CI, for everyone | Nothing broken or unreviewed can reach the main copy, by accident or in a hurry |
 | M1.1 | Gave each milestone one tool to learn | Your goal: learn the tools while building something useful |
 | M1.2 | Copied quizkit (the generic quiz parts) and its tests from HSK | Reuse proven parts instead of rebuilding; 537 tests came with them |
+| M1.3 | Copied Claude's safety rails: the `.env` lock, auto-format, permissions | Claude can't read secrets, and its code is always tidy |
 
 ---
 
@@ -100,3 +101,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Tests use HSK words as sample data** (e.g. 爸爸 = dad). That's fine: they test the marking machinery, not Mandarin.
 - **Two safety nets came along:** `test_reuse.py` fails if quizkit ever imports our longevity code, and `conftest.py` makes sure no test calls the real Claude.
 - **The capitals example** came too, and still plays with our package blocked: proof the parts really are generic.
+
+## M1 Step 3: Claude's safety rails (2026-11-12)
+
+> **In plain words:** two little scripts that run around every action Claude takes in this repo. One **blocks** anything touching `.env` (secrets). One **tidies** Python files after each edit. Plus a list of commands Claude may run without asking.
+
+- **Copied from HSK, unchanged**, with their 19 tests (556 tests now).
+- **You ran the copy, not me:** Claude Code stops Claude from changing its own settings (`.claude/`). Same idea as the public-repo block: Claude can't loosen its own limits.
+- **Live test still to do:** hooks only load in a session started inside this folder. This chat started in your home folder, so my `.env` read wasn't blocked here. Next session: start `claude` in `code/longevity-trainer` and ask it to read `.env`. It should be blocked.
+- These rails stop **Claude only**. GitHub's protected `main` stops everyone. Layers beat one lock.
