@@ -33,7 +33,9 @@
   - [x] 4. `card_writer` agent block (Sonnet, prompt v3): drafts cards from one source; code checks the quote is really there and drops repeats, then the checker. Writer eval: every run found all its quotes (0 invented); prompt v2 ("the quote alone must back the whole card") lifted kept cards from ~1/3 to ~5/8; 2 of 3 topics pass the bar each run (the miss: no "how" card; run again). Your spot-check: 10/10 👍. ADR 0008: `claude -p`, not the Agent SDK
   - [x] 5. First bank: **63 cards** (15 hand-made + 48 by the writer), every quote found: rapamycin 8, epigenetic clocks 8, physical activity 7, and the hallmarks review in 4 sections via `--pages` (25). Only gap: no "how" card for rapamycin (PEARL is a trial report, not a mechanism source). (User, 2026-11-12: science first: drugs and supplements, the hallmarks, and the factors (exercise, sleep, diet); companies later, as M5 dated cards)
   - [x] 6. Grow the bank as we go (user, 2026-11-12: "come up with new cards as we go, not just a bank we never update"): `write-cards --add` appends new cards to a topic and skips questions already in the bank (and the writer is shown them, so it doesn't reword them); every card that passes the gates is saved, and a coverage line says which asks a topic still needs. M5 then runs it on a schedule
-- [ ] **M4 First playable quiz**
+- [ ] **M4 A quiz you can use every day** (issue #23)
+  - [x] 1. Saved progress + spaced repetition: new block `study` wraps quizkit's `deck_builder`, `leitner`, `progress_store` and `progress`. `longevity quiz` deals due cards, then new ones (never cards not due yet: answering early would move them up a box early); "Nothing due, next card due …" otherwise; `--topic hallmarks`, `--practise` (review anything, nothing saved), `--no-save`; `longevity stats` per topic group. Your progress lives in `data/progress.db` (gitignored); tests can't touch it
+  - [ ] 2. Marking eval: borderline answers you label; Claude's marking must match (≥90%, no wrong "yes")
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
 

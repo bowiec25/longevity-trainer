@@ -142,7 +142,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>63</b><span>quiz cards (hallmarks, rapamycin, clocks, exercise), every quote checked</span></div>
-    <div class="tile"><b>1114</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>1174</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>8</b><span>decision records (ADRs)</span></div>
@@ -262,7 +262,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 1114 tests guard</h2>
+    <h2>4. What the 1174 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
@@ -270,6 +270,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
       <tbody>
         <tr><td class="mono">test_cli.py</td><td class="n">11</td><td class="bar"><span style="width:2%"></span></td><td>the quiz: right answers score, typos forgiven, Claude's mark shown (fake Claude), own mark y/n when Claude can't check, q quits and keeps the score, receipt shown</td></tr>
         <tr><td class="mono">blocks/test_source_text.py</td><td class="n">65</td><td class="bar"><span style="width:12%"></span></td><td>quizkit block, by the test-writer: text from web pages and journal XML; hidden parts, reference lists and author notes left out; all 4 real sources read</td></tr>
+        <tr><td class="mono">blocks/test_study.py + test_cli_progress.py</td><td class="n">60</td><td class="bar"><span style="width:12%"></span></td><td>longevity block, by the test-writer: due cards first, then new, never early reviews; a missed card comes back first; boxes move right; a busy file warns once and keeps trying; stats per topic group; tests never touch your real progress file</td></tr>
         <tr><td class="mono">blocks/test_card_writer.py</td><td class="n">130</td><td class="bar"><span style="width:25%"></span></td><td>longevity block, tests written <b>before</b> the code: the writer's prompt carries your whole standard; each gate (shape, quote in the source, repeats, checker) drops the right drafts; ids never clash with the bank; the bar; the write-cards command (dry run, --add / --replace, --pages, a broken bank stops it, coverage and cost lines)</td></tr>
         <tr><td class="mono">blocks/test_card_checker.py</td><td class="n">74</td><td class="bar"><span style="width:14%"></span></td><td>longevity block, by the test-writer: the checker's prompt carries your rules word for word; bad replies rejected; exam scoring and the bar; the exam command (dry run, limit, held-out)</td></tr>
         <tr><td class="mono">blocks/test_marking.py</td><td class="n">51</td><td class="bar"><span style="width:10%"></span></td><td>longevity block, by the test-writer: names vs explanations get the right marking rules, length limits, cache, "asking Claude" only on real calls, offline switch-off after 2 failures</td></tr>
@@ -322,6 +323,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-12</span><span class="what">M4 Step 1: the quiz remembers</span><span>Spaced repetition and saved progress, wired from quizkit's own blocks through a new <code>study</code> block: due cards first, then new ones; a card you miss comes back first; <code>longevity stats</code> per topic. The reviewer caught a bug that would have pushed cards up boxes early. <a href="snapshots/m4-step1.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M3 Steps 5–6: the first bank, and a bank that grows</span><span>63 cards: rapamycin, epigenetic clocks, exercise (WHO) and all 12 hallmarks, every quote checked. Your steer, "update it as we go", became <code>write-cards --add</code>: it tops up a topic and skips questions the bank already has. <code>--pages</code> writes long reviews one section at a time. M3 done. <a href="snapshots/m3-done.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M3 Step 4: the student who writes flashcards</span><span>New block <code>card_writer</code> (Claude Sonnet) drafts cards from one source; code checks each quote is really there and drops repeats, then the strict teacher checks the rules. It never invented a quote; telling it "the quote alone must back the whole card" lifted kept cards from about a third to about five in eight. You spot-checked 10: all 👍. <a href="snapshots/m3-step4.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M3 Step 3: the strict teacher</span><span>New block <code>card_checker</code> (Claude Haiku) reads each card against your rules. 14 real runs, including 12 fresh cards it was never tuned on: no bad card got through; about 30% of good ones rejected (fine for now: the writer just redrafts). It also caught 4 real flaws in our own exam. <a href="snapshots/m3-step3.html">snapshot</a></span></li>

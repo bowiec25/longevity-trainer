@@ -31,6 +31,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M3.3 | Card checker (Claude Haiku) measured on the exam and on fresh held-out cards | A judgment needs an eval, and an eval you tuned on overstates the score |
 | M3.4 | Card writer (Claude Sonnet): drafts cards from a source; code and the checker keep only the good ones | Writing a question needs judgment; the gates make sure nothing unchecked reaches the bank |
 | M3.5–6 | First bank of 63 cards; `--pages` for long sources; `--add` to grow topics over time | A bank you never update goes stale (your steer); long reviews need one section at a time |
+| M4.1 | The quiz remembers: spaced repetition and saved progress, from quizkit's blocks | A daily quiz must bring back what you miss and leave what you know; quizkit already had it |
 
 ---
 
@@ -278,3 +279,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **`--pages`:** the hallmarks review (215,000 characters) is too long for one call, and one run would only skim it. Four runs of 3–9 pages each cover all 12 hallmarks. Receipt pages still match `check-receipts`.
 - **The strict checker costs runs:** it rejects about half the drafts, mostly for small wording slips (dropping "fully" or "probably" from the source). Nothing bad gets in, but topics need 2–3 runs. Cost: about $0.03–0.12 a run.
 - **Reviews caught:** a receipt page could disagree with `check-receipts` when a sentence appears twice; the coverage line ignored cards already in the file; the topic file was read twice (two runs could hand out the same id; now it stops if the file changed during the run).
+
+## M4 Step 1: the quiz remembers (2026-11-12)
+
+> **In plain words:** flashcards in boxes. Get a card right and it moves to a box you check less often (1 day, 3, 7, 21); miss it and it goes back to box 1 and comes back first. The quiz now deals what's due, then new cards, and saves where every card is.
+
+- **Reused, not rebuilt:** quizkit (copied from HSK) already had the parts: `deck_builder` (due first), `leitner` (boxes), `progress_store` (SQLite), `quizkit.progress` (save + stats). A new longevity block, `study`, wraps them; `cli.py` only reads the keyboard and prints.
+- **Structure kept:** my first version put the logic straight into `cli.py`; `/code-review` caught that it skipped the build loop, so it became a block with a SPEC and 44 tests by the test-writer (written before the code).
+- **The bug the reviewer caught:** dealing filled a 10-card quiz with cards not due yet, and a right answer moves a card up a box whether it was due or not, so a small topic would race to the top box in a week. Now only due and new cards are dealt; `--practise` reviews anything without saving.
+- **Your data is safe from tests:** a test had written an (empty) `data/progress.db`; now a guard in `tests/conftest.py` points every test at a temp file.
+- **Commands:** `uv run longevity quiz` (10 cards; `-n`, `--topic hallmarks`, `--practise`, `--no-save`), `uv run longevity stats`.

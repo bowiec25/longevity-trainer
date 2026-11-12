@@ -1,6 +1,10 @@
 """The terminal front end: `longevity quiz`, `check-receipts` and `check-cards-exam`.
 
-`quiz` plays the cards, with the receipt after each answer.
+`quiz` plays the cards, with the receipt after each answer: due cards first, then
+new ones (spaced repetition: quizkit's deck_builder + leitner); every answer and
+each card's box is saved in data/progress.db (quizkit's progress_store), unless
+--no-save. `--topic` picks cards whose topic contains the text. `stats` shows, per
+topic, new / in each box / due now, the last 7 days' score and the most missed.
 `check-receipts` finds every card's quote in its pinned source (downloads it if needed).
 `check-cards-exam` scores the card checker on the labelled exam (real Claude;
 --holdout for the never-tuned-on cards, --limit, --dry-run).
@@ -13,16 +17,15 @@ Marking:
   word-level for names and facts, main idea for explanations. If Claude can't be
   reached, or with --no-judge, you see the model answer and mark it yourself.
   Claude's "no" is final for now (disputing a verdict is in docs/FUTURE.md).
-Progress isn't saved yet.
 """
 
 import argparse
 import os
-import random
 import sys
 import tempfile
 import textwrap
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 
 from longevity_trainer.blocks.card_bank import (
@@ -45,7 +48,16 @@ from longevity_trainer.blocks.card_writer import (
     write_cards,
 )
 from longevity_trainer.blocks.marking import make_judge
+from longevity_trainer.blocks.study import (
+    Saver,
+    deal,
+    groups,
+    next_due,
+    schedule,
+    stats_lines,
+)
 from quizkit.blocks.engine import Attempt, QuizSession
+from quizkit.blocks.progress_store import ProgressFileError, ProgressStore
 from quizkit.blocks.receipts import check_all
 from quizkit.claude import ClaudeError, ask_claude
 from quizkit.download import DownloadError
@@ -55,6 +67,7 @@ from quizkit.modes import Mode, build_question
 SELF_YES = Verdict(correct=True, reason="you marked it right", source="self")
 SELF_NO = Verdict(correct=False, reason="you marked it wrong", source="self")
 QUIT_WORDS = {"q", "quit", "exit"}
+DEFAULT_N = 10
 
 Read = Callable[[str], str | None]  # shows a prompt, returns the line (None = end)
 
@@ -95,11 +108,13 @@ def play(
     read: Read = _read,
     write: Callable[[str], None] = print,
     judge: Judge | None = None,
+    on_answer: Callable[[Attempt], None] | None = None,
 ) -> tuple[int, int]:
     """Ask every card in order; return (right, answered).
 
     With a `judge`, Claude marks any answer the answer list calls wrong; if Claude
-    can't be reached, you mark it yourself."""
+    can't be reached, you mark it yourself. `on_answer` gets each answer once it's
+    finally marked (e.g. a `Saver`); an answer left unmarked by quitting isn't sent."""
     by_id = {c.id: c for c in cards}
 
     session = QuizSession([to_question(c) for c in cards], judge=judge)
@@ -131,12 +146,14 @@ def play(
             write(_wrap(f"Answer: {card.answers[0]}"))
             if typed.strip() and session.can_own_mark:
                 mark = _ask_yes_no(read, "   Count it as right? (y/n) ")
-                if mark is None:
+                if mark is None:  # quit before marking it: not saved
                     break
                 session.own_mark(SELF_YES if mark else SELF_NO, card_id=card.id)
                 write("   ✓ Counted" if mark else "   ✗ Not this time")
             else:
                 write("   ✗ Not this time")
+        if on_answer is not None:
+            on_answer(session.result().attempts[-1])
         r = card.receipt
         write(_wrap(f'Receipt: "{r.quote}" ({r.source}, p. {r.page})') + "\n")
     result = session.result()
@@ -146,6 +163,44 @@ def play(
 
 SOURCES_DIR = ROOT / "data" / "sources"
 JUDGE_CACHE = ROOT / "data" / "judge_cache.jsonl"  # gitignored: your answers
+PROGRESS_FILE = ROOT / "data" / "progress.db"  # gitignored: your own progress
+
+
+def _open_store() -> ProgressStore | None:
+    """The progress store, or None (after one line) if the file can't be used."""
+    try:
+        return ProgressStore(PROGRESS_FILE)
+    except ProgressFileError as err:
+        print(f"can't use {PROGRESS_FILE.name}: {err}")
+        return None
+
+
+def stats_command(write: Callable[[str], None] = print) -> int:
+    """How you're doing, per topic group (the study block's stats screen). Looking
+    creates no progress file."""
+    store = None
+    if PROGRESS_FILE.exists():
+        store = _open_store()
+        if store is None:
+            return 1
+    try:
+        lines = stats_lines(load_cards(), store, datetime.now(UTC))
+    except ProgressFileError as err:
+        write(f"can't read {PROGRESS_FILE.name}: {err}")
+        return 1
+    for line in lines:
+        write(line)
+    return 0
+
+
+def _positive(text: str) -> int:
+    try:
+        number = int(text)
+    except ValueError:
+        number = 0
+    if number < 1:
+        raise argparse.ArgumentTypeError(f"{text!r}: give a whole number, 1 or more")
+    return number
 
 
 def check_all_receipts(write: Callable[[str], None] = print) -> int:
@@ -351,11 +406,26 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="longevity")
     sub = parser.add_subparsers(dest="command", required=True)
     quiz = sub.add_parser("quiz", help="play the cards")
-    quiz.add_argument("-n", type=int, default=None, help="how many questions")
+    quiz.add_argument(
+        "-n",
+        type=_positive,
+        default=DEFAULT_N,
+        help=f"how many questions (default {DEFAULT_N})",
+    )
+    quiz.add_argument("--topic", default=None, help='e.g. "hallmarks" or "rapamycin"')
+    quiz.add_argument(
+        "--no-save", action="store_true", help="play without saving progress"
+    )
+    quiz.add_argument(
+        "--practise",
+        action="store_true",
+        help="also cards that aren't due yet; nothing is saved",
+    )
     quiz.add_argument("--seed", type=int, default=None, help="fixed order (testing)")
     quiz.add_argument(
         "--no-judge", action="store_true", help="mark open answers yourself, no Claude"
     )
+    sub.add_parser("stats", help="how you're doing, per topic")
     sub.add_parser("check-receipts", help="find every quote in its pinned source")
     exam = sub.add_parser(
         "check-cards-exam",
@@ -393,6 +463,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if hasattr(sys.stdout, "reconfigure"):  # Windows consoles: show ✓ and quotes
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if args.command == "stats":
+        return stats_command()
     if args.command == "check-receipts":
         return check_all_receipts()
     if args.command == "check-cards-exam":
@@ -408,10 +480,45 @@ def main(argv: list[str] | None = None) -> int:
             pages=args.pages,
             add=args.add,
         )
-    cards = load_cards()
-    random.Random(args.seed).shuffle(cards)
-    if args.n is not None:
-        cards = cards[: max(1, args.n)]
+    bank = load_cards()
+    saving = not (args.no_save or args.practise)
+    store = None
+    plan = None  # no progress yet: every card is new
+    if PROGRESS_FILE.exists():
+        store = _open_store()
+        if store is None:
+            return 1
+        try:
+            plan = schedule(store)
+        except ProgressFileError as err:
+            print(f"can't read {PROGRESS_FILE.name}: {err}")
+            return 1
+    cards = deal(
+        bank,
+        args.n,
+        topic=args.topic,
+        schedule=plan,
+        now=datetime.now(UTC),
+        seed=args.seed,
+        practise=args.practise,
+    )
+    if not cards:
+        soonest = next_due(bank, plan or {}, topic=args.topic)
+        if soonest is not None:
+            when = soonest.astimezone().strftime("%a %d %b %H:%M")
+            print(f"Nothing due. Next card due {when}. (--practise to review anyway)")
+            return 0
+        if args.topic:
+            print(f"no cards on a topic containing {args.topic!r}. Topics:")
+            for group in groups(bank):
+                print(f"  {group}")
+        else:
+            print("no cards in the bank")
+        return 1
+    if saving and store is None:  # created only now that a quiz starts
+        store = _open_store()
+        if store is None:
+            return 1
     judge = None
     if not args.no_judge:
         judge = make_judge(
@@ -419,7 +526,7 @@ def main(argv: list[str] | None = None) -> int:
             before_asking=lambda: print("   asking Claude…", flush=True),
         )
     try:
-        play(cards, judge=judge)
+        play(cards, judge=judge, on_answer=Saver(store) if saving else None)
     except KeyboardInterrupt:
         print("\nStopped.")
     return 0
