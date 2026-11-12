@@ -23,8 +23,9 @@
 - [ ] **M2 Sources in** (issue #11)
   - [x] 1. Topic map: `docs/TOPIC_MAP.md` + `data/topics.jsonl`: 73 topics from the primer's sections; 59 quiz now (v1), 9 wait for M5 (dated), 5 read-don't-quiz; 9 groups for the fan-out
   - [x] 2. ADR 0007: trusted sources + licences: tiers A guideline · B major-journal review · C the study itself (only for claims about it); never news, company sites, preprints or the primer; commit the record + short quotes, never the document
-  - [ ] 3. Pin 3 real sources by hand first (different tiers)
-  - [ ] 4. `source_vetter` block (quizkit), through the loop
+  - [x] 3. Pinned 3 real sources by hand (WHO page · Aging Cell review · PEARL), findings in `docs/SOURCE_FORMATS.md`: many official sites block programs (skipped); three formats (PDF, HTML, JATS XML); Europe PMC's API is the road to open journal articles, with machine-readable licences; preprint twins rejected
+  - [ ] 4a. `source_text` block (quizkit): plain text from PDF, HTML or JATS XML, so quotes can be checked in any format
+  - [ ] 4b. `source_vetter` block (quizkit): tier, publisher list, preprint check, pin, licence
   - [ ] 5. Fan-out workflow: one agent per group finds sources; a script pins + vets
   - [ ] 6. Coverage check: every v1 topic has a source or is marked
 - [ ] **M3 Questions with receipts**

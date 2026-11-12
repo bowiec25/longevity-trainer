@@ -1,0 +1,17 @@
+{
+  "id": "who-physical-activity",
+  "title": "Physical activity (fact sheet)",
+  "publisher": "World Health Organization",
+  "tier": "A",
+  "format": "html",
+  "year": 2026,
+  "url": "https://www.who.int/news-room/fact-sheets/detail/physical-activity",
+  "retrieved": "2026-11-12",
+  "size": 115953,
+  "sha256": "182117c9276f18638a78a00b39c0cc987d6a432e227a636c11bc030411034ec2",
+  "local_path": "data/raw/who-physical-activity.html",
+  "topics": [
+    "exercise"
+  ],
+  "licence_note": "© World Health Organization (website terms). Not committed: record + short quotes only. Page last modified 2026-11-04, so it changes: M5 re-checks it."
+}

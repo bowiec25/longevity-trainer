@@ -24,6 +24,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | Loop | The build loop restored and enforced: SPEC → independent test-writer → build → reviewers → PR | Steps 6–7 skipped it; now CI fails if anyone does |
 | M2.1 | Topic map: every primer section → topics → card kinds → quiz now / later / never | Decides what M2 needs sources for, and what M3 writes cards on |
 | M2.2 | ADR 0007: what counts as a trusted source, and what we may commit | The agents in Step 5 get a clear brief; a script can check it |
+| M2.3 | Pinned 3 real sources by hand and wrote down what goes wrong | Real pages before any SPEC (HSK lesson): Step 4 changed because of it |
 
 ---
 
@@ -183,3 +184,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Never:** news, blogs, company or clinic sites, preprints, Wikipedia, AI answers, or the primer.
 - **Mice ≠ people:** a mouse study can't back a human claim; when tiers disagree, the higher one wins and the card says so.
 - **Licences, one rule:** commit the source's record and short quotes, never the document (it downloads locally, checked by its fingerprint).
+
+## M2 Step 3: three real sources, by hand (2026-11-12)
+
+> **In plain words:** before writing the source checker, I saved one guideline page (WHO), one journal review and one trial paper, to see the real problems. Findings are in `docs/SOURCE_FORMATS.md`.
+
+- **Many official sites block programs** (NIH supplements office, NIA, CDC). Claude Code won't let me disguise the downloader as a browser, which is right, so those sites are skipped unless they offer an official API.
+- **Three formats:** PDF, web page (HTML) and journal XML. M1's quote check only read PDFs, so Step 4 now starts with a block that gets plain text from all three.
+- **Europe PMC** (a free service for programs) gives open journal articles as clean XML, with the licence stated inside. It becomes the agents' first stop in Step 5.
+- **Also:** paywalled reviews are skipped; preprint copies (like PEARL's) are rejected; web pages change, which M5 will handle.
+- **Safety fix:** `data/raw/` is now ignored as a whole (before, only PDFs were), so downloaded pages can't be committed by accident.
