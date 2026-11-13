@@ -1,0 +1,21 @@
+{
+  "id": "nad-senescence-2024",
+  "title": "NAD metabolism: Role in senescence regulation and aging",
+  "authors": "Chini CCS, Cordeiro HS, Tran NLK, et al.",
+  "publisher": "Wiley (Aging Cell)",
+  "journal": "Aging Cell 2024",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2024,
+  "doi": "10.1111/acel.13920",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10776128/fullTextXML",
+  "retrieved": "2026-11-13",
+  "size": 430747,
+  "sha256": "467a8e71265c6e3cbaa7cad305494269da8f8885ce3ff6e3c271fba219fc1f22",
+  "local_path": "data/raw/nad-senescence-2024.xml",
+  "topics": [
+    "nad-boosters",
+    "sirtuins-nad"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B review: mechanisms and the state of the evidence."
+}

@@ -342,3 +342,22 @@ A plain-English record of each step: **what** it does, **why** it's best practic
   - Third try, with both fixed: 4 of 6 kept, including a connect card. About 15 cents a run.
 - **Reviewer catches, fixed:** a made-up quote could hide behind a bad link, so quotes are now checked first. Tests no longer read the real topic file.
 - **Known limit:** "own topic" is only caught when a topic's name matches its id (in FUTURE).
+
+## Filling the bank: drugs and supplements (2026-11-13)
+
+> **In plain words:** new textbooks on the shelf. For each of four topics, one trusted review was found, downloaded, fingerprinted, and handed to the card writer.
+
+- **Sources** (tier B, open access, through Europe PMC's full-text service like PEARL):
+  - rapamycin and mTOR: *GeroScience* 2021
+  - metformin: *Ageing Research Reviews* 2025, a sceptical one ("emerging uncertainty")
+  - NAD+: *Aging Cell* 2024
+  - senolytics: *J Intern Med* 2020, by the field's founders
+
+  Each record is pinned by SHA-256. The documents stay out of the repo.
+- **Cards:** +19, so the bank is 81, and every quote was found word for word.
+  - 4 are connect cards: metformin → AMPK, NAD+ → sirtuins, senolytics → the geroscience hypothesis.
+  - Rapamycin finally has a "how" card: inhibiting mTOR induces autophagy.
+- **What got dropped:** the checker rejected about half the drafts, as before.
+  - Two good questions about the ITP mouse study were dropped at the link gate. The writer filed them as "how sure" but also filled in a link. Idea in FUTURE: keep such cards and ignore the link.
+- **Still missing:** a "how sure" card for NAD+ and a "what" card for senolytics. One more `--add` run each didn't produce them.
+- **Cost:** 6 writer runs, about 80 cents in total.

@@ -1,0 +1,20 @@
+{
+  "id": "senolytics-2020",
+  "title": "Senolytic drugs: from discovery to translation",
+  "authors": "Kirkland JL, Tchkonia T",
+  "publisher": "Wiley (Journal of Internal Medicine)",
+  "journal": "J Intern Med 2020",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2020,
+  "doi": "10.1111/joim.13141",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7405395/fullTextXML",
+  "retrieved": "2026-11-13",
+  "size": 232641,
+  "sha256": "7c45dcee4ec12b15968377e7c886aa1359a6536290ccfb7810762fe3d470ea8a",
+  "local_path": "data/raw/senolytics-2020.xml",
+  "topics": [
+    "senolytics"
+  ],
+  "licence_note": "CC BY-NC-ND 4.0 (article licence): record and short quotes only, as for every source. Tier B review."
+}
