@@ -329,3 +329,16 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Tests without a browser:** Streamlit's AppTest plays whole rounds on temp files with a fake Claude. The launcher's tests use a fake process, so the real Streamlit never starts in tests. I started the real page once to check that it answers, and stopped it before clicking anything, so your progress file wasn't touched.
 - **Your turn:** `uv run longevity web`.
 
+## Connect cards (2026-11-13)
+
+> **In plain words:** an expert sees the field as a map, not a list. A new kind of question links one topic to another: "which animals besides mice has rapamycin been tested in?" → dogs (the TRIAD topic).
+
+- **Why:** you want the questions to build a longevity expert, and picked "connecting things" first, out of: explain, judge evidence, connect, compare, apply.
+- **What changed:** the card writer has a fifth ask, `connect`, and LEARNING_GOALS has question 6, "What does it connect to?". The writer sees the list of topics. A connect card names the topic it links to, and a new **code gate** drops it if that topic isn't real or is the card's own topic. The receipt stays the same: the quote must state the link.
+- **Not required:** a topic still needs what / how / how sure. Connect shows in the coverage line when it's there, because some sources state no link.
+- **Real runs (dry runs, nothing saved):**
+  - First try: no connect cards. The prompt allowed them but didn't ask for any.
+  - Second try: one, but it said "which topic…" and used my list's description, so the checker rightly rejected it.
+  - Third try, with both fixed: 4 of 6 kept, including a connect card. About 15 cents a run.
+- **Reviewer catches, fixed:** a made-up quote could hide behind a bad link, so quotes are now checked first. Tests no longer read the real topic file.
+- **Known limit:** "own topic" is only caught when a topic's name matches its id (in FUTURE).

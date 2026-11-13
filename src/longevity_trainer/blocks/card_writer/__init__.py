@@ -46,6 +46,7 @@ BLOCK_SPEC = BlockSpec(
         "root",
         "fetch",
         "pages",
+        "topics",
     ],
     outputs=[
         "write_cards",
@@ -56,13 +57,16 @@ BLOCK_SPEC = BlockSpec(
         "slug",
         "ASKS",
         "REQUIRED_ASKS",
+        "TOPICS_FILE",
+        "load_topics",
     ],
 )
 
-PROMPT_VERSION = "4"
+PROMPT_VERSION = "5"
 SOURCES_DIR = ROOT / "data" / "sources"
+TOPICS_FILE = ROOT / "data" / "topics.jsonl"
 MAX_SOURCE_CHARS = 200_000
-ASKS = ("what", "how", "how_sure", "catch")
+ASKS = ("what", "how", "how_sure", "catch", "connect")
 REQUIRED_ASKS = {"what", "how", "how_sure"}  # rule 1 (never names alone), rule 2
 try:
     LEARNING_GOALS_TEXT = LEARNING_GOALS.read_text("utf-8")
@@ -83,9 +87,16 @@ Your task: write cards on ONE topic, using ONLY the source text you are given.
   - the question must not assert anything the quote doesn't say (if the quote doesn't name the drug, the trial or the population, pick a quote that does, or leave it out of the question);
   - a plain-English paraphrase of the quote in the answer is fine;
   - avoid open lists ("which outcomes", "what limitations", "key messages"): the question must have one clear answer, and if the quote lists several equally right items, either ask for one of them and accept each, or ask a narrower question.
-- Cover the five questions per topic except the trend one: what is it, how does \
-it work, how sure are we, what's the catch. Mark each card's "asks" as what, how, \
-how_sure or catch.
+- Cover the questions per topic except the trend one: what is it, how does \
+it work, how sure are we, what's the catch, what does it connect to. Mark each \
+card's "asks" as what, how, how_sure, catch or connect.
+- A connect card links this topic to ONE other topic from the list you are given \
+(what it acts on, which hallmark or pathway it belongs to, what measures it, which \
+trial tested it). Ask in the source's own words, and never say "topic" in the \
+card: e.g. "Which kinase complex does rapamycin inhibit?" -> "mTORC1 (mTOR)". The \
+answer is the name as the quote gives it, not the description in the list. Its \
+"links_to" is that topic's id, and its quote states the link. Every other card has "links_to": "". \
+Write at least one connect card whenever the source states a link to a listed topic.
 - A how_sure answer names the species or population (mice, healthy people, \
 patients) and doesn't oversell.
 - No trivia: no sample sizes, p-values, registry numbers or exact dates.
@@ -116,8 +127,16 @@ SCHEMA = {
                         "minItems": 1,
                     },
                     "quote": {"type": "string"},
+                    "links_to": {"type": "string"},
                 },
-                "required": ["asks", "kind", "question", "answers", "quote"],
+                "required": [
+                    "asks",
+                    "kind",
+                    "question",
+                    "answers",
+                    "quote",
+                    "links_to",
+                ],
                 "additionalProperties": False,
             },
         }
@@ -132,11 +151,12 @@ class Draft(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
 
-    asks: Literal["what", "how", "how_sure", "catch"]
+    asks: Literal["what", "how", "how_sure", "catch", "connect"]
     kind: Literal["name", "fact", "term", "explain"]
     question: str
     answers: list[str] = Field(min_length=1)
     quote: str
+    links_to: str = ""  # connect cards: the other topic's id
 
 
 class Drop(BaseModel):
@@ -145,7 +165,7 @@ class Drop(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     question: str
-    gate: Literal["shape", "quote", "repeat", "checker"]
+    gate: Literal["shape", "link", "quote", "repeat", "checker"]
     reason: str
 
 
@@ -157,6 +177,7 @@ class WriterReport(BaseModel):
     drafted: int
     kept: int
     dropped_shape: int
+    dropped_link: int
     dropped_quote: int
     dropped_repeat: int
     dropped_checker: int
@@ -187,6 +208,45 @@ class WriterResult(BaseModel):
 def slug(text: str) -> str:
     """Lower case, letters/digits/hyphens: 'Epigenetic clocks!' -> 'epigenetic-clocks'."""
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+
+
+def load_topics(path: Path | None = None) -> dict[str, str]:
+    """The `v1` topics a connect card may link to: id -> topic text, in file order
+    (default file: TOPICS_FILE, looked up at call time)."""
+    path = TOPICS_FILE if path is None else path
+    topics: dict[str, str] = {}
+    seen: set[str] = set()
+    for number, line in enumerate(Path(path).read_text("utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except ValueError as err:
+            raise ValueError(f"{path} line {number}: not JSON ({err})") from err
+        if not isinstance(row, dict) or not all(
+            isinstance(row.get(f), str) for f in ("id", "topic", "status")
+        ):
+            raise ValueError(f"{path} line {number}: needs string id, topic and status")
+        if row["id"] in seen:
+            raise ValueError(f"{path} line {number}: repeated id {row['id']!r}")
+        seen.add(row["id"])
+        if row["status"] == "v1":
+            topics[row["id"]] = row["topic"]
+    return topics
+
+
+def _link_problem(draft: Draft, topic_slug: str, topics: dict[str, str]) -> str:
+    """Why a draft's links_to is wrong ("" = fine)."""
+    link = slug(draft.links_to)  # " mTOR " -> "mtor"; topic ids are slugs
+    if draft.asks != "connect":
+        return "only connect cards link to a topic" if link else ""
+    if not link:
+        return "connect card has no links_to"
+    if link == topic_slug:
+        return f"links_to {link!r} is this card's own topic"
+    if link not in topics:
+        return f"links_to {link!r} is not a known topic"
+    return ""
 
 
 def _norm(question: str) -> str:
@@ -249,6 +309,7 @@ def write_cards(
     root: Path = ROOT,
     fetch: Callable[[str], bytes] = http_get,
     pages: tuple[int, int] | None = None,
+    topics: dict[str, str] | None = None,
 ) -> WriterResult:
     """Draft `n` cards, run them through the gates, return what survived and why."""
     topic_slug = slug(topic)
@@ -256,6 +317,8 @@ def write_cards(
         raise ValueError(f"topic {topic!r} has no letters or digits")
     if not 1 <= n <= 20:
         raise ValueError(f"n must be 1-20, not {n}")
+    if topics is None:  # before the source, so a bad topics file fails fast
+        topics = load_topics()
     title, every, chosen, text = _source_text(
         source_id, sources_dir, root, fetch, pages
     )
@@ -268,8 +331,16 @@ def write_cards(
             "Questions already in the bank: don't ask any of these again, "
             f"even in other words; ask about other facts:\n{listed}\n\n"
         )
+    links = "\n".join(
+        f"- {tid}: {about}" for tid, about in topics.items() if tid != topic_slug
+    )
+    if links:
+        links = f"Topics a connect card may link to (id: topic):\n{links}\n\n"
+    else:
+        links = "No topics to link to: write no connect cards.\n\n"
     reply = ask(
         f"Topic: {topic}\nNumber of cards: {n}\nSource: {title}\n\n{known}"
+        f"{links}"
         f"Source text:\n{text}",
         model=model,
         system=SYSTEM,
@@ -314,6 +385,11 @@ def write_cards(
                     reason=f"quote not found in {source_id}",
                 )
             )
+            continue
+        # after the quote gate, so every invented quote counts against the bar
+        problem = _link_problem(draft, topic_slug, topics)
+        if problem:
+            drops.append(Drop(question=draft.question, gate="link", reason=problem))
             continue
         card = card.model_copy(
             update={
@@ -383,6 +459,7 @@ def write_cards(
         drafted=len(drafts),
         kept=len(kept),
         dropped_shape=count("shape"),
+        dropped_link=count("link"),
         dropped_quote=count("quote"),
         dropped_repeat=count("repeat"),
         dropped_checker=count("checker"),
