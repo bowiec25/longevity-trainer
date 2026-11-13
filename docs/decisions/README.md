@@ -15,6 +15,7 @@ One file per big decision, numbered in order. Never deleted or rewritten: if a d
 | [0006](0006-the-build-loop-enforced.md) | The build loop (SPEC → test-writer → build → reviewers → PR), enforced by CI | Accepted |
 | [0007](0007-trusted-sources-and-licences.md) | Trusted sources: guidelines (A), major-journal reviews (B), a study only for itself (C); commit records + short quotes, never documents | Accepted |
 | [0008](0008-card-writer-uses-claude-p.md) | The card writer uses `claude -p` (one call, JSON reply, no tools), not the Agent SDK; replaces 0002 guardrail 5 | Accepted |
+| [0009](0009-web-page-on-one-quiz-brain.md) | A local Streamlit web page on one shared quiz brain (`quiz_round`); HSK ADR 0014 pattern | Accepted |
 
 ## Template
 ```markdown

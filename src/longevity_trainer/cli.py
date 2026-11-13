@@ -54,24 +54,31 @@ from longevity_trainer.blocks.marking import (
     make_judge,
     run_marking_eval,
 )
-from longevity_trainer.blocks.study import (
-    Saver,
-    deal,
-    groups,
-    next_due,
-    schedule,
-    stats_lines,
+from longevity_trainer.blocks.quiz_round import (
+    JUDGE_CACHE,
+    NOT_THIS_TIME,
+    OWN_MARK_QUESTION,
+    PROGRESS_FILE,
+    SELF_NO,
+    SELF_YES,
+    RoundFiles,
+    RoundOptions,
+    SetupProblem,
+    feedback,
+    own_mark_line,
+    receipt_line,
+    score_line,
+    setup,
 )
+from longevity_trainer.blocks.study import stats_lines
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.judge import PROMPT_VERSION as JUDGE_PROMPT_VERSION
 from quizkit.blocks.progress_store import ProgressFileError, ProgressStore
 from quizkit.blocks.receipts import check_all
 from quizkit.claude import ClaudeError, ask_claude
 from quizkit.download import DownloadError
-from quizkit.models import Judge, Verdict
+from quizkit.models import Judge
 
-SELF_YES = Verdict(correct=True, reason="you marked it right", source="self")
-SELF_NO = Verdict(correct=False, reason="you marked it wrong", source="self")
 QUIT_WORDS = {"q", "quit", "exit"}
 DEFAULT_N = 10
 
@@ -128,42 +135,26 @@ def play(
         if typed is None or typed.strip().lower() in QUIT_WORDS:
             break
         attempt: Attempt = session.answer(typed)
-        verdict = attempt.verdict
-        checked = verdict is not None and verdict.source != "not_checked"
-        if attempt.correct:
-            write(
-                _wrap(f"✓ Right (Claude: {verdict.reason})")
-                if checked
-                else "   ✓ Right"
-            )
-            if checked:
-                write(_wrap(f"Model answer: {card.answers[0]}"))
-        else:
-            if checked:
-                write(_wrap(f"✗ Claude: {verdict.reason}"))
-            elif verdict is not None:  # Claude couldn't check
-                write(_wrap(f"(Claude: {verdict.reason})"))
-            write(_wrap(f"Answer: {card.answers[0]}"))
-            if typed.strip() and session.can_own_mark:
-                mark = _ask_yes_no(read, "   Count it as right? (y/n) ")
+        for line in feedback(attempt, card):
+            write(_wrap(line))
+        if not attempt.correct:
+            if session.can_own_mark:  # wrong, typed, and nobody could check it
+                mark = _ask_yes_no(read, f"   {OWN_MARK_QUESTION} (y/n) ")
                 if mark is None:  # quit before marking it: not saved
                     break
                 session.own_mark(SELF_YES if mark else SELF_NO, card_id=card.id)
-                write("   ✓ Counted" if mark else "   ✗ Not this time")
+                write(f"   {own_mark_line(mark)}")
             else:
-                write("   ✗ Not this time")
+                write(f"   {NOT_THIS_TIME}")
         if on_answer is not None:
             on_answer(session.result().attempts[-1])
-        r = card.receipt
-        write(_wrap(f'Receipt: "{r.quote}" ({r.source}, p. {r.page})') + "\n")
+        write(_wrap(receipt_line(card)) + "\n")
     result = session.result()
-    write(f"Score: {result.correct} / {result.answered}")
+    write(score_line(result))
     return result.correct, result.answered
 
 
 SOURCES_DIR = ROOT / "data" / "sources"
-JUDGE_CACHE = ROOT / "data" / "judge_cache.jsonl"  # gitignored: your answers
-PROGRESS_FILE = ROOT / "data" / "progress.db"  # gitignored: your own progress
 
 
 def _open_store() -> ProgressStore | None:
@@ -525,53 +516,28 @@ def main(argv: list[str] | None = None) -> int:
             pages=args.pages,
             add=args.add,
         )
-    bank = load_cards()
-    saving = not (args.no_save or args.practise)
-    store = None
-    plan = None  # no progress yet: every card is new
-    if PROGRESS_FILE.exists():
-        store = _open_store()
-        if store is None:
-            return 1
-        try:
-            plan = schedule(store)
-        except ProgressFileError as err:
-            print(f"can't read {PROGRESS_FILE.name}: {err}")
-            return 1
-    cards = deal(
-        bank,
-        args.n,
+    options = RoundOptions(
         topic=args.topic,
-        schedule=plan,
-        now=datetime.now(UTC),
-        seed=args.seed,
+        n=args.n,
         practise=args.practise,
+        judge=not args.no_judge,
+        save=not args.no_save,
+        seed=args.seed,
     )
-    if not cards:
-        soonest = next_due(bank, plan or {}, topic=args.topic)
-        if soonest is not None:
-            when = soonest.astimezone().strftime("%a %d %b %H:%M")
-            print(f"Nothing due. Next card due {when}. (--practise to review anyway)")
-            return 0
-        if args.topic:
-            print(f"no cards on a topic containing {args.topic!r}. Topics:")
-            for group in groups(bank):
-                print(f"  {group}")
-        else:
-            print("no cards in the bank")
-        return 1
-    if saving and store is None:  # created only now that a quiz starts
-        store = _open_store()
-        if store is None:
-            return 1
-    judge = None
-    if not args.no_judge:
-        judge = make_judge(
-            cache_file=JUDGE_CACHE,
+    try:
+        round_ = setup(
+            options,
+            RoundFiles(progress=PROGRESS_FILE, judge_cache=JUDGE_CACHE),
+            now=datetime.now(UTC),
+            make_judge=make_judge,
             before_asking=lambda: print("   asking Claude…", flush=True),
         )
+    except SetupProblem as problem:
+        for line in problem.lines:
+            print(line)
+        return 0 if problem.nothing_due else 1
     try:
-        play(cards, judge=judge, on_answer=Saver(store) if saving else None)
+        play(round_.cards, judge=round_.judge, on_answer=round_.saver)
     except KeyboardInterrupt:
         print("\nStopped.")
     return 0

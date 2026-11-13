@@ -33,6 +33,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M3.5–6 | First bank of 63 cards; `--pages` for long sources; `--add` to grow topics over time | A bank you never update goes stale (your steer); long reviews need one section at a time |
 | M4.1 | The quiz remembers: spaced repetition and saved progress, from quizkit's blocks | A daily quiz must bring back what you miss and leave what you know; quizkit already had it |
 | M4.2 | Marking eval: 23 answers you labelled; Claude agrees on 21, never says yes to a wrong one | An AI marker needs an exam too, or we're just hoping it's fair |
+| M4.3a | One quiz brain (`quiz_round`) for the terminal and the coming web page (ADR 0009) | Two screens with their own copies would drift; HSK did the same before its web page |
 
 ---
 
@@ -301,4 +302,17 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Reuse, not copies (block-reviewer):** the counting of right / wrong yes / wrong no was copied from quizkit's HSK eval; it's now one shared `score` in quizkit that both use. Reading one JSONL file moved into quizkit's loader (so a Windows BOM is fine). A card turns into a question in one place, `card.to_question()`, for the quiz, the eval and the coming web page. **To port back to HSK:** `score`, `ScoreItem`, `verdict_mark` and `load_jsonl_file`.
 - **Your 👎:** the sedentary-behaviour card ("a shit Q") is gone (62 cards) and is now example 12 in LEARNING_GOALS, so the writer learns from it.
 - **Command:** `uv run longevity check-marking-eval` (`--dry-run`, `--limit N`). Re-run when the marking rules or model change.
+
+## M4 Step 3a: one brain, two screens (2026-11-13)
+
+> **In plain words:** the TV and the phone show the same programme. The quiz's rules (which cards, how answers are marked, what's said after each one, what's saved) now live in one block, and both the terminal and the coming web page are screens on it.
+
+- **Why first:** what to say after an answer, the "count it as right?" rule and setting up a round all lived inside the terminal program. A web page would have had to copy them, and copies drift.
+- **New block `quiz_round`:**
+  - `setup` builds a round: it deals the cards, opens your progress file and builds Claude's marker.
+  - The wording functions are `feedback`, `own_mark_line`, `receipt_line` and `score_line`.
+  - `QuizScreen` is the click-by-click quiz for a web page. It ignores double or late clicks, and it saves each answer once, when it's final. Copied from HSK's `WebQuiz`.
+- **Terminal unchanged:** every CLI test passes. One test now points at the block, because the setup moved there.
+- **Safety net grown:** tests also can't touch the block's default progress and Claude-cache files.
+- **ADR 0009:** a local Streamlit page on one shared brain. Next (3b): the page itself.
 

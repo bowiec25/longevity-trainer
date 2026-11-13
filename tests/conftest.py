@@ -14,7 +14,11 @@ def no_real_claude(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def no_real_progress(tmp_path, monkeypatch):
-    """Safety net: no test reads or writes your real data/progress.db."""
+    """Safety net: no test reads or writes your real data/progress.db or
+    data/judge_cache.jsonl (the terminal's paths and quiz_round's defaults)."""
     from longevity_trainer import cli
+    from longevity_trainer.blocks import quiz_round
 
-    monkeypatch.setattr(cli, "PROGRESS_FILE", tmp_path / "progress-guard.db")
+    for module in (cli, quiz_round):
+        monkeypatch.setattr(module, "PROGRESS_FILE", tmp_path / "progress-guard.db")
+        monkeypatch.setattr(module, "JUDGE_CACHE", tmp_path / "judge-cache-guard.jsonl")
