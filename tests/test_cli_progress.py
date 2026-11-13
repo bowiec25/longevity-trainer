@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 import pytest
 
 from longevity_trainer import cli
+from longevity_trainer.blocks import quiz_round
 from longevity_trainer.blocks.card_bank import load_cards
 from longevity_trainer.blocks.study import SKILL, Saver
 from quizkit.blocks.progress_store import ProgressStore
@@ -129,7 +130,7 @@ def test_a_read_error_in_quiz_is_one_line(progress, monkeypatch, capsys):
     def broken(_store):
         raise ProgressFileError("database is busy")
 
-    monkeypatch.setattr(cli, "schedule", broken)
+    monkeypatch.setattr(quiz_round, "schedule", broken)
     assert cli.main(["quiz", "--no-judge"]) == 1
     assert "database is busy" in capsys.readouterr().out
 
