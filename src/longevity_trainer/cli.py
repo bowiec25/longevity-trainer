@@ -5,6 +5,7 @@ new ones (spaced repetition: quizkit's deck_builder + leitner); every answer and
 each card's box is saved in data/progress.db (quizkit's progress_store), unless
 --no-save. `--topic` picks cards whose topic contains the text. `stats` shows, per
 topic, new / in each box / due now, the last 7 days' score and the most missed.
+`web` opens the same quiz and stats as a page in your browser (this computer only).
 `check-receipts` finds every card's quote in its pinned source (downloads it if needed).
 `check-marking-eval` scores Claude's marking on answers you labelled (real Claude).
 `check-cards-exam` scores the card checker on the labelled exam (real Claude;
@@ -75,6 +76,7 @@ from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.judge import PROMPT_VERSION as JUDGE_PROMPT_VERSION
 from quizkit.blocks.progress_store import ProgressFileError, ProgressStore
 from quizkit.blocks.receipts import check_all
+from quizkit.blocks.web_launch import serve
 from quizkit.claude import ClaudeError, ask_claude
 from quizkit.download import DownloadError
 from quizkit.models import Judge
@@ -155,6 +157,7 @@ def play(
 
 
 SOURCES_DIR = ROOT / "data" / "sources"
+WEB_PAGE = Path(__file__).with_name("web_app.py")
 
 
 def _open_store() -> ProgressStore | None:
@@ -452,6 +455,9 @@ def main(argv: list[str] | None = None) -> int:
         "--no-judge", action="store_true", help="mark open answers yourself, no Claude"
     )
     sub.add_parser("stats", help="how you're doing, per topic")
+    sub.add_parser(
+        "web", help="the quiz as a page in your browser (this computer only)"
+    )
     sub.add_parser("check-receipts", help="find every quote in its pinned source")
     exam = sub.add_parser(
         "check-cards-exam",
@@ -499,6 +505,8 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if args.command == "stats":
         return stats_command()
+    if args.command == "web":
+        return serve(WEB_PAGE, ROOT)
     if args.command == "check-receipts":
         return check_all_receipts()
     if args.command == "check-marking-eval":
