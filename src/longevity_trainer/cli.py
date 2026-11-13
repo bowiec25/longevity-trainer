@@ -334,7 +334,8 @@ def write_cards_command(
     r = result.report
     write(
         f"\n{r.model} (prompt v{r.prompt_version}): kept {r.kept}/{r.drafted}; "
-        f"dropped shape {r.dropped_shape}, quote {r.dropped_quote}, "
+        f"dropped shape {r.dropped_shape}, link {r.dropped_link}, "
+        f"quote {r.dropped_quote}, "
         f"repeat {r.dropped_repeat}, checker {r.dropped_checker}; "
         f"asks kept {r.asks_kept} -> {'PASSED' if r.passed else 'NOT PASSED'}"
     )

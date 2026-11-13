@@ -39,6 +39,9 @@
   - [x] 3. A web page to play on (Streamlit, like HSK's `hsk web`): the quiz, the receipt after each answer, and stats, on the same blocks (user, 2026-11-12: "I'm gonna wait for the Streamlit setup to play")
     - [x] 3a. One brain for both screens: new block `quiz_round` (set up a round, what to say after each answer, and `QuizScreen`, the click-by-click quiz for a web page). The terminal now uses it, with unchanged output. ADR 0009
     - [x] 3b. The page: `uv run longevity web` opens it in your browser (this computer only). Quiz page: pick a topic, type answers, Claude marks them, "count it as right?" buttons when Claude can't check, the receipt quote after every answer. Stats page: the same lines as `longevity stats`. The launcher and Markdown-safe text are a new quizkit block, `web_launch`, generic for any quiz (port to HSK)
+- [ ] **Questions that build an expert** (user, 2026-11-13: "the questions should be made up based on trying to make a longevity expert"; first pick: connecting things)
+  - [x] 1. Connect cards: a fifth ask, "what does it connect to?" (LEARNING_GOALS question 6). The writer links a topic to another topic in `data/topics.jsonl` (what it acts on, its hallmark or pathway, what measures it, which trial tested it); a new code gate checks the link names a real other topic. First real run: rapamycin → dogs (TRIAD)
+  - [ ] 2. Fill the bank: run the writer over more topics, so there's more to connect
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
 

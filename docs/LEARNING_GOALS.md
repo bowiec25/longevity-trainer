@@ -6,7 +6,7 @@
 
 ---
 
-## 1. What I want to learn: five questions per topic
+## 1. What I want to learn: six questions per topic
 
 For every drug, supplement, intervention or mechanism, I should be able to answer:
 
@@ -17,8 +17,9 @@ For every drug, supplement, intervention or mechanism, I should be able to answe
 | 3 | **How sure are we it helps longevity?** | The evidence grade (A–E) **and why**: in which species or people, which trials, which outcome |
 | 4 | **What's the catch?** | Side effects, failed trials, open questions, why the evidence is weaker than it sounds |
 | 5 | **Is it growing in popularity?** | The trend (rising, flat, falling) and what's driving it. A **dated** fact: the card carries an "as of" date and is re-checked by the M5 freshness job |
+| 6 | **What does it connect to?** | Its link to another topic: what it acts on, which hallmark or pathway it belongs to, what measures it, which trial tested it. An expert sees the field as a map, not a list (user, 2026-11-13) |
 
-Not every topic needs all five (a hallmark has no "side effects" or trend), but questions 2 and 3 matter most: **mechanism and conviction**. Names come first, as vocabulary.
+Not every topic needs all six (a hallmark has no "side effects" or trend), but questions 2 and 3 matter most: **mechanism and conviction**. Names come first, as vocabulary.
 
 ### Worked example: rapamycin
 | # | What I should know |
@@ -28,6 +29,7 @@ Not every topic needs all five (a hallmark has no "side effects" or trend), but 
 | 3 | Grade D for lifespan: the only compound that reliably extends life in both sexes in the most rigorous mouse-testing programme, even started in old age; unproven in people |
 | 4 | PEARL (114 healthy people, 48 weeks) missed its main goal; the compounded form may have been poorly absorbed; side effects reported by users (infections, cholesterol, blood sugar) |
 | 5 | Flat: it plateaued after the 2022–24 hype (as of Oct 2026) |
+| 6 | Acts on mTOR (deregulated nutrient sensing, one of the hallmarks); tested in people in PEARL and in dogs in TRIAD |
 
 (From the primer, section 6.5. Each fact still needs a receipt from a trusted source before it becomes a card.)
 

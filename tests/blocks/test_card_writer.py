@@ -62,6 +62,7 @@ def test_block_spec_lists_spec_inputs_and_outputs():
         "root",
         "fetch",
         "pages",
+        "topics",
     }
     assert set(block.BLOCK_SPEC.outputs) == {
         "write_cards",
@@ -72,6 +73,8 @@ def test_block_spec_lists_spec_inputs_and_outputs():
         "slug",
         "ASKS",
         "REQUIRED_ASKS",
+        "TOPICS_FILE",
+        "load_topics",
     }
 
 
@@ -205,7 +208,7 @@ def env(tmp_path):
             sources_dir=sources_dir,
             root=tmp_path,
             fetch=fetch,
-            **kwargs,
+            **{"topics": TOPICS, **kwargs},  # not the real topics file
         )
         return result, calls
 
@@ -474,6 +477,7 @@ def test_receipt_page_is_where_find_quote_finds_it_in_a_pdf(tmp_path):
 def assert_counts_add_up(report, result):
     drops = (
         report.dropped_shape
+        + report.dropped_link
         + report.dropped_quote
         + report.dropped_repeat
         + report.dropped_checker
@@ -857,8 +861,8 @@ def test_cli_prints_a_line_per_draft_and_the_report(cli, results, capsys):
 # ---- Added after the SPEC review (PROMPT_VERSION 3, page markers, CLI bank) -------
 
 
-def test_prompt_version_is_4():
-    assert block.PROMPT_VERSION == "4"
+def test_prompt_version_is_5():
+    assert block.PROMPT_VERSION == "5"
 
 
 def test_checker_rejected_question_does_not_block_a_later_same_question(env):
@@ -1299,8 +1303,8 @@ def test_cli_coverage_counts_the_existing_file_with_add(cli, env, capsys):
 # ---- Added after the SPEC review (PROMPT_VERSION 4, one read, coverage) -----------
 
 
-def test_asks_are_the_four_in_order():
-    assert block.ASKS == ("what", "how", "how_sure", "catch")
+def test_asks_are_the_five_in_order():
+    assert block.ASKS == ("what", "how", "how_sure", "catch", "connect")
 
 
 def test_required_asks_are_what_how_how_sure():
@@ -1445,3 +1449,394 @@ def test_cli_topic_file_changed_during_run_writes_nothing(
     captured = capsys.readouterr()
     assert "changed" in (captured.out + captured.err).lower()
     assert [p.name for p in cli.cards_dir.iterdir()] == ["rapamycin.jsonl"]
+
+
+# ---- Added for connect cards (SPEC 2026-11-13, PROMPT_VERSION 5) -------------------
+
+TOPICS = {
+    "mtor": "mTOR: the cell's growth switch",
+    "ampk": "AMPK: the energy-shortage sensor",
+    "rapamycin": "Rapamycin: mechanism, mouse evidence, human trials",
+}
+CONNECT_Q = "Which cell growth switch does rapamycin turn down?"
+
+
+def connect(links_to="mtor", question=CONNECT_Q, quote=S_WHAT, asks="connect"):
+    d = draft(asks, question, answers=["mTOR"], quote=quote, kind="name")
+    d["links_to"] = links_to
+    return d
+
+
+def test_block_spec_lists_topics_input_and_new_outputs():
+    assert "topics" in block.BLOCK_SPEC.inputs
+    assert {"TOPICS_FILE", "load_topics"} <= set(block.BLOCK_SPEC.outputs)
+
+
+def test_connect_draft_with_known_topic_is_kept(env):
+    result, _ = env([*good_drafts(), connect()], topics=TOPICS)
+    assert gates(result) == []
+    assert result.kept[-1].id == "rapamycin-connect-1"
+    assert "connect" in result.report.asks_kept
+    assert result.report.dropped_link == 0
+
+
+def test_connect_links_to_with_spaces_is_kept(env):
+    result, _ = env([connect(" mtor ")], topics=TOPICS)
+    assert gates(result) == []
+    assert [c.id for c in result.kept] == ["rapamycin-connect-1"]
+
+
+@pytest.mark.parametrize(
+    "links_to, reason",
+    [
+        ("", "has no links_to"),
+        ("   ", "has no links_to"),
+        ("made-up", "not a known topic"),
+        ("rapamycin", "own topic"),
+    ],
+)
+def test_connect_bad_links_to_dropped_at_link(env, links_to, reason):
+    result, _ = env([*good_drafts(), connect(links_to)], topics=TOPICS)
+    assert gates(result) == ["link"]
+    assert reason in result.drops[0].reason
+    assert result.drops[0].question == CONNECT_Q
+    assert result.report.dropped_link == 1
+
+
+def test_unknown_links_to_reason_names_it(env):
+    result, _ = env([connect("made-up")], topics=TOPICS)
+    assert "'made-up'" in result.drops[0].reason
+
+
+def test_own_topic_is_the_topic_slug(env):
+    """links_to == slug(topic): "Rapamycin!" has slug "rapamycin"."""
+    result, _ = env([connect("rapamycin")], topic="Rapamycin!", topics=TOPICS)
+    assert gates(result) == ["link"]
+    assert "own topic" in result.drops[0].reason
+
+
+def test_non_connect_draft_with_links_to_dropped_at_link(env):
+    d = connect(
+        "mtor", question="What does rapamycin inhibit in the cell?", asks="what"
+    )
+    result, _ = env([d], topics=TOPICS)
+    assert gates(result) == ["link"]
+    assert "only connect cards" in result.drops[0].reason
+
+
+def test_non_connect_draft_with_blank_links_to_is_fine(env):
+    d = connect("  ", question="What does rapamycin inhibit in the cell?", asks="what")
+    result, _ = env([d], topics=TOPICS)
+    assert gates(result) == []
+
+
+def test_quote_gate_comes_before_link(env):
+    """An invented quote always counts against the bar, even with a bad link."""
+    fake = "Rapamycin doubled the lifespan of every human volunteer tested."
+    result, _ = env([connect("made-up", quote=fake)], topics=TOPICS)
+    assert gates(result) == ["quote"]
+    assert (result.report.dropped_quote, result.report.dropped_link) == (1, 0)
+
+
+def test_link_gate_comes_before_checker(env):
+    check = fake_check()
+    result, _ = env([connect("made-up")], topics=TOPICS, check=check)
+    assert gates(result) == ["link"]
+    assert check.calls == []
+
+
+def test_system_prompt_asks_for_connect_cards(env):
+    _, calls = env(topics=TOPICS)
+    system = calls[0]["system"]
+    assert "connect" in system and "links_to" in system
+    assert "at least one connect card" in system
+
+
+def test_link_gate_comes_after_shape(env):
+    result, _ = env([connect("made-up", question="Why??")], topics=TOPICS)
+    assert gates(result) == ["shape"]
+
+
+def test_counts_add_up_with_a_link_drop(env):
+    drafts = [*good_drafts(), connect("made-up"), connect()]
+    result, _ = env(drafts, topics=TOPICS, n=6)
+    r = result.report
+    assert (r.drafted, r.kept, r.dropped_link) == (6, 5, 1)
+    assert_counts_add_up(r, result)
+    assert "dropped_link" in r.model_dump()
+
+
+def test_prompt_lists_topics_but_not_own_topic(env):
+    _, calls = env(topics=TOPICS)
+    prompt = calls[0]["prompt"]
+    assert "- mtor: mTOR: the cell's growth switch" in prompt
+    assert "- ampk: AMPK: the energy-shortage sensor" in prompt
+    assert "- rapamycin:" not in prompt
+
+
+def test_required_asks_do_not_include_connect():
+    assert "connect" not in block.REQUIRED_ASKS
+    assert block.ASKS[-1] == "connect"
+
+
+def test_draft_without_links_to_reads_as_blank():
+    d = block.Draft.model_validate(draft("how_sure", quote=S_SURE))
+    assert d.links_to == ""
+
+
+def test_draft_accepts_connect_with_links_to():
+    d = block.Draft.model_validate(connect())
+    assert (d.asks, d.links_to) == ("connect", "mtor")
+
+
+def test_reply_schema_requires_links_to_and_allows_connect(env):
+    _, calls = env(topics=TOPICS)
+    items = calls[0]["json_schema"]["properties"]["cards"]["items"]
+    assert "links_to" in items["required"]
+    assert "connect" in json.dumps(items)
+
+
+def test_topics_none_uses_load_topics_from_topics_file(env, tmp_path, monkeypatch):
+    f = tmp_path / "topics.jsonl"
+    f.write_text(
+        json.dumps({"id": "zzz-topic", "topic": "A test topic", "status": "v1"}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(block, "TOPICS_FILE", f)
+    other = connect("mtor", question="Which growth switch is blocked by rapamycin?")
+    result, calls = env([connect("zzz-topic"), other], topics=None)
+    assert "- zzz-topic: A test topic" in calls[0]["prompt"]
+    assert [c.id for c in result.kept] == ["rapamycin-connect-1"]
+    assert gates(result) == ["link"]  # mtor isn't in this topics file
+
+
+def test_missing_topics_file_raises_before_claude(env, tmp_path, monkeypatch):
+    monkeypatch.setattr(block, "TOPICS_FILE", tmp_path / "nope.jsonl")
+    ask, calls = fake_ask(good_drafts())
+    with pytest.raises(FileNotFoundError):
+        env(ask=ask, topics=None)
+    assert calls == []
+
+
+def test_bad_topics_file_raises_before_claude(env, tmp_path, monkeypatch):
+    f = tmp_path / "topics.jsonl"
+    f.write_text("not json\n", encoding="utf-8")
+    monkeypatch.setattr(block, "TOPICS_FILE", f)
+    ask, calls = fake_ask(good_drafts())
+    with pytest.raises(ValueError):
+        env(ask=ask, topics=None)
+    assert calls == []
+
+
+# -- load_topics ---------------------------------------------------------------------
+
+
+def topic_line(tid, text="Some topic", status="v1") -> str:
+    return json.dumps({"id": tid, "topic": text, "status": status})
+
+
+def test_topics_file_is_data_topics_jsonl():
+    assert block.TOPICS_FILE == ROOT / "data" / "topics.jsonl"
+
+
+def test_load_topics_keeps_v1_in_file_order_and_skips_blanks(tmp_path):
+    f = tmp_path / "topics.jsonl"
+    lines = [
+        topic_line("b-one", "B one"),
+        "",
+        topic_line("later", "Later", status="after-m5"),
+        "   ",
+        topic_line("a-two", "A two"),
+        topic_line("read-only", "Read", status="read"),
+    ]
+    f.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    topics = block.load_topics(f)
+    assert topics == {"b-one": "B one", "a-two": "A two"}
+    assert list(topics) == ["b-one", "a-two"]
+
+
+def test_load_topics_missing_file_raises(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        block.load_topics(tmp_path / "nope.jsonl")
+
+
+BAD_TOPIC_LINES = {
+    "not json": "not json",
+    "not an object": "[1, 2]",
+    "no id": json.dumps({"topic": "T", "status": "v1"}),
+    "no topic": json.dumps({"id": "x", "status": "v1"}),
+    "no status": json.dumps({"id": "x", "topic": "T"}),
+    "id not a string": json.dumps({"id": 5, "topic": "T", "status": "v1"}),
+    "topic not a string": json.dumps({"id": "x", "topic": ["T"], "status": "v1"}),
+    "status not a string": json.dumps({"id": "x", "topic": "T", "status": 1}),
+}
+
+
+@pytest.mark.parametrize("bad", BAD_TOPIC_LINES.values(), ids=BAD_TOPIC_LINES.keys())
+def test_load_topics_bad_line_raises_naming_line_number(tmp_path, bad):
+    f = tmp_path / "topics.jsonl"
+    f.write_text(topic_line("ok-one") + "\n" + bad + "\n", encoding="utf-8")
+    with pytest.raises(ValueError) as err:
+        block.load_topics(f)
+    assert re.search(r"\b2\b", str(err.value))
+
+
+def test_load_topics_repeated_id_raises(tmp_path):
+    f = tmp_path / "topics.jsonl"
+    f.write_text(topic_line("dup") + "\n" + topic_line("dup") + "\n", encoding="utf-8")
+    with pytest.raises(ValueError):
+        block.load_topics(f)
+
+
+def test_load_topics_real_file():
+    topics = block.load_topics()
+    assert "mtor" in topics and "rapamycin" in topics
+    assert "glp1-price" not in topics  # after-m5
+
+
+# -- CLI coverage with connect -------------------------------------------------------
+
+
+def coverage_line(out: str) -> str:
+    """The coverage line ("topic <slug> covers: ..."; a temp path can hold "cover")."""
+    lines = [
+        ln.lower()
+        for ln in out.splitlines()
+        if ln.lower().startswith("topic ") and " covers" in ln.lower()
+    ]
+    assert lines, f"no coverage line in:\n{out}"
+    return lines[-1]
+
+
+def test_cli_coverage_lists_connect_from_topic_file(cli, env, capsys):
+    con = env([connect()], topics=TOPICS)[0].kept[0]
+    write_card_file(
+        cli.cards_dir / "rapamycin.jsonl",
+        [con.model_copy(update={"id": "rapamycin-connect-3"})],
+    )
+    assert cli(what_and_how_sure(env), "--add") == 0
+    line = coverage_line(capsys.readouterr().out)
+    assert "connect" in line.split("missing", 1)[0]
+
+
+def test_cli_coverage_lists_connect_from_kept_cards(cli, env, capsys):
+    result, _ = env([*good_drafts(), connect()], topics=TOPICS)
+    assert cli(result) == 0
+    line = coverage_line(capsys.readouterr().out)
+    assert "connect" in line.split("missing", 1)[0]
+
+
+def test_cli_coverage_never_reports_connect_missing(cli, env, capsys):
+    assert cli(what_and_how_sure(env)) == 0
+    tail = missing_part(capsys.readouterr().out)
+    assert "connect" not in tail
+
+
+def test_cli_report_line_includes_link_count(cli, env, capsys):
+    result, _ = env([*good_drafts(), connect("made-up")], topics=TOPICS)
+    assert result.report.dropped_link == 1
+    cli(result, "--dry-run")
+    assert re.search(r"\blink 1\b", capsys.readouterr().out)
+
+
+def test_cli_bad_topics_file_prints_one_line_exit_1(cli, capsys):
+    error = ValueError("data/topics.jsonl line 3: not a JSON object")
+    assert cli(error) == 1
+    captured = capsys.readouterr()
+    assert str(error) in captured.out + captured.err
+    assert list(cli.cards_dir.iterdir()) == []
+
+
+# ---- Added after the connect review (slugged links_to, empty topic list, early load) -
+
+
+def test_connect_links_to_is_slugged(env):
+    """Topic ids are slugs: "mTOR" and " mTOR " count as "mtor"."""
+    other = connect("mTOR", question="Which growth switch is blocked by rapamycin?")
+    result, _ = env([connect(" mTOR "), other], topics=TOPICS)
+    assert gates(result) == []
+    assert [c.id for c in result.kept] == ["rapamycin-connect-1", "rapamycin-connect-2"]
+
+
+def topic_list_header(prompt: str) -> str:
+    """The line just above the first `- <id>: <text>` topic line."""
+    lines = prompt.splitlines()
+    first = next(i for i, ln in enumerate(lines) if ln.startswith("- mtor:"))
+    header = lines[first - 1].strip()
+    assert header, "expected a header line right above the topic list"
+    return header
+
+
+@pytest.mark.parametrize(
+    "topics",
+    [{}, {"rapamycin": TOPICS["rapamycin"]}],
+    ids=["no topics", "only own topic"],
+)
+def test_no_other_topics_prompt_says_write_no_connect_cards(env, topics):
+    header = topic_list_header(env(topics=TOPICS)[1][0]["prompt"])
+    _, calls = env(topics=topics)
+    prompt = calls[0]["prompt"]
+    assert header not in prompt
+    assert not re.search(r"^- [a-z0-9-]+: ", prompt, re.MULTILINE)
+    assert re.search(r"\b(no|not|don't|do not)\b[^.\n]*connect card", prompt.lower())
+
+
+def test_with_topics_prompt_does_not_say_no_connect_cards(env):
+    _, calls = env(topics=TOPICS)
+    assert not re.search(r"\bno connect cards?\b", calls[0]["prompt"].lower())
+
+
+def test_missing_topics_file_raises_before_fetch(env, tmp_path, monkeypatch):
+    """topics=None + no topics file: raises before the source is read or fetched."""
+    monkeypatch.setattr(block, "TOPICS_FILE", tmp_path / "nope.jsonl")
+    fetched: list[str] = []
+    ask, calls = fake_ask(good_drafts())
+
+    def fetch(url):
+        fetched.append(url)
+        return env.fetch(url)
+
+    with pytest.raises(FileNotFoundError):
+        block.write_cards(
+            "rapamycin",
+            SOURCE_ID,
+            ask=ask,
+            check=fake_check(),
+            sources_dir=env.sources_dir,
+            root=env.root,  # the document isn't on disk yet, so a read would fetch
+            fetch=fetch,
+            topics=None,
+        )
+    assert fetched == []
+    assert calls == []
+
+
+def test_load_topics_without_argument_follows_topics_file(tmp_path, monkeypatch):
+    f = tmp_path / "topics.jsonl"
+    f.write_text(topic_line("only-one", "Only one") + "\n", encoding="utf-8")
+    monkeypatch.setattr(block, "TOPICS_FILE", f)
+    assert block.load_topics() == {"only-one": "Only one"}
+
+
+def test_load_topics_without_argument_missing_topics_file_raises(tmp_path, monkeypatch):
+    monkeypatch.setattr(block, "TOPICS_FILE", tmp_path / "nope.jsonl")
+    with pytest.raises(FileNotFoundError):
+        block.load_topics()
+
+
+def test_cli_missing_topics_file_prints_one_line_exit_1(tmp_path, monkeypatch, capsys):
+    """The real write_cards (not faked): a missing topics file stops the run."""
+    from longevity_trainer import cli as cli_module
+
+    cards_dir = tmp_path / "cards"
+    cards_dir.mkdir()
+    missing = tmp_path / "no-topics.jsonl"
+    monkeypatch.setattr(cli_module, "CARDS_DIR", cards_dir)
+    monkeypatch.setattr(block, "TOPICS_FILE", missing)
+    argv = ["write-cards", "--topic", "rapamycin", "--source", SOURCE_ID]
+    assert cli_module.main(argv) == 1
+    captured = capsys.readouterr()
+    lines = [ln for ln in (captured.out + captured.err).splitlines() if ln.strip()]
+    assert len(lines) == 1, lines
+    assert "no-topics.jsonl" in lines[0]
+    assert list(cards_dir.iterdir()) == []
