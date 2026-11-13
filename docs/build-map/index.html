@@ -142,7 +142,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>62</b><span>quiz cards (hallmarks, rapamycin, clocks, exercise), every quote checked</span></div>
-    <div class="tile"><b>1375</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>1442</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>8</b><span>decision records (ADRs)</span></div>
@@ -262,7 +262,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 1375 tests guard</h2>
+    <h2>4. What the 1442 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
@@ -270,6 +270,8 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
       <tbody>
         <tr><td class="mono">test_cli.py</td><td class="n">11</td><td class="bar"><span style="width:2%"></span></td><td>the quiz: right answers score, typos forgiven, Claude's mark shown (fake Claude), own mark y/n when Claude can't check, q quits and keeps the score, receipt shown</td></tr>
         <tr><td class="mono">blocks/test_source_text.py</td><td class="n">65</td><td class="bar"><span style="width:12%"></span></td><td>quizkit block, by the test-writer: text from web pages and journal XML; hidden parts, reference lists and author notes left out; all 4 real sources read</td></tr>
+        <tr><td class="mono">test_web_app.py</td><td class="n">15</td><td class="bar"><span style="width:4%"></span></td><td>the web page, played by Streamlit's AppTest (no browser): right/wrong answers, the receipt, Yes/No marking, stop, nothing due, Save off, Practise, the stats page, and the page stays local</td></tr>
+        <tr><td class="mono">blocks/test_web_launch.py</td><td class="n">52</td><td class="bar"><span style="width:10%"></span></td><td>quizkit block, by the test-writer: the launcher starts Streamlit on this computer only, opens the browser once, never leaves a copy holding the port after Ctrl-C (fake process, real Streamlit never started); text shown as written</td></tr>
         <tr><td class="mono">blocks/test_quiz_round.py</td><td class="n">90</td><td class="bar"><span style="width:17%"></span></td><td>longevity block, by the test-writer: one brain for the terminal and the web page: what's said after each answer, setting up a round (nothing due, unknown topic, bad progress file), and the click-by-click quiz (double or late clicks ignored, each answer saved once, never on stop)</td></tr>
         <tr><td class="mono">blocks/test_study.py + test_cli_progress.py</td><td class="n">60</td><td class="bar"><span style="width:12%"></span></td><td>longevity block, by the test-writer: due cards first, then new, never early reviews; a missed card comes back first; boxes move right; a busy file warns once and keeps trying; stats per topic group; tests never touch your real progress file</td></tr>
         <tr><td class="mono">blocks/test_card_writer.py</td><td class="n">130</td><td class="bar"><span style="width:25%"></span></td><td>longevity block, tests written <b>before</b> the code: the writer's prompt carries your whole standard; each gate (shape, quote in the source, repeats, checker) drops the right drafts; ids never clash with the bank; the bar; the write-cards command (dry run, --add / --replace, --pages, a broken bank stops it, coverage and cost lines)</td></tr>
@@ -284,7 +286,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">1375</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">1442</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -324,6 +326,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-13</span><span class="what">M4 Step 3: the web page</span><span><code>uv run longevity web</code> opens the quiz in your browser: type an answer, see Claude's mark and the 🧾 receipt quote, Yes/No when Claude can't check, and a Stats page. Local only (127.0.0.1, no usage data). The launcher became a generic quizkit block, <code>web_launch</code>. M4 done: a quiz you can use every day. <a href="snapshots/m4-done.html">snapshot</a></span></li>
     <li><span class="when">2026-11-13</span><span class="what">M4 Step 3a: one brain, two screens</span><span>The quiz's rules (which cards, marking, what's said after each answer, saving) moved out of the terminal program into a new block, <code>quiz_round</code>, so the coming web page can't drift from it. The terminal says exactly what it said before. ADR 0009: a local Streamlit page, HSK's pattern. <a href="snapshots/m4-step3a.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M4 Step 2: an exam for the marker</span><span>You labelled 23 borderline answers; Claude's marking, run exactly as the quiz runs it (answer list first), agreed on 21 both times and never passed a wrong answer: PASSED. The reviewers caught copied code, now shared quizkit parts (one scorer, one file loader) and one <code>card.to_question()</code>. Your 👎 removed the sedentary card (62). <a href="snapshots/m4-step2.html">snapshot</a></span></li>
     <li><span class="when">2026-11-12</span><span class="what">M4 Step 1: the quiz remembers</span><span>Spaced repetition and saved progress, wired from quizkit's own blocks through a new <code>study</code> block: due cards first, then new ones; a card you miss comes back first; <code>longevity stats</code> per topic. The reviewer caught a bug that would have pushed cards up boxes early. <a href="snapshots/m4-step1.html">snapshot</a></span></li>

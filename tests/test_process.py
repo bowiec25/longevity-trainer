@@ -27,6 +27,10 @@ NOT_BLOCKS = {
     "longevity_trainer/__init__.py": "package entry point",
     "longevity_trainer/blocks/__init__.py": "package marker",
     "longevity_trainer/cli.py": "terminal front end (wires blocks; tested in test_cli.py)",
+    "longevity_trainer/web_app.py": "web front end entry: page menu only (test_web_app.py)",
+    "longevity_trainer/web_pages/__init__.py": "package marker for the web pages",
+    "longevity_trainer/web_pages/quiz.py": "web quiz page: draws QuizScreen (test_web_app.py)",
+    "longevity_trainer/web_pages/stats.py": "web stats page: draws stats_lines (test_web_app.py)",
     # quizkit's shared parts, copied from HSK caa969a with their own tests (ADR 0003)
     "quizkit/__init__.py": "package marker",
     "quizkit/blocks/__init__.py": "package marker",

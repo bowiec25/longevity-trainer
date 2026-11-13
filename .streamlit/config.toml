@@ -1,0 +1,11 @@
+# Streamlit settings for `uv run longevity web` (ADR 0009). `longevity web` also
+# passes these as flags (quizkit.blocks.web_launch.command), so they hold from any folder.
+[server]
+address = "127.0.0.1"  # only this computer can open the page
+headless = true  # no first-run email question; `longevity web` opens the browser itself
+
+[browser]
+gatherUsageStats = false  # send no usage data to Streamlit
+
+[client]
+toolbarMode = "minimal"  # no "Deploy" button: this app is never published online

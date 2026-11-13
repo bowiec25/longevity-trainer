@@ -34,6 +34,7 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 | M4.1 | The quiz remembers: spaced repetition and saved progress, from quizkit's blocks | A daily quiz must bring back what you miss and leave what you know; quizkit already had it |
 | M4.2 | Marking eval: 23 answers you labelled; Claude agrees on 21, never says yes to a wrong one | An AI marker needs an exam too, or we're just hoping it's fair |
 | M4.3a | One quiz brain (`quiz_round`) for the terminal and the coming web page (ADR 0009) | Two screens with their own copies would drift; HSK did the same before its web page |
+| M4.3b | The web page: `uv run longevity web` (quiz with receipts + stats); quizkit `web_launch` | You asked to play in a browser; local only, nothing leaves your computer |
 
 ---
 
@@ -315,4 +316,16 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Terminal unchanged:** every CLI test passes. One test now points at the block, because the setup moved there.
 - **Safety net grown:** tests also can't touch the block's default progress and Claude-cache files.
 - **ADR 0009:** a local Streamlit page on one shared brain. Next (3b): the page itself.
+
+## M4 Step 3b: the web page (2026-11-13)
+
+> **In plain words:** a second screen on the same brain. `uv run longevity web` opens the quiz in your browser: type an answer, see Claude's mark and the receipt quote, press Next.
+
+- **What you get:**
+  - **Quiz page:** topic, how many, Practise, Claude marking and Save progress in the sidebar. A question with an answer box, then ✓/✗, Claude's reason, the model answer and the 🧾 receipt quote. Yes/No buttons (or the Y and N keys) when Claude can't check. Enter goes to the next question.
+  - **Stats page:** the same lines as `longevity stats`.
+- **Safe by default:** it runs on 127.0.0.1 (this computer only), sends no usage data to Streamlit and shows no Deploy button. Ctrl-C in the terminal stops it cleanly.
+- **Reuse:** the launcher and the Markdown-safe text were inside HSK's terminal program. They're now a generic quizkit block, `web_launch`, that any quiz can use. **Port to HSK:** `web_launch` (HSK's `cli.web` would call `serve`).
+- **Tests without a browser:** Streamlit's AppTest plays whole rounds on temp files with a fake Claude. The launcher's tests use a fake process, so the real Streamlit never starts in tests. I started the real page once to check that it answers, and stopped it before clicking anything, so your progress file wasn't touched.
+- **Your turn:** `uv run longevity web`.
 

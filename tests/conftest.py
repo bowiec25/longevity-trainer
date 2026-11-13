@@ -13,6 +13,18 @@ def no_real_claude(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def no_real_web_server(monkeypatch):
+    """Safety net: no test starts the real Streamlit or opens a browser through
+    `longevity web`; a test that means to check it patches `cli.serve` itself."""
+    from longevity_trainer import cli
+
+    def refuse(*_args, **_kwargs):
+        pytest.fail("a test tried to start the real web page (patch cli.serve)")
+
+    monkeypatch.setattr(cli, "serve", refuse)
+
+
+@pytest.fixture(autouse=True)
 def no_real_progress(tmp_path, monkeypatch):
     """Safety net: no test reads or writes your real data/progress.db or
     data/judge_cache.jsonl (the terminal's paths and quiz_round's defaults)."""
