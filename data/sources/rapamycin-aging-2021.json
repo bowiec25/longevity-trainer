@@ -1,0 +1,21 @@
+{
+  "id": "rapamycin-aging-2021",
+  "title": "Effect of rapamycin on aging and age-related diseases—past and future",
+  "authors": "Selvarani R, Mohammed S, Richardson A",
+  "publisher": "Springer (GeroScience)",
+  "journal": "GeroScience 2021",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2021,
+  "doi": "10.1007/s11357-020-00274-1",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8190242/fullTextXML",
+  "retrieved": "2026-11-13",
+  "size": 307118,
+  "sha256": "a2aa8eeb150c97661b4ba56524c77d6e19379ac9cd05dcbc55c3ddab1c6eee40",
+  "local_path": "data/raw/rapamycin-aging-2021.xml",
+  "topics": [
+    "rapamycin",
+    "mtor"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B review: mechanisms and the state of the evidence."
+}

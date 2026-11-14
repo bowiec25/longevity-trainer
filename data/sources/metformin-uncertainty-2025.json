@@ -1,0 +1,22 @@
+{
+  "id": "metformin-uncertainty-2025",
+  "title": "Emerging uncertainty on the anti-aging potential of metformin",
+  "authors": "Keys MT, Hallas J, Miller RA, et al.",
+  "publisher": "Elsevier (Ageing Research Reviews)",
+  "journal": "Ageing Res Rev 2025",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2025,
+  "doi": "10.1016/j.arr.2025.102817",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13329735/fullTextXML",
+  "retrieved": "2026-11-13",
+  "size": 220754,
+  "sha256": "0fbac7eb9ec2daafc7ab350cfc967bbb11ce4df1c32752e21719052d7e6dc299",
+  "local_path": "data/raw/metformin-uncertainty-2025.xml",
+  "topics": [
+    "metformin",
+    "tame",
+    "ampk"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B review: mechanisms and the state of the evidence."
+}

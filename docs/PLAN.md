@@ -42,6 +42,7 @@
 - [ ] **Questions that build an expert** (user, 2026-11-13: "the questions should be made up based on trying to make a longevity expert"; first pick: connecting things)
   - [x] 1. Connect cards: a fifth ask, "what does it connect to?" (LEARNING_GOALS question 6). The writer links a topic to another topic in `data/topics.jsonl` (what it acts on, its hallmark or pathway, what measures it, which trial tested it); a new code gate checks the link names a real other topic. First real run: rapamycin → dogs (TRIAD)
   - [ ] 2. Fill the bank: run the writer over more topics, so there's more to connect
+    - [x] 2a. Drugs and supplements: 4 open-access reviews pinned (tier B: rapamycin/mTOR *GeroScience* 2021, metformin *Ageing Res Rev* 2025, NAD+ *Aging Cell* 2024, senolytics *J Intern Med* 2020); +19 cards (bank 81, 81/81 quotes found), incl. 4 connect cards (metformin → AMPK, NAD+ → sirtuins, senolytics → geroscience). Rapamycin now has its "how" card. Gaps: NAD+ has no "how sure", senolytics no "what"
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
 
