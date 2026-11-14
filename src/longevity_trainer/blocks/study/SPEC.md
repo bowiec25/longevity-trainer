@@ -17,7 +17,7 @@ Flashcards in boxes: a card you get right moves to a box you check less often; o
 |---|---|---|
 | `cards` | `list[LongevityCard]` | The bank (from `card_bank.load_cards`) |
 | `n` | `int` | How many cards to deal (at least 1) |
-| `topic` | `str \| None` | Only cards whose topic contains this text, ignoring case (e.g. `"hallmarks"`, `"rapa"`); `None` = all |
+| `topic` | `str \| Sequence[str] \| None` | Only cards whose topic contains this text, ignoring case (e.g. `"hallmarks"`, `"rapa"`). Several texts (a list or tuple, e.g. `("hallmarks", "metformin")`, from the web page's multi-pick) = cards matching **any** of them. Blank texts in a list are ignored. `None`, `""` or an empty list = all (user, 2026-11-14: pick several topics at once) |
 | `schedule` | `dict[str, datetime] \| None` | When each answered card is next due (from `schedule(store)`); `None` = no progress (shuffled) |
 | `now` | `datetime \| None` | The time to compare due dates with (timezone-aware; default: now, UTC) |
 | `seed` | `int \| None` | Same seed → same order (tests) |
@@ -65,9 +65,9 @@ The CLI (not this block) turns a `ProgressFileError` (opening the store, or read
 ## How to test
 Automatic tests in `tests/blocks/test_study.py` with real bank cards or small `LongevityCard`s made in the test, and a `ProgressStore` in a temp folder:
 - **group_of:** `"hallmarks: dysbiosis"` → `"hallmarks"`, `"rapamycin"` → `"rapamycin"`, `"  sleep :  naps"` → `"sleep"`
-- **deal:** due (most overdue first) → new, and **not-due cards left out** (even when that gives fewer than `n`), with a fixed `now` and `seed`; with `practise=True` the not-due cards come after (soonest first); everything not due and nothing new → `[]`; without a schedule all cards can be dealt; `n` limits and no repeats; `topic` is case-insensitive and matches part of a topic (`"HALLMARKS"` picks every `hallmarks: …` card); no match → `[]`; `n=0` → `ValueError`; returns the `LongevityCard`s (receipts intact); same seed → same order
+- **deal:** due (most overdue first) → new, and **not-due cards left out** (even when that gives fewer than `n`), with a fixed `now` and `seed`; with `practise=True` the not-due cards come after (soonest first); everything not due and nothing new → `[]`; without a schedule all cards can be dealt; `n` limits and no repeats; `topic` is case-insensitive and matches part of a topic (`"HALLMARKS"` picks every `hallmarks: …` card); a list of two topics deals cards from both and none from others; an empty list deals from all; a list where nothing matches → `[]`; blank texts in a list are ignored (`["", "rapa"]` deals only rapamycin cards, `[""]` deals from all; `next_due` likewise); no match → `[]`; `n=0` → `ValueError`; returns the `LongevityCard`s (receipts intact); same seed → same order
 - **schedule:** after saving, has the card ids and their due times
-- **next_due:** the soonest due among matching cards; `topic` narrows it; no matching card in the schedule → `None`
+- **next_due:** the soonest due among matching cards; `topic` narrows it (a list too: the soonest among cards matching any); no matching card in the schedule → `None`
 - **groups:** the four writer `hallmarks: …` sections and the hand-made `hallmarks: …` cards give one `hallmarks`; sorted, no repeats
 - **Saver:** right on a new card → box 2; wrong → box 1 and due == the saved time; `saved` counts; the store's answers have skill `"recall"`; a store whose `record` raises `ProgressFileError` → `warn` called once with "progress not saved", `unsaved` 1; a second failing call doesn't raise or warn again (`unsaved` 2); if `record` works again on a third call, that answer is saved (`saved` 1)
 - **A missed card comes back first:** save a wrong answer, then `deal` with `schedule(store)` puts it first

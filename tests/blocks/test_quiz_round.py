@@ -291,6 +291,27 @@ def test_setup_deals_at_most_n_and_by_topic(files):
     assert {c.id for c in r.cards} == {"c-1", "c-2"}
 
 
+def gamma_cards():
+    return [*three_cards(), make_card("c-4", topic="gamma", answers=("fourth",))]
+
+
+def test_setup_tuple_of_topics_deals_from_each_of_them(files):
+    r = block.setup(
+        block.RoundOptions(topic=("ALPHA", "gamma"), judge=False),
+        files,
+        bank=gamma_cards(),
+        now=NOW,
+    )
+    assert {c.id for c in r.cards} == {"c-1", "c-2", "c-4"}
+
+
+def test_setup_empty_tuple_of_topics_deals_from_all(files):
+    r = block.setup(
+        block.RoundOptions(topic=(), judge=False), files, bank=gamma_cards(), now=NOW
+    )
+    assert {c.id for c in r.cards} == {"c-1", "c-2", "c-3", "c-4"}
+
+
 def test_setup_with_a_seed_deals_the_same_order(files):
     cards = load_cards()
     opts = block.RoundOptions(n=5, seed=7, judge=False, save=False)
@@ -464,6 +485,50 @@ def test_unknown_topic_lists_groups_and_creates_no_file(files):
         "  alpha",
         "  beta",
     ]
+    assert problem.value.nothing_due is False
+    assert not files.progress.exists()
+
+
+def test_unknown_pair_of_topics_names_both_lists_groups_and_creates_no_file(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(topic=("a", "b"), judge=False),
+            files,
+            # topics without an "a" or "b" in them (matching is by part of the topic)
+            bank=[make_card("c-9", topic="pi"), make_card("c-8", topic="rho: x")],
+            now=NOW,
+        )
+    assert problem.value.lines == [
+        "no cards on a topic containing 'a' or 'b'. Topics:",
+        "  pi",
+        "  rho",
+    ]
+    assert problem.value.nothing_due is False
+    assert not files.progress.exists()
+
+
+def test_blank_topic_texts_are_left_out_of_the_no_cards_message(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(topic=("zzz", ""), judge=False),
+            files,
+            bank=three_cards(),
+            now=NOW,
+        )
+    assert problem.value.lines == [
+        "no cards on a topic containing 'zzz'. Topics:",
+        "  alpha",
+        "  beta",
+    ]
+    assert not files.progress.exists()
+
+
+def test_empty_bank_with_only_a_blank_topic_says_no_cards_in_the_bank(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(topic=("",), judge=False), files, bank=[], now=NOW
+        )
+    assert problem.value.lines == ["no cards in the bank"]
     assert problem.value.nothing_due is False
     assert not files.progress.exists()
 
