@@ -12,8 +12,6 @@ from longevity_trainer.blocks.quiz_round import QuizScreen, RoundOptions
 from longevity_trainer.blocks.study import groups
 from quizkit.blocks.web_launch import safe
 
-ALL = "All topics"
-
 if "quiz" not in st.session_state:  # a test may put its own (fake judge) here first
     st.session_state["quiz"] = QuizScreen()
 quiz: QuizScreen = st.session_state["quiz"]
@@ -28,8 +26,15 @@ def _lines(lines: list[str]) -> None:
 # --- Settings (locked while a quiz runs) -------------------------------------------
 with st.sidebar:
     st.header("Quiz")
-    topics = [ALL, *groups(quiz.bank if quiz.bank is not None else load_cards())]
-    topic = st.selectbox("Topic", topics, key="topic", disabled=running)
+    topics = groups(quiz.bank if quiz.bank is not None else load_cards())
+    picked = st.multiselect(  # several topics at once; none = all
+        "Topics",
+        topics,
+        key="topics",  # a list (was "topic", one string)
+        placeholder="All topics",
+        disabled=running,
+        help="Pick one or more; leave empty for all topics.",
+    )
     n = st.number_input(
         "How many", min_value=1, max_value=200, value=10, key="n", disabled=running
     )
@@ -57,7 +62,7 @@ with st.sidebar:
     if not running and st.button("Start quiz", type="primary", key="start"):
         quiz.start(
             RoundOptions(
-                topic=None if topic == ALL else topic,
+                topic=tuple(picked) or None,
                 n=int(n),
                 practise=practise,
                 judge=judge,
@@ -73,7 +78,9 @@ with st.sidebar:
 st.title("🧬 Longevity Trainer")
 
 if quiz.phase == "setup":
-    st.write("Pick a topic on the left, then **Start quiz**.")
+    st.write(
+        "Pick one or more topics on the left (none = all topics), then **Start quiz**."
+    )
     for line in quiz.problems:
         (st.info if quiz.nothing_due else st.error)(safe(line))
 

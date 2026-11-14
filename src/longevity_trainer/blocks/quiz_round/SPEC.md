@@ -15,7 +15,7 @@ It exists so the terminal (`longevity quiz`) and the web page (M4 Step 3b) are t
 ## Inputs
 | Input | Type | Plain meaning |
 |---|---|---|
-| `options` | `RoundOptions` (frozen dataclass) | `topic: str \| None = None` (a topic or group, matched as `study.deal` matches), `n: int = 10` (≥1), `practise: bool = False` (deal cards not due yet too; nothing saved), `judge: bool = True` (Claude marks answers the answer list rejects), `save: bool = True`, `seed: int \| None = None` (fixed order, for tests) |
+| `options` | `RoundOptions` (frozen dataclass) | `topic: str \| tuple[str, ...] \| None = None` (a topic or group, or several (a tuple: cards matching any), matched as `study.deal` matches; an empty tuple = all), `n: int = 10` (≥1), `practise: bool = False` (deal cards not due yet too; nothing saved), `judge: bool = True` (Claude marks answers the answer list rejects), `save: bool = True`, `seed: int \| None = None` (fixed order, for tests) |
 | `files` | `RoundFiles` (frozen dataclass) | `progress: Path` (default `PROGRESS_FILE` = `data/progress.db`), `judge_cache: Path` (default `JUDGE_CACHE` = `data/judge_cache.jsonl`). Screens pass their own (tests pass temp paths) |
 | `bank` | `list[LongevityCard]` | The cards to deal from (default: `card_bank.load_cards()` when the round starts) |
 | `now` | `datetime` (timezone-aware) | When "due" is judged (default: now, UTC) |
@@ -84,7 +84,7 @@ The terminal's `play()` keeps its own loop (read, write, quit words) but takes e
 | The progress file exists but can't be opened | `["can't use progress.db: <why>"]` |
 | It opens but can't be read | `["can't read progress.db: <why>"]` |
 | Nothing to deal, but some matching card is due later | `["Nothing due. Next card due <Thu 13 Nov 09:00, local time>. (<practise_hint> to review anyway)"]`, `nothing_due=True` |
-| Nothing matches the topic | `["no cards on a topic containing '<topic>'. Topics:", "  <group>", …]` (each group of the bank, sorted). **No progress file is created** |
+| Nothing matches the topic | `["no cards on a topic containing '<topic>'. Topics:", "  <group>", …]` (each group of the bank, sorted); for several topics the first line names each, joined by " or " (`"no cards on a topic containing 'a' or 'b'. Topics:"`). **No progress file is created** |
 | The bank is empty (no topic given) | `["no cards in the bank"]` |
 | The progress file can't be created when saving starts | `["can't use progress.db: <why>"]` |
 
@@ -93,7 +93,7 @@ The terminal's `play()` keeps its own loop (read, write, quit words) but takes e
 ## How to test
 Automatic tests in `tests/blocks/test_quiz_round.py`: real cards from the bank or small hand-made `LongevityCard`s, a **fake judge** (never real Claude), progress in `tmp_path`, a fixed `now`.
 - **Wording:** each `feedback` case (right by the list; right by Claude with the model answer; wrong by Claude; wrong and Claude couldn't check; wrong, not asked); `own_mark_line`; `receipt_line`; `score_line`
-- **setup:** deals due then new; `practise` deals not-due cards and gives no saver; `save=False` → no saver and no file; each failure mode's lines (nothing due with the hint, unknown topic lists groups and creates no file, unusable file); `judge=False` → `make_judge` not called; `before_asking` passed through
+- **setup:** deals due then new; `practise` deals not-due cards and gives no saver; `save=False` → no saver and no file; each failure mode's lines (nothing due with the hint, unknown topic lists groups and creates no file, a tuple of topics deals from each of them and an unknown pair names both, blank texts are left out of the message (an empty bank with `("",)` says "no cards in the bank"), unusable file); `judge=False` → `make_judge` not called; `before_asking` passed through
 - **QuizScreen:** a full round right/wrong to `ended` with the summary; own mark yes/no lands in `result.lines` and is saved; stop in own_mark saves nothing; stale and double clicks (wrong phase, old card id) change nothing; a failed start shows `problems`; `new_quiz` back to setup; the result carries the card's receipt; a save failure shows `warning` once
 - **The terminal still says the same:** `tests/test_cli.py` and `tests/test_cli_progress.py` pass (one test there patches `quiz_round.schedule` instead of `cli.schedule`, since setup moved here)
 - **Contract test:** folder parts exist and `BLOCK_SPEC` matches this SPEC

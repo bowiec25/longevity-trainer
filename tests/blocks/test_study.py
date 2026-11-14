@@ -197,6 +197,53 @@ def test_deal_no_matching_topic_returns_empty_list():
     assert deal(load_cards(), 10, topic="zzz-nothing", seed=1) == []
 
 
+@pytest.mark.parametrize("make", [list, tuple])
+def test_deal_several_topics_deals_from_each_and_none_from_others(make):
+    """Several topic texts (list or tuple) = cards matching any of them."""
+    cards = load_cards()
+    dealt = deal(cards, 1000, topic=make(["METFORMIN", "senolytic"]), seed=1)
+    expected = {
+        c.id
+        for c in cards
+        if "metformin" in c.topic.lower() or "senolytic" in c.topic.lower()
+    }
+    assert {x.id for x in dealt} == expected
+    assert any("metformin" in x.topic.lower() for x in dealt)
+    assert any("senolytic" in x.topic.lower() for x in dealt)
+
+
+@pytest.mark.parametrize("empty", [[], ()])
+def test_deal_empty_list_of_topics_deals_from_all(empty):
+    cards = load_cards()
+    dealt = deal(cards, len(cards) + 50, topic=empty, seed=3)
+    assert sorted(x.id for x in dealt) == sorted(c.id for c in cards)
+
+
+def test_deal_list_of_topics_where_nothing_matches_returns_empty_list():
+    assert deal(load_cards(), 10, topic=["zzz-nothing", "yyy-none"], seed=1) == []
+
+
+def test_deal_list_with_one_unknown_topic_still_deals_the_known_one():
+    cards = load_cards()
+    dealt = deal(cards, 1000, topic=["zzz-nothing", "rapa"], seed=1)
+    assert dealt
+    assert {x.id for x in dealt} == {c.id for c in cards if "rapa" in c.topic.lower()}
+
+
+def test_deal_blank_texts_in_a_list_are_ignored():
+    cards = load_cards()
+    dealt = deal(cards, 1000, topic=["", "rapa"], seed=1)
+    assert {x.id for x in dealt} == {
+        c.id for c in cards if "rapamycin" in c.topic.lower()
+    }
+
+
+def test_deal_list_of_only_a_blank_text_deals_from_all():
+    cards = load_cards()
+    dealt = deal(cards, len(cards) + 50, topic=[""], seed=3)
+    assert sorted(x.id for x in dealt) == sorted(c.id for c in cards)
+
+
 @pytest.mark.parametrize("n", [0, -1])
 def test_deal_n_below_1_raises_value_error(n):
     with pytest.raises(ValueError):
@@ -246,6 +293,31 @@ def test_next_due_topic_narrows_it():
     sched = {a.id: NOW + timedelta(days=3), b.id: NOW + timedelta(days=1)}
     assert block.next_due([a, b], sched) == sched[b.id]
     assert block.next_due([a, b], sched, topic="TELOMERE") == sched[a.id]
+
+
+def test_next_due_list_of_topics_is_the_soonest_among_cards_matching_any():
+    a = card("hm-telomeres-name")  # "hallmarks: telomere attrition"
+    b = card("hm-dysbiosis-name")  # "hallmarks: dysbiosis"
+    c = card("hm-il6-marker")
+    sched = {
+        a.id: NOW + timedelta(days=3),
+        b.id: NOW + timedelta(days=2),
+        c.id: NOW + timedelta(days=1),
+    }
+    assert c.topic != a.topic and c.topic != b.topic  # c is outside both picks
+    picked = ["TELOMERE", "dysbiosis"]
+    assert block.next_due([a, b, c], sched, topic=picked) == sched[b.id]
+    assert block.next_due([a, b, c], sched, topic=("telomere",)) == sched[a.id]
+    assert block.next_due([a, b, c], sched, topic=["zzz", "yyy"]) is None
+    assert block.next_due([a, b, c], sched, topic=[]) == sched[c.id]
+
+
+def test_next_due_ignores_blank_texts_in_a_list():
+    a = card("hm-telomeres-name")  # "hallmarks: telomere attrition"
+    b = card("hm-dysbiosis-name")  # "hallmarks: dysbiosis"
+    sched = {a.id: NOW + timedelta(days=3), b.id: NOW + timedelta(days=1)}
+    assert block.next_due([a, b], sched, topic=["", "telomere"]) == sched[a.id]
+    assert block.next_due([a, b], sched, topic=[""]) == sched[b.id]
 
 
 def test_next_due_ignores_schedule_entries_for_cards_not_given():

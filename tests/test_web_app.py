@@ -76,7 +76,8 @@ def test_page_opens_on_the_settings(tmp_path):
     at = page(tmp_path)
     assert not at.exception
     assert "Start quiz" in [b.label for b in at.button]
-    assert "hallmarks" in at.selectbox(key="topic").options
+    assert "hallmarks" in at.multiselect(key="topics").options
+    assert at.multiselect(key="topics").value == []  # none picked = all topics
 
 
 def test_a_right_answer_shows_the_receipt_and_is_saved(tmp_path):
@@ -189,11 +190,28 @@ def test_practise_deals_a_card_that_is_not_due(tmp_path):
     assert "Practise" in [c.label for c in at.checkbox]
 
 
+def test_picking_two_topics_deals_only_from_them(tmp_path):
+    at = page(
+        tmp_path,
+        cards=("hm-telomeres-name", "metformin-what-1", "senolytics-how-1"),
+    )
+    assert at.multiselect(key="topics").options == [
+        "hallmarks",
+        "metformin",
+        "senolytics",
+    ]
+    at.multiselect(key="topics").select("metformin").select("senolytics").run()
+    at.button(key="start").click().run()
+    quiz = at.session_state["quiz"]
+    assert quiz.view.total == 2
+    assert quiz.view.topic in {"metformin", "senolytics"}  # not hallmarks
+
+
 def test_settings_are_locked_while_a_quiz_runs(tmp_path):
     at = page(tmp_path)
     at.button(key="start").click().run()
     assert at.checkbox(key="save").disabled
-    assert at.selectbox(key="topic").disabled
+    assert at.multiselect(key="topics").disabled
 
 
 def test_stats_page_with_no_progress_creates_no_file(tmp_path):
