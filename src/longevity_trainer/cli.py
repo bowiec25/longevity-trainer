@@ -299,6 +299,7 @@ def write_cards_command(
     write: Callable[[str], None] = print,
     pages: tuple[int, int] | None = None,
     add: bool = False,
+    primer_pages: tuple[int, int] | None = None,
 ) -> int:
     """Draft, gate and (unless --dry-run) save cards; exit code 0 = the bar is met."""
     out = CARDS_DIR / f"{slug(topic)}.jsonl"
@@ -314,6 +315,22 @@ def write_cards_command(
     except ValueError as err:  # bad line, repeated id, not UTF-8: ids could clash
         write(f"the card bank has a problem, fix it first: {str(err).splitlines()[0]}")
         return 1
+    primer: list[str] | None = None  # read only when needed
+    primer_text = ""
+    if primer_pages is not None:  # before any Claude call
+        primer, problem = _read_primer()
+        if primer is None:
+            write(f"can't read the primer: {problem}")
+            return 1
+        first, last = primer_pages
+        if last > len(primer):
+            write(f"the primer has {len(primer)} pages, not {last}")
+            return 1
+        chosen = range(first, last + 1)
+        if not any(primer[k - 1].strip() for k in chosen):
+            write(f"primer pages {first}-{last} have no text")
+            return 1
+        primer_text = "\n\n".join(f"[primer page {k}]\n{primer[k - 1]}" for k in chosen)
     ask, replies = _counting_ask()
     try:
         result = write_cards(
@@ -326,6 +343,7 @@ def write_cards_command(
             pages=pages,
             ask=ask,
             check=lambda card: check_card(card, ask=ask),
+            primer_text=primer_text,
         )
     except (OSError, ValueError, DownloadError, ClaudeError) as err:
         write(str(err).splitlines()[0])
@@ -342,6 +360,27 @@ def write_cards_command(
         f"repeat {r.dropped_repeat}, checker {r.dropped_checker}; "
         f"asks kept {r.asks_kept} -> {'PASSED' if r.passed else 'NOT PASSED'}"
     )
+    if r.passed and result.kept:  # tag before writing, so easy mode sees them
+        problem = ""
+        if primer is None:
+            primer, problem = _read_primer()
+        try:
+            if primer is None:
+                tags, why = None, f"can't read the primer: {problem}"
+            else:
+                tags = tag_cards(result.kept, primer, ask=ask)
+        except ClaudeError as err:
+            tags, why = None, _claude_reason(err)
+        if tags is None:
+            write(f"not tagged ({why}): run tag-levels later")
+        else:
+            kept = [
+                c.model_copy(update={"difficulty": tags.difficulty[c.id]})
+                for c in result.kept
+            ]
+            result = result.model_copy(update={"kept": kept})
+            easy = sum(c.difficulty == "easy" for c in kept)
+            write(f"tagged: {easy} easy, {len(kept) - easy} hard")
     write(_cost_line(replies))
     ok = r.passed and bool(result.kept)
     new_ids = [c.id for c in result.kept] if ok else []
@@ -435,6 +474,24 @@ def cards_exam(model: str, holdout: bool, limit: int | None, dry_run: bool) -> i
     return 0 if report.passed else 1
 
 
+def _read_primer(path: Path | None = None) -> tuple[list[str] | None, str]:
+    """(the primer's pages, "") or (None, why it can't be read): missing, a PDF
+    pypdf can't read, or no text on any page (a scan: every card would be hard)."""
+    try:
+        pages = load_primer(path)
+    except Exception as err:  # noqa: BLE001 - pypdf raises its own errors
+        return None, (str(err) or type(err).__name__).splitlines()[0]
+    if not any(page.strip() for page in pages):
+        return None, "it has no text"
+    return pages, ""
+
+
+def _claude_reason(err: ClaudeError) -> str:
+    """A Claude error's text before its first ':' (the rest may echo Claude's raw
+    reply, which can quote the primer: never printed)."""
+    return str(err).split(":", 1)[0].strip() or "Claude error"
+
+
 def tag_levels_command(
     dry_run: bool,
     retag: bool,
@@ -442,15 +499,9 @@ def tag_levels_command(
     write: Callable[[str], None] = print,
 ) -> int:
     """Tag cards easy or hard against the primer (ADR 0010); exit 0 = all tagged."""
-    try:
-        pages = load_primer(primer)
-    except Exception as err:  # noqa: BLE001 - missing, or a PDF pypdf can't read
-        write(
-            f"can't read the primer: {(str(err) or type(err).__name__).splitlines()[0]}"
-        )
-        return 1
-    if not any(page.strip() for page in pages):  # e.g. a scan: every card would be hard
-        write("can't read the primer: it has no text")
+    pages, problem = _read_primer(primer)
+    if pages is None:
+        write(f"can't read the primer: {problem}")
         return 1
     files = sorted(p for p in CARDS_DIR.glob("*.jsonl") if p.is_file())
     texts = {p.name: p.read_text("utf-8-sig") for p in files}
@@ -472,7 +523,7 @@ def tag_levels_command(
         try:
             result = tag_cards(cards, pages, ask=ask)
         except ClaudeError as err:
-            write(f"{group}: not tagged ({str(err).splitlines()[0]})")
+            write(f"{group}: not tagged ({_claude_reason(err)})")
             failed = True
             continue
         for card in cards:
@@ -595,6 +646,12 @@ def main(argv: list[str] | None = None) -> int:
     writer.add_argument(
         "--dry-run", action="store_true", help="draft and gate, but write nothing"
     )
+    writer.add_argument(
+        "--primer-pages",
+        type=_page_range,
+        default=None,
+        help="your primer's pages on this topic, e.g. 9-11: aim at them first",
+    )
     grow = writer.add_mutually_exclusive_group()
     grow.add_argument(
         "--add", action="store_true", help="add cards to the topic's card file"
@@ -642,6 +699,7 @@ def main(argv: list[str] | None = None) -> int:
             args.replace,
             pages=args.pages,
             add=args.add,
+            primer_pages=args.primer_pages,
         )
     options = RoundOptions(
         topic=args.topic,

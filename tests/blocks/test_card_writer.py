@@ -62,6 +62,7 @@ def test_block_spec_lists_spec_inputs_and_outputs():
         "root",
         "fetch",
         "pages",
+        "primer_text",
         "topics",
     }
     assert set(block.BLOCK_SPEC.outputs) == {
@@ -76,6 +77,23 @@ def test_block_spec_lists_spec_inputs_and_outputs():
         "TOPICS_FILE",
         "load_topics",
     }
+
+
+@pytest.fixture(autouse=True)
+def no_real_primer(monkeypatch):
+    """Safety net: the CLI never reads the real primer PDF or tags with real Claude.
+    By default the primer can't be read (so a run prints its `not tagged` line);
+    tests that need a primer or tagging patch `cli.load_primer` / `cli.tag_cards`."""
+    from longevity_trainer import cli as cli_module
+
+    def no_primer(*_a, **_k):
+        raise FileNotFoundError("no primer in tests")
+
+    def refuse(*_a, **_k):
+        pytest.fail("a test tried to tag with the real primer_check (patch tag_cards)")
+
+    monkeypatch.setattr(cli_module, "load_primer", no_primer)
+    monkeypatch.setattr(cli_module, "tag_cards", refuse)
 
 
 # ---- Behaviour (from SPEC.md) ----------------------------------------------------
@@ -861,8 +879,9 @@ def test_cli_prints_a_line_per_draft_and_the_report(cli, results, capsys):
 # ---- Added after the SPEC review (PROMPT_VERSION 3, page markers, CLI bank) -------
 
 
-def test_prompt_version_is_5():
-    assert block.PROMPT_VERSION == "5"
+def test_prompt_version_is_6():
+    """v6 added the primer part (SPEC 2026-11-18)."""
+    assert block.PROMPT_VERSION == "6"
 
 
 def test_checker_rejected_question_does_not_block_a_later_same_question(env):
@@ -1840,3 +1859,301 @@ def test_cli_missing_topics_file_prints_one_line_exit_1(tmp_path, monkeypatch, c
     assert len(lines) == 1, lines
     assert "no-topics.jsonl" in lines[0]
     assert list(cards_dir.iterdir()) == []
+
+
+# ---- Added for the primer (SPEC 2026-11-18, ADR 0010, PROMPT_VERSION 6) ------------
+
+PRIMER_NOTE = "PRIMER-NOTE telomeres shorten with every cell division in people."
+
+
+def test_primer_text_goes_in_the_prompt_before_the_source(env):
+    _, calls = env(primer_text=PRIMER_NOTE)
+    prompt = calls[0]["prompt"]
+    assert PRIMER_NOTE in prompt
+    assert prompt.index(PRIMER_NOTE) < prompt.index(S_WHAT)
+    assert re.search(r"primer states", prompt.lower())
+    assert "first" in prompt.lower()
+
+
+def test_no_primer_text_means_no_primer_part(env):
+    _, calls = env()
+    prompt = calls[0]["prompt"]
+    assert PRIMER_NOTE not in prompt
+    assert not re.search(r"primer states", prompt.lower())
+
+
+def test_empty_primer_text_is_the_default(env):
+    _, default_calls = env()
+    _, empty_calls = env(primer_text="")
+    assert default_calls[0]["prompt"] == empty_calls[0]["prompt"]
+
+
+def test_quote_only_in_the_primer_is_dropped_at_quote(env):
+    primer_quote = "Telomeres shorten with every cell division in people."
+    q = "What happens to telomeres at cell division?"
+    result, _ = env([draft("what", q, quote=primer_quote)], primer_text=primer_quote)
+    assert result.kept == []
+    assert gates(result) == ["quote"]
+
+
+# -- CLI primer ----------------------------------------------------------------------
+
+PRIMER_PAGES = [
+    "PRIMER-ONE hallmarks of ageing are twelve.",
+    "PRIMER-TWO rapamycin inhibits mTOR in the cell.",
+    "PRIMER-THREE senescent cells pile up with age.",
+]
+
+
+@pytest.fixture
+def primer(monkeypatch):
+    """A fake readable primer and a fake tag_cards (first kept card easy, rest hard)."""
+    from longevity_trainer import cli as cli_module
+    from longevity_trainer.blocks.primer_check import TagResult
+
+    state = type("PrimerFake", (), {})()
+    state.calls = []
+    state.raises = None
+    state.pages = list(PRIMER_PAGES)
+    state.loads = 0
+
+    def load_primer(*_a, **_k):
+        state.loads += 1
+        return list(state.pages)
+
+    def tag_cards(cards, primer_pages, *a, **k):
+        state.calls.append((list(cards), list(primer_pages), k))
+        if state.raises is not None:
+            raise state.raises
+        diff = {c.id: ("easy" if i == 0 else "hard") for i, c in enumerate(cards)}
+        reasons = {cid: "not in the primer" for cid, d in diff.items() if d == "hard"}
+        return TagResult(difficulty=diff, reasons=reasons, model="sonnet")
+
+    monkeypatch.setattr(cli_module, "load_primer", load_primer)
+    monkeypatch.setattr(cli_module, "tag_cards", tag_cards)
+    return state
+
+
+def primer_text_of(cli) -> str:
+    ((_args, kwargs),) = cli.calls
+    return kwargs.get("primer_text")
+
+
+def output_lines(capsys) -> list[str]:
+    captured = capsys.readouterr()
+    return [ln for ln in (captured.out + captured.err).splitlines() if ln.strip()]
+
+
+def test_cli_primer_pages_passes_those_pages_marked(cli, env, primer):
+    cli(what_and_how_sure(env), "--primer-pages", "2-3", "--dry-run")
+    text = primer_text_of(cli)
+    assert re.search(r"\[primer page 2\]\s*" + re.escape(PRIMER_PAGES[1]), text)
+    assert re.search(r"\[primer page 3\]\s*" + re.escape(PRIMER_PAGES[2]), text)
+    assert text.index("[primer page 2]") < text.index("[primer page 3]")
+    assert PRIMER_PAGES[0] not in text and "[primer page 1]" not in text
+    assert re.search(re.escape(PRIMER_PAGES[1]) + r"\n\n\[primer page 3\]", text)
+
+
+def test_cli_primer_pages_single_page(cli, env, primer):
+    cli(what_and_how_sure(env), "--primer-pages", "2", "--dry-run")
+    text = primer_text_of(cli)
+    assert "[primer page 2]" in text and PRIMER_PAGES[1] in text
+    assert PRIMER_PAGES[0] not in text and PRIMER_PAGES[2] not in text
+
+
+def test_cli_without_primer_pages_passes_empty_primer_text(cli, env, primer):
+    cli(what_and_how_sure(env), "--dry-run")
+    assert primer_text_of(cli) == ""
+
+
+@pytest.mark.parametrize("flag", ["x", "5-", "0-3", "9-4"])
+def test_cli_bad_primer_pages_exits_2_without_calling_write_cards(
+    cli, results, primer, flag
+):
+    with pytest.raises(SystemExit) as exc:
+        cli(results["pass"], "--primer-pages", flag)
+    assert exc.value.code == 2
+    assert cli.calls == []
+
+
+def test_cli_primer_pages_beyond_the_primer_exit_1_before_claude(
+    cli, results, primer, capsys
+):
+    assert cli(results["pass"], "--primer-pages", "3-5") == 1
+    assert cli.calls == []
+    assert len(output_lines(capsys)) == 1
+    assert list(cli.cards_dir.iterdir()) == []
+
+
+def test_cli_unreadable_primer_with_primer_pages_exit_1_before_claude(
+    cli, results, capsys
+):
+    """The autouse guard makes load_primer raise FileNotFoundError."""
+    assert cli(results["pass"], "--primer-pages", "1-2") == 1
+    assert cli.calls == []
+    assert len(output_lines(capsys)) == 1
+    assert list(cli.cards_dir.iterdir()) == []
+
+
+def test_cli_kept_cards_are_written_with_their_difficulty(cli, env, primer):
+    result = what_and_how_sure(env)
+    assert cli(result) == 0
+    loaded = load_cards(cli.cards_dir)
+    assert [c.id for c in loaded] == [c.id for c in result.kept]
+    assert [c.difficulty for c in loaded] == ["easy", "hard"]
+
+
+def test_cli_tag_cards_gets_the_kept_cards_and_all_primer_pages(cli, env, primer):
+    result = what_and_how_sure(env)
+    cli(result, "--dry-run")
+    ((cards, pages, _k),) = primer.calls
+    assert [c.id for c in cards] == [c.id for c in result.kept]
+    assert pages == PRIMER_PAGES
+
+
+def test_cli_tag_cards_uses_the_same_counting_ask(cli, env, primer):
+    cli(what_and_how_sure(env), "--dry-run")
+    ((_args, wc_kwargs),) = cli.calls
+    ((_cards, _pages, tag_kwargs),) = primer.calls
+    assert tag_kwargs.get("ask") is not None
+    assert tag_kwargs["ask"] is wc_kwargs.get("ask")
+
+
+def test_cli_prints_tagged_line_before_cost_line(cli, env, primer, capsys):
+    assert cli(what_and_how_sure(env)) == 0
+    lines = output_lines(capsys)
+    tagged = [i for i, ln in enumerate(lines) if "tagged: 1 easy, 1 hard" in ln]
+    cost = [i for i, ln in enumerate(lines) if "Claude calls" in ln]
+    assert tagged and cost
+    assert tagged[0] < cost[0]
+
+
+def test_cli_dry_run_tags_but_writes_nothing(cli, env, primer, capsys):
+    assert cli(what_and_how_sure(env), "--dry-run") == 0
+    assert len(primer.calls) == 1
+    assert any("tagged: 1 easy, 1 hard" in ln for ln in output_lines(capsys))
+    assert list(cli.cards_dir.iterdir()) == []
+
+
+def test_cli_tag_cards_claude_error_writes_untagged(cli, env, primer, capsys):
+    primer.raises = ClaudeError("claude is down")
+    result = what_and_how_sure(env)
+    assert cli(result) == 0  # exit code unchanged
+    lines = output_lines(capsys)
+    assert any(
+        ln.startswith("not tagged (") and "run tag-levels later" in ln for ln in lines
+    )
+    assert not any(ln.startswith("tagged:") for ln in lines)
+    loaded = load_cards(cli.cards_dir)
+    assert [c.id for c in loaded] == [c.id for c in result.kept]
+    assert all(c.difficulty is None for c in loaded)
+
+
+def test_cli_no_primer_no_flag_writes_untagged_exit_0(cli, env, capsys):
+    """The autouse guard: no primer file, no --primer-pages."""
+    result = what_and_how_sure(env)
+    assert cli(result) == 0
+    lines = output_lines(capsys)
+    assert any(
+        ln.startswith("not tagged (can't read the primer: ")
+        and "run tag-levels later" in ln
+        for ln in lines
+    )
+    loaded = load_cards(cli.cards_dir)
+    assert [c.id for c in loaded] == [c.id for c in result.kept]
+    assert all(c.difficulty is None for c in loaded)
+
+
+def test_cli_not_tagged_line_comes_before_cost_line(cli, env, capsys):
+    cli(what_and_how_sure(env), "--dry-run")
+    lines = output_lines(capsys)
+    nt = [i for i, ln in enumerate(lines) if ln.startswith("not tagged (")]
+    cost = [i for i, ln in enumerate(lines) if "Claude calls" in ln]
+    assert nt and cost and nt[0] < cost[0]
+
+
+def test_cli_run_that_keeps_nothing_does_not_tag(cli, results, primer, capsys):
+    assert cli(results["empty"]) == 1
+    assert primer.calls == []
+    lines = output_lines(capsys)
+    assert not any(ln.startswith(("tagged:", "not tagged")) for ln in lines)
+
+
+def test_cli_primer_text_is_never_printed_or_written(cli, env, primer, capsys):
+    assert cli(what_and_how_sure(env), "--primer-pages", "1-3") == 0
+    captured = capsys.readouterr()
+    shown = captured.out + captured.err
+    written = (cli.cards_dir / "rapamycin.jsonl").read_text(encoding="utf-8")
+    for page in PRIMER_PAGES:
+        assert page not in shown
+        assert page not in written
+
+
+# ---- Added after the primer review (read only when needed, blank pages, bar) -------
+
+
+def test_whitespace_only_primer_text_means_no_primer_part(env):
+    _, default_calls = env()
+    _, blank_calls = env(primer_text="   \n  ")
+    assert blank_calls[0]["prompt"] == default_calls[0]["prompt"]
+
+
+def test_system_prompt_says_never_to_quote_the_primer(env):
+    _, calls = env(primer_text=PRIMER_NOTE)
+    system = calls[0]["system"].lower()
+    assert re.search(
+        r"(never|not|don't)[^.\n]*quot[^.\n]*primer"
+        r"|primer[^.\n]*(never|not|don't)[^.\n]*quot",
+        system,
+    )
+
+
+def test_cli_chosen_primer_pages_with_no_text_exit_1(cli, results, primer, capsys):
+    primer.pages = [PRIMER_PAGES[0], "   ", "\n"]
+    assert cli(results["pass"], "--primer-pages", "2-3") == 1
+    assert cli.calls == []
+    assert len(output_lines(capsys)) == 1
+
+
+def test_cli_primer_with_every_page_blank_exit_1(cli, results, primer, capsys):
+    primer.pages = ["", "  ", "\n"]
+    assert cli(results["pass"], "--primer-pages", "1-3") == 1
+    assert cli.calls == []
+    assert len(output_lines(capsys)) == 1
+
+
+def test_cli_existing_file_refuses_without_reading_the_primer(cli, results, primer):
+    (cli.cards_dir / "rapamycin.jsonl").write_text("old\n", encoding="utf-8")
+    assert cli(results["pass"], "--primer-pages", "1-2") == 1
+    assert cli.calls == []
+    assert primer.loads == 0
+
+
+def test_cli_run_that_misses_the_bar_does_not_tag(cli, results, primer, capsys):
+    assert results["fail"].kept  # cards kept, bar missed
+    assert cli(results["fail"]) == 1
+    assert primer.calls == []
+    lines = output_lines(capsys)
+    assert not any(ln.startswith(("tagged:", "not tagged")) for ln in lines)
+
+
+def test_cli_blank_primer_without_flag_is_not_tagged(cli, env, primer, capsys):
+    primer.pages = ["", "  "]
+    result = what_and_how_sure(env)
+    assert cli(result) == 0
+    assert primer.calls == []
+    lines = output_lines(capsys)
+    assert any(ln.startswith("not tagged (can't read the primer: ") for ln in lines)
+    assert all(c.difficulty is None for c in load_cards(cli.cards_dir))
+
+
+def test_cli_claude_error_prints_only_text_before_colon(cli, env, primer, capsys):
+    primer.raises = ClaudeError("bad reply: PRIMER-SECRET words from the primer")
+    assert cli(what_and_how_sure(env)) == 0
+    captured = capsys.readouterr()
+    shown = captured.out + captured.err
+    assert any(
+        ln.startswith("not tagged (bad reply): ") and "run tag-levels later" in ln
+        for ln in shown.splitlines()
+    )
+    assert "PRIMER-SECRET" not in shown

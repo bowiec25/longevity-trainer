@@ -50,7 +50,7 @@
   - [ ] 3. Every hallmark covered
     - [x] 3a. The 12 hallmarks are `parts` of `hallmarks` (`data/topics.jsonl`); the 25 bundle-topic cards re-filed to their one hallmark (only `topic` changed); one duplicate navitoclax card dropped; `longevity coverage hallmarks` shows each hallmark's easy what / how cards: 1 of 12 covered
     - [ ] 3b. Fill the gaps (after step 4, so new cards aim at the primer and come out easy)
-  - [ ] 4. The writer aims at the primer; new cards tagged as they're written
+  - [x] 4. The writer aims at the primer (`write-cards --primer-pages A-B`: the topic's primer pages go in the prompt, "facts the primer states first", quotes still from the source; prompt v6); every run that meets the bar tags its new cards easy/hard before writing
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
 

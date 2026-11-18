@@ -142,7 +142,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>81</b><span>quiz cards (hallmarks, rapamycin, metformin, NAD+, senolytics, clocks, exercise), every quote checked</span></div>
-    <div class="tile"><b>1715</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>1746</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>8</b><span>decision records (ADRs)</span></div>
@@ -262,7 +262,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 1715 tests guard</h2>
+    <h2>4. What the 1746 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
@@ -276,7 +276,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">blocks/test_topic_map.py</td><td class="n">77</td><td class="bar"><span style="width:9%"></span></td><td>longevity block, tests written <b>before</b> the code: the topic map loads and rejects bad lines; each card finds its shelf (by topic id or alias); every card in the real bank has a shelf; each hallmark's easy what / how cards counted, and every hallmark card names one of the 12</td></tr>
         <tr><td class="mono">blocks/test_quiz_round.py</td><td class="n">138</td><td class="bar"><span style="width:17%"></span></td><td>longevity block, by the test-writer: one brain for the terminal and the web page: what's said after each answer, setting up a round (nothing due, unknown topic, bad progress file, easy cards only), and the click-by-click quiz (double or late clicks ignored, each answer saved once, never on stop)</td></tr>
         <tr><td class="mono">blocks/test_study.py + test_cli_progress.py</td><td class="n">70</td><td class="bar"><span style="width:12%"></span></td><td>longevity block, by the test-writer: due cards first, then new, never early reviews; a missed card comes back first; boxes move right; a busy file warns once and keeps trying; stats per topic group; tests never touch your real progress file</td></tr>
-        <tr><td class="mono">blocks/test_card_writer.py</td><td class="n">180</td><td class="bar"><span style="width:25%"></span></td><td>longevity block, tests written <b>before</b> the code: the writer's prompt carries your whole standard; each gate (shape, quote in the source, a connect card links to a real other topic, repeats, checker) drops the right drafts; ids never clash with the bank; the bar; the write-cards command (dry run, --add / --replace, --pages, a broken bank stops it, coverage and cost lines)</td></tr>
+        <tr><td class="mono">blocks/test_card_writer.py</td><td class="n">211</td><td class="bar"><span style="width:25%"></span></td><td>longevity block, tests written <b>before</b> the code: the writer's prompt carries your whole standard; each gate (shape, quote in the source, a connect card links to a real other topic, repeats, checker) drops the right drafts; ids never clash with the bank; the bar; the write-cards command (dry run, --add / --replace, --pages, a broken bank stops it, coverage and cost lines)</td></tr>
         <tr><td class="mono">blocks/test_card_checker.py</td><td class="n">74</td><td class="bar"><span style="width:14%"></span></td><td>longevity block, by the test-writer: the checker's prompt carries your rules word for word; bad replies rejected; exam scoring and the bar; the exam command (dry run, limit, held-out)</td></tr>
         <tr><td class="mono">blocks/test_marking.py</td><td class="n">51</td><td class="bar"><span style="width:10%"></span></td><td>longevity block, by the test-writer: names vs explanations get the right marking rules, length limits, cache, "asking Claude" only on real calls, offline switch-off after 2 failures</td></tr>
         <tr><td class="mono">blocks/test_receipts.py</td><td class="n">114</td><td class="bar"><span style="width:22%"></span></td><td>quizkit block, tests by the test-writer: quote keys (IL-1α ≠ IL-1β, 1.5 ≠ 15), pinned sources, safe paths, every bad source → one line, never a crash</td></tr>
@@ -288,7 +288,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">1715</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">1746</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -328,6 +328,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-18</span><span class="what">The writer aims at your primer</span><span>The card writer now reads your primer's pages on the topic (<code>--primer-pages</code>) and asks about what the primer says first; quotes still come only from the trusted source. Every new card is tagged easy or hard as it's written, so easy mode keeps growing. <a href="snapshots/writer-aims-at-primer.html">snapshot</a></span></li>
     <li><span class="when">2026-11-18</span><span class="what">Every hallmark: the coverage report</span><span>Your ask: learn all 12. The hallmarks are now named <b>parts</b> of the topic, every hallmark card names one, and <code>longevity coverage hallmarks</code> shows each one's easy "what" and "how" cards. Today: 1 of 12 covered; genomic instability has no cards yet. <a href="snapshots/hallmark-coverage.html">snapshot</a></span></li>
     <li><span class="when">2026-11-18</span><span class="what">The easy / hard switch</span><span>The quiz now starts in <b>easy</b> mode: only facts your primer states. Tick <b>Hard mode</b> on the page (or <code>--hard</code> in the terminal) for the extra reading too. A topic with only hard cards says so and points to hard mode. <a href="snapshots/easy-hard-switch.html">snapshot</a></span></li>
     <li><span class="when">2026-11-18</span><span class="what">Easy and hard cards: the tags</span><span>Your point: knowing the primer cold wouldn't get you 100%. A new agent block, <code>primer_check</code>, tags each card <b>easy</b> (your primer states it; Claude quotes the primer and code finds the quote) or <b>hard</b> (the wider sources). Bank: 25 easy, 56 hard. Only the tag is saved, never the primer (ADR 0010). <a href="snapshots/easy-hard-tags.html">snapshot</a></span></li>

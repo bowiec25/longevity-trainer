@@ -426,3 +426,18 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Where we stand:** 1 of 12 hallmarks fully covered in easy mode. Genomic instability has no cards at all. Most others have an easy "what" but no easy "how".
 - **Next:** step 4 makes the writer aim at your primer, then a writing run fills the gaps with easy cards.
 - **Reviewer catches, fixed:** easy "fact" cards now count as "what" (none were hidden); `coverage Hallmarks` works whatever the capitals; a blank part is rejected; how to write cards for one hallmark (`write-cards --topic "hallmarks: <part>"`) is written down.
+
+## The writer aims at your primer (2026-11-18)
+
+> **In plain words:** before, the card writer only read the trusted source. Now it also reads your primer's pages on the topic and asks about what the primer says first, so the new cards can be easy. Each card is tagged easy or hard as it's written.
+
+- **Run it:** `uv run longevity write-cards --topic "hallmarks: telomere attrition" --source hallmarks-of-aging-2023 --pages … --primer-pages 12-13 --add`
+- **Still true:** every quote comes from the trusted source, never the primer (the writer is told not to, and the quote check only looks in the source). The primer's text is never saved or printed.
+- **Tagging:** a run that meets the bar tags its new cards (`tagged: 3 easy, 2 hard`). If the primer can't be read, or Claude can't tag, it says `not tagged … run tag-levels later` and saves the cards untagged.
+- **Reviewer catches, fixed:**
+  - A scanned primer would have tagged every card hard for good; it now counts as "can't read".
+  - The primer's pages are marked `[primer page N]`, so they can't be mixed up with the source's pages.
+  - No tagging on runs that save nothing.
+  - The primer is only read when it's needed.
+  - A Claude error never prints Claude's raw reply, which could quote the primer.
+- **Primer pages:** the hallmarks are on primer pages 12-13 (one plain-English line each).
