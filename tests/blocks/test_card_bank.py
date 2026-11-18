@@ -217,6 +217,46 @@ def test_to_quizkit_makes_a_quizkit_card(tmp_path):
     assert q.level == 1
 
 
+# difficulty
+
+
+def test_line_without_difficulty_loads_as_none(tmp_path):
+    write(tmp_path / "a.jsonl", card("a1"))
+    (c,) = block.load_cards(tmp_path)
+    assert c.difficulty is None
+
+
+@pytest.mark.parametrize("level", ["easy", "hard"])
+def test_easy_and_hard_difficulty_load(tmp_path, level):
+    write(tmp_path / "a.jsonl", card("a1", difficulty=level))
+    (c,) = block.load_cards(tmp_path)
+    assert c.difficulty == level
+
+
+def test_difficulty_null_loads_as_none(tmp_path):
+    write(tmp_path / "a.jsonl", '{"difficulty": null, ' + json.dumps(card("a1"))[1:])
+    (c,) = block.load_cards(tmp_path)
+    assert c.difficulty is None
+
+
+def test_other_difficulty_raises_value_error_with_file_and_line(tmp_path):
+    write(tmp_path / "hallmarks.jsonl", card("ok1"), card("x", difficulty="medium"))
+    with pytest.raises(ValueError) as err:
+        block.load_cards(tmp_path)
+    assert "hallmarks.jsonl" in str(err.value)
+    assert "line 2" in str(err.value)
+
+
+@pytest.mark.parametrize("level", ["easy", "hard", None])
+def test_card_dumped_with_model_dump_json_loads_back_the_same(tmp_path, level):
+    write(tmp_path / "a.jsonl", card("a1", difficulty=level))
+    (c,) = block.load_cards(tmp_path)
+    (tmp_path / "a.jsonl").write_text(c.model_dump_json() + "\n", encoding="utf-8")
+    (again,) = block.load_cards(tmp_path)
+    assert again == c
+    assert again.difficulty == level
+
+
 # to_question
 
 

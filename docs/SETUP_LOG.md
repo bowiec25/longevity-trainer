@@ -388,3 +388,16 @@ A plain-English record of each step: **what** it does, **why** it's best practic
   - This also fixes two FUTURE items: card names not matching topic ids, and picked groups matching loosely.
 - **`quiz_round`:** a round can be limited to shelves. If a shelf has no cards, it says so and lists the shelves that do.
 - **Terminal:** unchanged. `--topic` still takes one topic or group.
+
+## Easy and hard cards: the tags (2026-11-18)
+
+> **In plain words:** the exam on the textbook you were given, and the extra reading. Every card is now tagged **easy** (your primer states its fact) or **hard** (it comes from the wider sources). Easy mode itself is the next step.
+
+- **Why:** you noticed the questions go beyond your primer, so knowing it cold wouldn't get you 100%.
+- **How a card gets tagged (new agent block `primer_check`):**
+  - Claude reads your primer and a batch of cards. For each card it says whether the primer states that fact, and copies the primer's words that do.
+  - Code then looks for those words in the primer. Found → easy. Not found, too short (a single word like "mTOR" proves nothing), or unsure → hard.
+  - So an easy tag needs proof, just as a card needs a receipt.
+- **Your primer stays private:** only the word "easy" or "hard" is saved on each card. The primer's text is never printed or committed (a test checks this). Every card still has its trusted-source receipt (ADR 0010).
+- **Run it:** `uv run longevity tag-levels` (add `--dry-run` to look first, `--retag` to re-check everything). It skips cards already tagged, and prints the model, prompt version and cost.
+- **Reviewer catches, fixed:** the one-word "proof"; a broken or scanned primer PDF now gives one clear line instead of a crash; a card id with stray spaces is still saved; a failed write leaves no stray temp file; ADR 0010 now describes ADR 0004 correctly.

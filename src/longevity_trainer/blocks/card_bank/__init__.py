@@ -45,6 +45,7 @@ class LongevityCard(BaseModel):
     question: str = Field(min_length=10)
     answers: list[str] = Field(min_length=1)
     receipt: Receipt
+    difficulty: Literal["easy", "hard"] | None = None  # set by primer_check (ADR 0010)
 
     @field_validator("kind", mode="before")
     @classmethod

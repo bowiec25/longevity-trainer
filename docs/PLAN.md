@@ -44,6 +44,11 @@
   - [ ] 2. Fill the bank: run the writer over more topics, so there's more to connect
     - [x] 2a. Drugs and supplements: 4 open-access reviews pinned (tier B: rapamycin/mTOR *GeroScience* 2021, metformin *Ageing Res Rev* 2025, NAD+ *Aging Cell* 2024, senolytics *J Intern Med* 2020); +19 cards (bank 81, 81/81 quotes found), incl. 4 connect cards (metformin → AMPK, NAD+ → sirtuins, senolytics → geroscience). Rapamycin now has its "how" card. Gaps: NAD+ has no "how sure", senolytics no "what"
 - [x] **Shelves for topics** (user, 2026-11-18: the topic box mixed levels, "metformin and rapamycin are like drugs category, not their own"): 7 shelves (How we age, Big ideas, Drugs & treatments, Supplements, Lifestyle, Measuring ageing, Evidence & trials; + Industry later), an `area` on every line of `data/topics.jsonl`; new block `topic_map` maps each card to its shelf; the page's box lists shelves
+- [ ] **Easy and hard mode, every hallmark covered** (user, 2026-11-18: "even if you fully memorized the full source document … I'm not sure you could get 100% right"; "as a learner it's important I learn all"; ADR 0010)
+  - [x] 1. Tag each card easy (your primer states it, proven by a primer quote code finds) or hard: new agent block `primer_check`, `difficulty` on cards, `longevity tag-levels`. Whole bank tagged
+  - [ ] 2. The easy / hard switch (page checkbox, terminal `--hard`)
+  - [ ] 3. Every hallmark covered: hallmark cards filed per hallmark, a coverage check, gaps filled
+  - [ ] 4. The writer aims at the primer; new cards tagged as they're written
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
 

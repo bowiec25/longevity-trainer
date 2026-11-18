@@ -22,6 +22,7 @@ Marking:
 """
 
 import argparse
+import json
 import os
 import sys
 import tempfile
@@ -55,6 +56,7 @@ from longevity_trainer.blocks.marking import (
     make_judge,
     run_marking_eval,
 )
+from longevity_trainer.blocks.primer_check import load_primer, tag_cards
 from longevity_trainer.blocks.quiz_round import (
     JUDGE_CACHE,
     NOT_THIS_TIME,
@@ -71,7 +73,7 @@ from longevity_trainer.blocks.quiz_round import (
     score_line,
     setup,
 )
-from longevity_trainer.blocks.study import stats_lines
+from longevity_trainer.blocks.study import group_of, stats_lines
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.judge import PROMPT_VERSION as JUDGE_PROMPT_VERSION
 from quizkit.blocks.progress_store import ProgressFileError, ProgressStore
@@ -432,6 +434,88 @@ def cards_exam(model: str, holdout: bool, limit: int | None, dry_run: bool) -> i
     return 0 if report.passed else 1
 
 
+def tag_levels_command(
+    dry_run: bool,
+    retag: bool,
+    primer: Path | None = None,
+    write: Callable[[str], None] = print,
+) -> int:
+    """Tag cards easy or hard against the primer (ADR 0010); exit 0 = all tagged."""
+    try:
+        pages = load_primer(primer)
+    except Exception as err:  # noqa: BLE001 - missing, or a PDF pypdf can't read
+        write(
+            f"can't read the primer: {(str(err) or type(err).__name__).splitlines()[0]}"
+        )
+        return 1
+    if not any(page.strip() for page in pages):  # e.g. a scan: every card would be hard
+        write("can't read the primer: it has no text")
+        return 1
+    files = sorted(p for p in CARDS_DIR.glob("*.jsonl") if p.is_file())
+    texts = {p.name: p.read_text("utf-8-sig") for p in files}
+    try:
+        _load_texts(texts)  # the whole bank: bad lines and repeated ids stop here
+        per_file = {name: _load_texts({name: text}) for name, text in texts.items()}
+    except ValueError as err:
+        write(f"the card bank has a problem, fix it first: {str(err).splitlines()[0]}")
+        return 1
+    groups: dict[str, list[LongevityCard]] = {}
+    for cards in per_file.values():
+        for card in cards:
+            if retag or card.difficulty is None:
+                groups.setdefault(group_of(card.topic), []).append(card)
+    ask, replies = _counting_ask()
+    tagged: dict[str, str] = {}
+    failed = False
+    for group, cards in groups.items():
+        try:
+            result = tag_cards(cards, pages, ask=ask)
+        except ClaudeError as err:
+            write(f"{group}: not tagged ({str(err).splitlines()[0]})")
+            failed = True
+            continue
+        for card in cards:
+            level = result.difficulty[card.id]
+            reason = result.reasons.get(card.id)
+            write(f"{level} {card.id}" + (f" ({reason})" if reason else ""))
+        easy = sum(result.difficulty[c.id] == "easy" for c in cards)
+        write(f"{group}: {easy} easy, {len(cards) - easy} hard")
+        model_line = f"{result.model} (prompt v{result.prompt_version})"
+        tagged.update({c.id: result.difficulty[c.id] for c in cards})
+    if groups and tagged:
+        write(model_line)
+    write(_cost_line(replies))
+    if dry_run:
+        write("dry run: nothing written")
+        return 1 if failed else 0
+    for path in files:
+        cards = {c.id: c for c in per_file[path.name] if c.id in tagged}
+        if not cards:
+            continue
+        if path.read_text("utf-8-sig") != texts[path.name]:
+            write(
+                f"{path.name} changed during the run (another run or an edit): run again"
+            )
+            failed = True
+            continue
+        lines = []
+        for line in texts[path.name].splitlines():
+            card_id = json.loads(line)["id"].strip() if line.strip() else None
+            if card_id in cards:  # only tagged cards' lines change
+                card = cards[card_id].model_copy(update={"difficulty": tagged[card_id]})
+                line = card.model_dump_json()
+            lines.append(line)
+        tmp = path.with_name(path.name + ".tmp")
+        try:  # a temp file, then swap it in: a failed write keeps the old file
+            tmp.write_text("\n".join(lines) + "\n", "utf-8", newline="\n")
+            os.replace(tmp, path)
+        except OSError as err:
+            tmp.unlink(missing_ok=True)
+            write(f"couldn't write {path.name}: {err}")
+            failed = True
+    return 1 if failed else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="longevity")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -500,6 +584,14 @@ def main(argv: list[str] | None = None) -> int:
     grow.add_argument(
         "--replace", action="store_true", help="overwrite the topic's card file"
     )
+    tagger = sub.add_parser(
+        "tag-levels", help="tag cards easy (in your primer) or hard (real Claude)"
+    )
+    tagger.add_argument("--dry-run", action="store_true", help="tag, write nothing")
+    tagger.add_argument(
+        "--retag", action="store_true", help="also re-check cards already tagged"
+    )
+    tagger.add_argument("--primer", type=Path, default=None, help="the primer PDF")
     args = parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):  # Windows consoles: show ✓ and quotes
@@ -514,6 +606,8 @@ def main(argv: list[str] | None = None) -> int:
         return marking_eval(args.limit, args.dry_run)
     if args.command == "check-cards-exam":
         return cards_exam(args.model, args.holdout, args.limit, args.dry_run)
+    if args.command == "tag-levels":
+        return tag_levels_command(args.dry_run, args.retag, args.primer)
     if args.command == "write-cards":
         return write_cards_command(
             args.topic,
