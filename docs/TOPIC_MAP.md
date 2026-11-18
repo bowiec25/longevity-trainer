@@ -14,6 +14,22 @@
 ## Card kinds per topic
 From ADR 0005: `name` (name & recall), `fact`, `term`, `explain`, `grade` (grade the evidence). Every drug, supplement or intervention gets `grade`, following `docs/LEARNING_GOALS.md` ("how sure are we it helps longevity?" is always asked). `grade` cards need their own marking rule; until then, M3 writes them as `explain` cards whose answer states the grade and why.
 
+## Shelves (areas): what the quiz page's topic box lists
+Each topic has an `area` (added 2026-11-18, user: "metformin and rapamycin are like drugs category, not their own"). The web page's box lists these shelves; the narrow topic stays on each card. Moving a topic to another shelf = editing its line in `data/topics.jsonl`.
+
+| Shelf | Groups on it |
+|---|---|
+| How we age | ageing-basics, hallmarks (incl. mTOR, AMPK, sirtuins) |
+| Big ideas | big-ideas (geroscience, senolytics, reprogramming, ITP) |
+| Drugs & treatments | drugs, hormones, peptides, procedures |
+| Supplements | supplements |
+| Lifestyle | lifestyle |
+| Measuring ageing | measurement |
+| Evidence & trials | evidence, pipeline (TAME, PEARL, TRIAD) |
+| Industry | market (not quizzed yet: dated or read-only) |
+
+A card's file name (its topic) must be a topic id or one of its `aliases` (e.g. `physical-activity` for `exercise`); a test fails otherwise.
+
 ## Groups (one fan-out agent each in M2 Step 5)
 | Group | v1 topics | What its sources look like |
 |---|---|---|

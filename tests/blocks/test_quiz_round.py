@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 import longevity_trainer.blocks.quiz_round as block
+from longevity_trainer.blocks import topic_map
 from longevity_trainer.blocks.card_bank import LongevityCard, load_cards
 from longevity_trainer.blocks.study import Saver, next_due, schedule
 from quizkit.blocks.base import missing_spec_sections, spec_section
@@ -51,6 +52,11 @@ def test_inputs_and_outputs_match_spec():
             assert listed, (
                 f"SPEC.md {section} is filled in: copy it into BLOCK_SPEC.{field}"
             )
+
+
+def test_block_spec_inputs_include_topics():
+    """SPEC.md Inputs gained `topics` (the topic map for `areas`)."""
+    assert "topics" in block.BLOCK_SPEC.inputs
 
 
 # --- helpers ---------------------------------------------------------------------
@@ -1095,3 +1101,278 @@ def test_own_mark_phase_is_exactly_can_own_mark(files, typed, verdict):
     screen.submit(typed, c.id)
     assert (screen.phase == "own_mark") is session.can_own_mark
     assert screen.phase == ("own_mark" if session.can_own_mark else "result")
+
+
+# --- setup: shelves (areas) -----------------------------------------------------------
+
+
+def shelf_topics():
+    """A small hand-made topic map: three shelves, one topic found by an alias."""
+
+    def t(id_, area, aliases=()):
+        return topic_map.Topic(
+            id=id_,
+            topic=f"The topic {id_}",
+            group="g",
+            area=area,
+            status="v1",
+            aliases=list(aliases),
+        )
+
+    return [
+        t("hallmarks", "How we age"),
+        t("rapamycin", "Drugs & treatments"),
+        t("metformin", "Drugs & treatments"),
+        t("exercise", "Lifestyle", aliases=["physical-activity"]),
+    ]
+
+
+def shelf_cards():
+    return [
+        make_card("h-1", topic="hallmarks: senescence", answers=("h one",)),
+        make_card("h-2", topic="hallmarks: telomeres", answers=("h two",)),
+        make_card("d-1", topic="rapamycin", answers=("d one",)),
+        make_card("d-2", topic="metformin", answers=("d two",)),
+        make_card("l-1", topic="Physical Activity", answers=("l one",)),
+    ]
+
+
+class Unreadable(list):
+    """A topics list that fails the test if anything reads it."""
+
+    def __iter__(self):
+        pytest.fail("the topic map was read")
+
+    def __getitem__(self, _i):
+        pytest.fail("the topic map was read")
+
+
+def test_round_options_areas_default_to_empty():
+    assert block.RoundOptions().areas == ()
+    assert block.RoundOptions(areas=("Lifestyle",)).areas == ("Lifestyle",)
+
+
+def test_setup_one_shelf_deals_only_cards_on_it(files):
+    r = block.setup(
+        block.RoundOptions(areas=("Drugs & treatments",), judge=False),
+        files,
+        bank=shelf_cards(),
+        now=NOW,
+        topics=shelf_topics(),
+    )
+    assert {c.id for c in r.cards} == {"d-1", "d-2"}
+
+
+def test_setup_two_shelves_deal_from_both(files):
+    r = block.setup(
+        block.RoundOptions(areas=("Lifestyle", "How we age"), judge=False),
+        files,
+        bank=shelf_cards(),
+        now=NOW,
+        topics=shelf_topics(),
+    )
+    assert {c.id for c in r.cards} == {"h-1", "h-2", "l-1"}
+
+
+def test_setup_empty_areas_deals_every_shelf(files):
+    r = block.setup(
+        block.RoundOptions(areas=(), judge=False),
+        files,
+        bank=shelf_cards(),
+        now=NOW,
+        topics=shelf_topics(),
+    )
+    assert {c.id for c in r.cards} == {c.id for c in shelf_cards()}
+
+
+def test_setup_empty_areas_never_reads_the_topic_map(files, tmp_path, monkeypatch):
+    """With areas=() neither passed topics nor the default file are needed."""
+    monkeypatch.setattr(topic_map, "TOPICS_FILE", tmp_path / "no-topics.jsonl")
+    r = block.setup(block.RoundOptions(judge=False), files, bank=shelf_cards(), now=NOW)
+    assert len(r.cards) == len(shelf_cards())
+    r = block.setup(
+        block.RoundOptions(judge=False, save=False),
+        files,
+        bank=shelf_cards(),
+        now=NOW,
+        topics=Unreadable(),
+    )
+    assert len(r.cards) == len(shelf_cards())
+
+
+def test_setup_areas_without_topics_loads_the_real_topic_map(files):
+    """topics=None: topic_map.load_topic_map() (the real data/topics.jsonl)."""
+    r = block.setup(
+        block.RoundOptions(areas=("Drugs & treatments",), judge=False, save=False),
+        files,
+        bank=shelf_cards(),
+        now=NOW,
+    )
+    assert {c.id for c in r.cards} == {"d-1", "d-2"}
+
+
+def test_an_empty_handed_shelf_gives_the_shelf_lines_and_no_file(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(areas=("Supplements",)),
+            files,
+            bank=shelf_cards(),
+            now=NOW,
+            topics=shelf_topics(),
+        )
+    assert problem.value.lines == [
+        "no cards on the shelf 'Supplements'. Shelves:",
+        "  How we age",
+        "  Drugs & treatments",
+        "  Lifestyle",
+    ]
+    assert problem.value.nothing_due is False
+    assert not files.progress.exists()
+
+
+def test_two_empty_handed_shelves_name_both(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(areas=("Supplements", "Industry"), judge=False),
+            files,
+            bank=shelf_cards(),
+            now=NOW,
+            topics=shelf_topics(),
+        )
+    assert problem.value.lines == [
+        "no cards on the shelf 'Supplements' or 'Industry'. Shelves:",
+        "  How we age",
+        "  Drugs & treatments",
+        "  Lifestyle",
+    ]
+    assert not files.progress.exists()
+
+
+def test_an_empty_handed_shelf_never_builds_the_judge(files):
+    make = FakeMakeJudge()
+    with pytest.raises(block.SetupProblem):
+        block.setup(
+            block.RoundOptions(areas=("Industry",)),
+            files,
+            bank=shelf_cards(),
+            now=NOW,
+            make_judge=make,
+            topics=shelf_topics(),
+        )
+    assert make.calls == []
+
+
+def test_an_empty_handed_shelf_is_checked_before_dealing(files):
+    """Even with every card answered (nothing due), the shelf problem comes first."""
+    cards = shelf_cards()
+    all_answered_right(files, cards)
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(areas=("Industry",), judge=False),
+            files,
+            bank=cards,
+            now=NOW,
+            topics=shelf_topics(),
+        )
+    assert problem.value.nothing_due is False
+    assert problem.value.lines[0] == "no cards on the shelf 'Industry'. Shelves:"
+
+
+def test_areas_narrow_the_topic(files):
+    """topic matches cards on two shelves; areas keeps only one shelf's."""
+    r = block.setup(
+        block.RoundOptions(
+            topic=("hallmarks", "rapamycin"),
+            areas=("Drugs & treatments",),
+            judge=False,
+        ),
+        files,
+        bank=shelf_cards(),
+        now=NOW,
+        topics=shelf_topics(),
+    )
+    assert [c.id for c in r.cards] == ["d-1"]
+
+
+def test_topic_narrows_the_areas(files):
+    """areas keeps two shelves; topic keeps one card on them."""
+    r = block.setup(
+        block.RoundOptions(
+            topic="rapamycin", areas=("How we age", "Drugs & treatments"), judge=False
+        ),
+        files,
+        bank=shelf_cards(),
+        now=NOW,
+        topics=shelf_topics(),
+    )
+    assert [c.id for c in r.cards] == ["d-1"]
+
+
+def test_a_topic_off_the_chosen_shelf_finds_nothing_and_creates_no_file(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(
+                topic="hallmarks", areas=("Drugs & treatments",), judge=False
+            ),
+            files,
+            bank=shelf_cards(),
+            now=NOW,
+            topics=shelf_topics(),
+        )
+    first = problem.value.lines[0]
+    assert first == "no cards on a topic containing 'hallmarks'. Topics:"
+    assert not files.progress.exists()
+
+
+def test_quiz_screen_passes_topics_on_to_setup(files):
+    screen = block.QuizScreen(
+        files=files,
+        bank=shelf_cards(),
+        make_judge=FakeMakeJudge(),
+        now=lambda: NOW,
+        topics=shelf_topics(),
+    )
+    screen.start(block.RoundOptions(areas=("Lifestyle",), seed=1, judge=False))
+    assert screen.phase == "asking"
+    assert screen.view.card_id == "l-1"
+    assert screen.view.total == 1
+
+
+def test_quiz_screen_empty_handed_shelf_shows_the_shelf_problem(files):
+    screen = block.QuizScreen(
+        files=files,
+        bank=shelf_cards(),
+        make_judge=FakeMakeJudge(),
+        now=lambda: NOW,
+        topics=shelf_topics(),
+    )
+    screen.start(block.RoundOptions(areas=("Industry",), judge=False))
+    assert screen.phase == "setup"
+    assert screen.problems[0] == "no cards on the shelf 'Industry'. Shelves:"
+    assert not files.progress.exists()
+
+
+def test_a_plain_string_area_is_one_shelf():
+    assert block.RoundOptions(areas="Lifestyle").areas == ("Lifestyle",)
+
+
+@pytest.mark.parametrize("broken", ["missing", "bad_line"])
+def test_an_unreadable_topic_map_is_a_setup_problem(
+    files, tmp_path, monkeypatch, broken
+):
+    """areas given, topics=None, and data/topics.jsonl can't be read."""
+    path = tmp_path / "topics.jsonl"
+    if broken == "bad_line":
+        path.write_text("{not json\n", encoding="utf-8")
+    monkeypatch.setattr(topic_map, "TOPICS_FILE", path)
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(areas=("Lifestyle",), judge=False),
+            files,
+            bank=shelf_cards(),
+            now=NOW,
+        )
+    assert len(problem.value.lines) == 1
+    assert problem.value.lines[0].startswith("can't read the topic map: ")
+    assert problem.value.nothing_due is False
+    assert not files.progress.exists()
