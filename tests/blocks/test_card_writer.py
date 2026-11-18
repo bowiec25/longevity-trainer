@@ -63,6 +63,7 @@ def test_block_spec_lists_spec_inputs_and_outputs():
         "fetch",
         "pages",
         "primer_text",
+        "only_asks",
         "topics",
     }
     assert set(block.BLOCK_SPEC.outputs) == {
@@ -499,6 +500,7 @@ def assert_counts_add_up(report, result):
         + report.dropped_quote
         + report.dropped_repeat
         + report.dropped_checker
+        + report.dropped_ask
     )
     assert report.kept + drops == report.drafted
     assert report.kept == len(result.kept)
@@ -879,9 +881,9 @@ def test_cli_prints_a_line_per_draft_and_the_report(cli, results, capsys):
 # ---- Added after the SPEC review (PROMPT_VERSION 3, page markers, CLI bank) -------
 
 
-def test_prompt_version_is_6():
-    """v6 added the primer part (SPEC 2026-11-18)."""
-    assert block.PROMPT_VERSION == "6"
+def test_prompt_version_is_7():
+    """v7 added the learner's level and `only_asks` (SPEC 2026-11-18)."""
+    assert block.PROMPT_VERSION == "7"
 
 
 def test_checker_rejected_question_does_not_block_a_later_same_question(env):
@@ -1294,7 +1296,8 @@ def test_cli_coverage_line_names_what_is_missing(cli, env, capsys):
     assert "what" not in tail
     assert "sure" not in tail
     assert "catch" not in tail  # catch is covered-or-not, never "missing"
-    assert "--add" in out
+    assert "run again with --add --ask how" in out
+    assert coverage_line(out).count("--ask") == 1
 
 
 def test_cli_coverage_counts_the_existing_file_with_add(cli, env, capsys):
@@ -1428,8 +1431,10 @@ def test_cli_failing_run_still_prints_coverage_of_unchanged_file(
 
 def test_cli_failing_run_with_no_file_prints_coverage(cli, results, capsys):
     assert cli(results["fail"]) == 1
-    tail = missing_part(capsys.readouterr().out)
+    out = capsys.readouterr().out
+    tail = missing_part(out)
     assert "what" in tail and re.search(r"how[_ -]sure", tail)
+    assert "run again with --add --ask what --ask how --ask how_sure" in out
 
 
 def test_cli_failed_write_prints_no_coverage_line(cli, env, capsys):
@@ -2157,3 +2162,321 @@ def test_cli_claude_error_prints_only_text_before_colon(cli, env, primer, capsys
         for ln in shown.splitlines()
     )
     assert "PRIMER-SECRET" not in shown
+
+
+# ---- Added for `only_asks`, the ask gate and v7 (SPEC 2026-11-18) ------------------
+
+
+def only_asks_drafts() -> list[dict]:
+    """A what, a how and a catch draft, all with real quotes."""
+    return [
+        draft("what", "What does rapamycin inhibit in the cell?", quote=S_WHAT),
+        draft("how", "How does rapamycin slow cell growth?", quote=S_HOW),
+        draft("catch", "What side effect can rapamycin cause?", quote=S_CATCH),
+    ]
+
+
+def new_lines(prompt: str, baseline: str) -> list[str]:
+    """Lines in `prompt` that aren't in `baseline` (lower case)."""
+    old = set(baseline.lower().splitlines())
+    return [ln for ln in prompt.lower().splitlines() if ln not in old]
+
+
+def test_block_spec_lists_only_asks_input():
+    assert "only_asks" in block.BLOCK_SPEC.inputs
+
+
+def test_only_asks_prompt_says_write_only_those_asks(env):
+    _, base = env(only_asks_drafts())
+    _, calls = env(only_asks_drafts(), only_asks=["how"])
+    added = new_lines(calls[0]["prompt"], base[0]["prompt"])
+    assert any("only" in ln and "how" in ln for ln in added), added
+
+
+def test_only_asks_two_asks_prompt_names_both(env):
+    _, base = env(only_asks_drafts())
+    _, calls = env(only_asks_drafts(), only_asks=["how", "catch"])
+    added = " ".join(new_lines(calls[0]["prompt"], base[0]["prompt"]))
+    assert "only" in added and "how" in added and "catch" in added
+
+
+def test_only_asks_drops_other_asks_at_ask_gate(env):
+    check = fake_check()
+    result, _ = env(only_asks_drafts(), only_asks=["how"], check=check)
+    assert [c.question for c in result.kept] == ["How does rapamycin slow cell growth?"]
+    assert gates(result) == ["ask", "ask"]
+    assert result.drops[0].reason == "asked for only how"
+    assert result.report.dropped_ask == 2
+    assert [c.question for c in check.calls] == ["How does rapamycin slow cell growth?"]
+    assert result.report.passed is True
+    assert_counts_add_up(result.report, result)
+
+
+def test_ask_gate_comes_before_quote_gate(env):
+    """An off-ask draft with an invented quote counts in dropped_ask, not the quote bar."""
+    fake = "Rapamycin doubled the lifespan of every human volunteer tested."
+    drafts = [
+        draft("what", "What is invented about rapamycin here?", quote=fake),
+        draft("how", "How does rapamycin slow cell growth?", quote=S_HOW),
+    ]
+    result, _ = env(drafts, only_asks=["how"])
+    assert gates(result) == ["ask"]
+    assert (result.report.dropped_ask, result.report.dropped_quote) == (1, 0)
+    assert result.report.passed is True
+    assert_counts_add_up(result.report, result)
+
+
+def test_shape_gate_comes_before_ask_gate(env):
+    drafts = [draft("what", question="Short"), only_asks_drafts()[1]]
+    result, _ = env(drafts, only_asks=["how"])
+    assert gates(result) == ["shape"]
+    assert result.report.dropped_ask == 0
+
+
+def test_only_asks_two_asks_keeps_both(env):
+    result, _ = env(only_asks_drafts(), only_asks=["how", "catch"])
+    assert sorted(c.id for c in result.kept) == ["rapamycin-catch-1", "rapamycin-how-1"]
+    assert gates(result) == ["ask"]
+    assert result.report.asks_kept == ["catch", "how"]
+    assert_counts_add_up(result.report, result)
+
+
+def test_only_asks_with_primer_says_only_primer_facts(env):
+    _, calls = env(only_asks_drafts(), only_asks=["how"], primer_text=PRIMER_NOTE)
+    prompt = calls[0]["prompt"].lower()
+    assert PRIMER_NOTE.lower() in prompt
+    lines = [ln for ln in prompt.splitlines() if "primer states" in ln]
+    assert any("only" in ln for ln in lines), lines
+    assert "other facts" not in prompt
+
+
+def test_only_asks_none_adds_no_line_and_drops_nothing(env):
+    _, base = env(only_asks_drafts())
+    result, calls = env(only_asks_drafts(), only_asks=None)
+    assert calls[0]["prompt"] == base[0]["prompt"]
+    assert gates(result) == []
+    assert result.report.dropped_ask == 0
+
+
+def test_dropped_ask_defaults_to_0_and_is_in_model_dump(env):
+    result, _ = env()
+    assert result.report.dropped_ask == 0
+    assert result.report.model_dump()["dropped_ask"] == 0
+
+
+@pytest.mark.parametrize("only_asks", [[], ["why"], ["how", "why"]])
+def test_bad_only_asks_raises_before_claude(env, only_asks):
+    ask, calls = fake_ask(only_asks_drafts())
+    with pytest.raises(ValueError):
+        env(ask=ask, only_asks=only_asks)
+    assert calls == []
+
+
+def test_drop_accepts_ask_gate():
+    d = block.Drop(question="What is it?", gate="ask", reason="asked for only how")
+    assert d.gate == "ask"
+
+
+def test_system_prompt_has_learners_level_rule(env):
+    _, calls = env()
+    system = calls[0]["system"].lower()
+    assert "equation" in system
+    assert re.search(r"\bfl(y|ies)\b", system)
+    assert "worm" in system and "yeast" in system
+
+
+# -- CLI `--ask` ---------------------------------------------------------------------
+
+
+def ask_result(env):
+    """A passing result with one draft dropped at the ask gate."""
+    result, _ = env(only_asks_drafts()[:2], only_asks=["how"])
+    assert result.report.dropped_ask == 1 and result.report.passed
+    return result
+
+
+def test_cli_ask_flags_pass_only_asks(cli, results):
+    cli(results["pass"], "--ask", "how", "--ask", "catch", "--dry-run")
+    ((_args, kwargs),) = cli.calls
+    assert kwargs["only_asks"] == ["how", "catch"]
+
+
+def test_cli_ask_flags_are_passed_in_asks_order(cli, results):
+    cli(results["pass"], "--ask", "catch", "--ask", "how", "--dry-run")
+    ((_args, kwargs),) = cli.calls
+    assert kwargs["only_asks"] == ["how", "catch"]
+
+
+def test_cli_repeated_ask_passed_once(cli, results):
+    cli(results["pass"], "--ask", "how", "--ask", "how", "--dry-run")
+    ((_args, kwargs),) = cli.calls
+    assert kwargs["only_asks"] == ["how"]
+
+
+def test_cli_without_ask_passes_none(cli, results):
+    cli(results["pass"], "--dry-run")
+    ((_args, kwargs),) = cli.calls
+    assert kwargs.get("only_asks") is None
+
+
+def test_cli_bad_ask_exits_2_without_calling_write_cards(cli, results):
+    with pytest.raises(SystemExit) as exc:
+        cli(results["pass"], "--ask", "why", "--dry-run")
+    assert exc.value.code == 2
+    assert cli.calls == []
+
+
+def test_cli_report_line_has_ask_count_with_flag(cli, env, capsys):
+    cli(ask_result(env), "--ask", "how", "--dry-run")
+    assert re.search(r"\bchecker \d+, ask 1\b", capsys.readouterr().out)
+
+
+def test_cli_report_line_has_no_ask_count_without_flag(cli, env, capsys):
+    cli(what_and_how_sure(env), "--dry-run")
+    out = capsys.readouterr().out
+    assert re.search(r"\bchecker \d+", out)
+    assert not re.search(r"\bchecker \d+, ask \d+", out)
+
+
+# ---- Added after the only_asks review (bar denominator, connect, gap-fill CLI) -----
+
+NO_CONNECT = re.compile(r"\b(no|not|don't|do not)\b[^.\n]*connect card")
+
+
+def test_ask_reason_lists_asks_in_asks_order(env):
+    result, _ = env(only_asks_drafts()[:1], only_asks=["catch", "how"])
+    assert [d.reason for d in result.drops] == ["asked for only how, catch"]
+
+
+def test_repeated_only_ask_counts_once(env):
+    result, _ = env(only_asks_drafts()[:2], only_asks=["how", "how"])
+    assert [d.reason for d in result.drops] == ["asked for only how"]
+    assert len(result.kept) == 1
+
+
+def test_bar_off_ask_drafts_do_not_pad_it_spec_case(env):
+    """8 off-ask + 2 invented-quote how drafts: 2 of 2 reaching the quote gate missing."""
+    fake = "Rapamycin doubled the lifespan of every human volunteer tested."
+    off = [draft("what", f"What else is true of rapamycin, no {i}?") for i in range(8)]
+    bad = [
+        draft("how", f"How does it work in people, no {i}?", quote=fake)
+        for i in range(2)
+    ]
+    result, _ = env([*off, *bad], only_asks=["how"], n=10)
+    r = result.report
+    assert (r.drafted, r.dropped_ask, r.dropped_quote) == (10, 8, 2)
+    assert r.passed is False
+
+
+def test_bar_off_ask_drafts_not_in_the_denominator(env):
+    """7 off-ask, 1 invented, 2 good: 1 of 3 missing fails (it would pass over 10)."""
+    fake = "Rapamycin doubled the lifespan of every human volunteer tested."
+    off = [draft("what", f"What else is true of rapamycin, no {i}?") for i in range(7)]
+    drafts = [
+        *off,
+        draft("how", "How does it work in people, really?", quote=fake),
+        draft("how", "How does rapamycin slow cell growth?", quote=S_HOW),
+        draft("how", "How does rapamycin act on mTORC1 signalling?", quote=S_HOW),
+    ]
+    result, _ = env(drafts, only_asks=["how"], n=10)
+    r = result.report
+    assert (r.dropped_ask, r.dropped_quote, r.kept) == (7, 1, 2)
+    assert r.passed is False
+
+
+def test_bar_shape_drops_not_in_the_denominator(env):
+    """3 shape, 1 invented, 1 good: 1 of 2 reaching the quote gate missing fails."""
+    fake = "Rapamycin doubled the lifespan of every human volunteer tested."
+    drafts = [
+        draft("what", question="Short"),
+        draft("what", question="Tiny"),
+        draft("what", question="Brief"),
+        draft("how", "How does it work in people, really?", quote=fake),
+        draft("how", "How does rapamycin slow cell growth?", quote=S_HOW),
+    ]
+    result, _ = env(drafts, n=5)
+    r = result.report
+    assert (r.dropped_shape, r.dropped_quote, r.kept) == (3, 1, 1)
+    assert r.passed is False
+
+
+def test_only_asks_without_connect_sends_no_topic_list(env):
+    _, calls = env(only_asks_drafts(), only_asks=["how"], topics=TOPICS)
+    prompt = calls[0]["prompt"]
+    assert not re.search(r"^- [a-z0-9-]+: ", prompt, re.MULTILINE)
+    assert NO_CONNECT.search(prompt.lower())
+
+
+def test_only_asks_with_connect_sends_the_topic_list(env):
+    _, calls = env([connect()], only_asks=["connect"], topics=TOPICS)
+    prompt = calls[0]["prompt"]
+    assert "- mtor: " in prompt
+    assert not re.search(r"\bno connect cards?\b", prompt.lower())
+
+
+def test_only_asks_line_says_it_overrides_the_cover_rules(env):
+    _, base = env(only_asks_drafts())
+    _, calls = env(only_asks_drafts(), only_asks=["how"])
+    added = " ".join(new_lines(calls[0]["prompt"], base[0]["prompt"]))
+    assert "overrid" in added
+
+
+@pytest.mark.parametrize(
+    "topics", [{}, {"rapamycin": TOPICS["rapamycin"]}], ids=["none", "only own"]
+)
+def test_only_connect_with_no_topic_to_link_raises_before_claude(env, topics):
+    ask, calls = fake_ask([connect()])
+    with pytest.raises(ValueError):
+        env(ask=ask, only_asks=["connect"], topics=topics)
+    assert calls == []
+
+
+def test_system_prompt_level_is_a_well_read_non_specialist(env):
+    _, calls = env()
+    assert "well-read non-specialist" in calls[0]["system"].lower()
+
+
+# -- CLI gap fill --------------------------------------------------------------------
+
+
+def test_cli_ask_with_replace_exits_2_without_calling_write_cards(cli, results):
+    with pytest.raises(SystemExit) as exc:
+        cli(results["pass"], "--ask", "how", "--replace")
+    assert exc.value.code == 2
+    assert cli.calls == []
+
+
+def test_cli_gap_fill_with_primer_writes_only_easy_cards(cli, env, primer, capsys):
+    result = what_and_how_sure(env)  # the fake tags the first easy, the rest hard
+    easy, hard = result.kept
+    assert cli(result, "--ask", "how", "--primer-pages", "2-3") == 0
+    loaded = load_cards(cli.cards_dir)
+    assert [c.id for c in loaded] == [easy.id]
+    assert loaded[0].difficulty == "easy"
+    lines = output_lines(capsys)
+    assert f"not kept (hard): {hard.question}" in [ln.strip() for ln in lines]
+    assert not any(easy.question in ln and "not kept" in ln for ln in lines)
+
+
+def test_cli_gap_fill_coverage_counts_only_written_cards(cli, env, primer, capsys):
+    """The hard how_sure card isn't written, so how_sure is still missing."""
+    assert cli(what_and_how_sure(env), "--ask", "how", "--primer-pages", "2-3") == 0
+    out = "\n".join(output_lines(capsys))
+    assert re.search(r"how[_ -]sure", missing_part(out))
+
+
+def test_cli_gap_fill_tagging_failure_writes_nothing(cli, env, primer, capsys):
+    primer.raises = ClaudeError("claude is down")
+    assert cli(what_and_how_sure(env), "--ask", "how", "--primer-pages", "2-3") == 0
+    assert list(cli.cards_dir.iterdir()) == []
+    lines = output_lines(capsys)
+    assert "nothing written: a gap fill keeps only easy cards" in lines
+    assert any(ln.startswith("not tagged (") for ln in lines)
+
+
+def test_cli_primer_pages_without_ask_still_writes_hard_cards(cli, env, primer, capsys):
+    result = what_and_how_sure(env)
+    assert cli(result, "--primer-pages", "2-3") == 0
+    loaded = load_cards(cli.cards_dir)
+    assert [c.difficulty for c in loaded] == ["easy", "hard"]
+    assert not any(ln.startswith("not kept (hard)") for ln in output_lines(capsys))

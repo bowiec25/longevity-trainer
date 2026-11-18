@@ -1,0 +1,20 @@
+{
+  "id": "gompertz-kirkwood-2015",
+  "title": "Deciphering death: a commentary on Gompertz (1825) 'On the nature of the function expressive of the law of human mortality'",
+  "authors": "Kirkwood TB",
+  "publisher": "Royal Society (Philosophical Transactions B)",
+  "journal": "Philos Trans R Soc B 2015",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2015,
+  "doi": "10.1098/rstb.2014.0379",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4360127/fullTextXML",
+  "retrieved": "2026-11-18",
+  "size": 89667,
+  "sha256": "c3ebfe881a1b34cb1d6863746a294b01611b4feac6fbbd5fa2608fafe59785f9",
+  "local_path": "data/raw/gompertz-kirkwood-2015.xml",
+  "topics": [
+    "gompertz"
+  ],
+  "licence_note": "CC BY 4.0 (article licence): record and short quotes only, as for every source. Tier B review."
+}

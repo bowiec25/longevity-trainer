@@ -48,6 +48,7 @@ BLOCK_SPEC = BlockSpec(
         "pages",
         "topics",
         "primer_text",
+        "only_asks",
     ],
     outputs=[
         "write_cards",
@@ -63,7 +64,7 @@ BLOCK_SPEC = BlockSpec(
     ],
 )
 
-PROMPT_VERSION = "6"
+PROMPT_VERSION = "7"
 SOURCES_DIR = ROOT / "data" / "sources"
 TOPICS_FILE = ROOT / "data" / "topics.jsonl"
 MAX_SOURCE_CHARS = 200_000
@@ -102,6 +103,9 @@ Write at least one connect card whenever the source states a link to a listed to
 - A how_sure answer names the species or population (mice, healthy people, \
 patients) and doesn't oversell.
 - No trivia: no sample sizes, p-values, registry numbers or exact dates.
+- Write for a well-read non-specialist: the main ideas they should know. No equation symbols or constants, no single experiment \
+in flies, worms or yeast (unless the topic is that experiment), and no \
+researcher's name unless the name is the answer.
 - Each question must stand alone: never "the trial", "the authors", "this study" \
 or "Figure 2"; name the thing.
 - One clear right answer per question; list close alternatives in answers.
@@ -167,7 +171,7 @@ class Drop(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     question: str
-    gate: Literal["shape", "link", "quote", "repeat", "checker"]
+    gate: Literal["shape", "ask", "link", "quote", "repeat", "checker"]
     reason: str
 
 
@@ -183,6 +187,7 @@ class WriterReport(BaseModel):
     dropped_quote: int
     dropped_repeat: int
     dropped_checker: int
+    dropped_ask: int = 0
     checker_errors: int
     asks_kept: list[str]
     model: str
@@ -193,7 +198,10 @@ class WriterReport(BaseModel):
     def passed(self) -> bool:
         return (
             self.drafted > 0
-            and self.dropped_quote <= self.drafted * 0.2
+            # on the drafts that reached the quote gate: off-ask drafts never pad it
+            and self.drafted - self.dropped_ask - self.dropped_shape > 0
+            and self.dropped_quote
+            <= (self.drafted - self.dropped_ask - self.dropped_shape) * 0.2
             # coverage of the asks is a goal for the topic, over runs (--add)
             and self.kept >= 1
         )
@@ -313,6 +321,7 @@ def write_cards(
     pages: tuple[int, int] | None = None,
     topics: dict[str, str] | None = None,
     primer_text: str = "",
+    only_asks: list[str] | None = None,
 ) -> WriterResult:
     """Draft `n` cards, run them through the gates, return what survived and why."""
     topic_slug = slug(topic)
@@ -320,6 +329,12 @@ def write_cards(
         raise ValueError(f"topic {topic!r} has no letters or digits")
     if not 1 <= n <= 20:
         raise ValueError(f"n must be 1-20, not {n}")
+    wanted: list[str] | None = None
+    if only_asks is not None:  # fill a gap: only these asks
+        bad = [a for a in only_asks if a not in ASKS]
+        if not only_asks or bad:
+            raise ValueError(f"only_asks must be some of {list(ASKS)}, not {only_asks}")
+        wanted = [a for a in ASKS if a in only_asks]
     if topics is None:  # before the source, so a bad topics file fails fast
         topics = load_topics()
     title, every, chosen, text = _source_text(
@@ -337,22 +352,40 @@ def write_cards(
     links = "\n".join(
         f"- {tid}: {about}" for tid, about in topics.items() if tid != topic_slug
     )
+    if wanted == ["connect"] and not links:
+        raise ValueError(
+            "only connect cards asked for, but there's no topic to link to"
+        )
+    if wanted and "connect" not in wanted:
+        links = ""
     if links:
         links = f"Topics a connect card may link to (id: topic):\n{links}\n\n"
     else:
         links = "No topics to link to: write no connect cards.\n\n"
     primer = ""
     if primer_text.strip():  # ADR 0010: aim at the primer, so cards can be easy
+        aim = (
+            "Write only about facts the primer states that the source text also "
+            "states (every quote still copied from the source text).\n\n"
+            if wanted
+            else "Write first about facts the primer states that the source text "
+            "also states (every quote still copied from the source text), then "
+            "other facts.\n\n"
+        )
         primer = (
-            "The learner's primer (their syllabus) on this topic:\n"
-            f"{primer_text}\n\n"
-            "Write first about facts the primer states that the source text also "
-            "states (every quote still copied from the source text), then other "
-            "facts.\n\n"
+            f"The learner's primer (their syllabus) on this topic:\n{primer_text}\n\n"
+            f"{aim}"
+        )
+    aims = ""
+    if wanted:
+        aims = (
+            f"Write only cards whose asks is one of: {', '.join(wanted)} "
+            "(the bank already has the others). This overrides the rules to cover "
+            "every question and to write at least one connect card.\n\n"
         )
     reply = ask(
         f"Topic: {topic}\nNumber of cards: {n}\nSource: {title}\n\n{known}"
-        f"{links}{primer}"
+        f"{links}{primer}{aims}"
         f"Source text:\n{text}",
         model=model,
         system=SYSTEM,
@@ -386,6 +419,15 @@ def write_cards(
                     question=draft.question,
                     gate="shape",
                     reason=f"{where}: {reason['msg']}",
+                )
+            )
+            continue
+        if wanted and draft.asks not in wanted:  # before the quote bar counts it
+            drops.append(
+                Drop(
+                    question=draft.question,
+                    gate="ask",
+                    reason=f"asked for only {', '.join(wanted)}",
                 )
             )
             continue
@@ -475,6 +517,7 @@ def write_cards(
         dropped_quote=count("quote"),
         dropped_repeat=count("repeat"),
         dropped_checker=count("checker"),
+        dropped_ask=count("ask"),
         checker_errors=checker_errors,
         asks_kept=sorted({draft.asks for draft, _ in survivors}),
         model=model,

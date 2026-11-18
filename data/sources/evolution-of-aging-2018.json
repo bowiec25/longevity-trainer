@@ -1,0 +1,20 @@
+{
+  "id": "evolution-of-aging-2018",
+  "title": "Horizons in the evolution of aging",
+  "authors": "Flatt T, Partridge L",
+  "publisher": "BMC (BMC Biology)",
+  "journal": "BMC Biol 2018",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2018,
+  "doi": "10.1186/s12915-018-0562-z",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6100731/fullTextXML",
+  "retrieved": "2026-11-18",
+  "size": 263672,
+  "sha256": "32fee3bcd9c7eb5dbe35dfc22578ac22b72ab056de32e6f98d35b292bc8af199",
+  "local_path": "data/raw/evolution-of-aging-2018.xml",
+  "topics": [
+    "why-we-age"
+  ],
+  "licence_note": "CC BY 4.0 (article licence): record and short quotes only, as for every source. Tier B review."
+}

@@ -451,3 +451,14 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Chapter names** are our own short words, not the primer's text (the repo is public).
 - Prices, companies and regulators (14 sub-topics) are counted as "later": they change fast.
 - **Reviewer catches, fixed:** the topics not quizzed are split into "dated facts, later" (9) and "read, don't quiz" (5); two chapter names were too close to the primer's headings and were reworded; a misspelt card kind in the topic map is now rejected; a broken topic map or card file gives one line, not a crash.
+
+## Chapter 01, and a writer that fills gaps (2026-11-18)
+
+> **In plain words:** the first chapter fill showed the writer drifting into niche detail (equation symbols, fruit-fly experiments). Now you can point it at one gap, and a gap fill keeps only cards your primer states.
+
+- **Sources:** three open-access reviews pinned for chapter 01: Kirkwood 2015 (Gompertz), Garmany, Yamada & Terzic 2021 (the healthspan gap), Flatt & Partridge 2018 (why we age).
+- **Fill a gap:** `write-cards --topic healthspan --source healthspan-gap-2021 --primer-pages 10-12 --add --ask how`. It writes only "how" cards, and with `--primer-pages` it saves only the easy ones (the hard ones print `not kept (hard)`).
+- **Level:** the writer now writes for a well-read non-specialist: no equation symbols, no single fly/worm/yeast experiments, no researcher's name unless it's the answer (prompt v7).
+- **Coverage hint:** "missing: how (run again with --add --ask how)".
+- **Chapter 01:** 2 of 3 covered. Gompertz needs a plainer source for its easy "how".
+- **Reviewer catches, fixed:** off-topic drafts no longer make the quote check easier to pass; `--ask` with `--replace` is refused (it could wipe a topic's other cards); with `--ask how` the writer isn't also pushed to write connect cards.

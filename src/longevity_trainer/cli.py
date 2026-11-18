@@ -277,7 +277,8 @@ def _coverage(topic_slug: str, ids: list[str]) -> str:
     missing = [a for a in ASKS if a in REQUIRED_ASKS and a not in found]
     line = f"topic {topic_slug} covers: {', '.join(covered) or 'nothing yet'}; "
     if missing:
-        return line + f"missing: {', '.join(missing)} (run again with --add)"
+        again = " ".join(f"--ask {a}" for a in missing)
+        return line + f"missing: {', '.join(missing)} (run again with --add {again})"
     return line + "nothing missing"
 
 
@@ -304,6 +305,7 @@ def write_cards_command(
     pages: tuple[int, int] | None = None,
     add: bool = False,
     primer_pages: tuple[int, int] | None = None,
+    only_asks: list[str] | None = None,
 ) -> int:
     """Draft, gate and (unless --dry-run) save cards; exit code 0 = the bar is met."""
     out = CARDS_DIR / f"{slug(topic)}.jsonl"
@@ -336,6 +338,7 @@ def write_cards_command(
             return 1
         primer_text = "\n\n".join(f"[primer page {k}]\n{primer[k - 1]}" for k in chosen)
     ask, replies = _counting_ask()
+    gap_fill_empty = False
     try:
         result = write_cards(
             topic,
@@ -348,6 +351,7 @@ def write_cards_command(
             ask=ask,
             check=lambda card: check_card(card, ask=ask),
             primer_text=primer_text,
+            only_asks=only_asks,
         )
     except (OSError, ValueError, DownloadError, ClaudeError) as err:
         write(str(err).splitlines()[0])
@@ -361,7 +365,8 @@ def write_cards_command(
         f"\n{r.model} (prompt v{r.prompt_version}): kept {r.kept}/{r.drafted}; "
         f"dropped shape {r.dropped_shape}, link {r.dropped_link}, "
         f"quote {r.dropped_quote}, "
-        f"repeat {r.dropped_repeat}, checker {r.dropped_checker}; "
+        f"repeat {r.dropped_repeat}, checker {r.dropped_checker}"
+        f"{f', ask {r.dropped_ask}' if only_asks else ''}; "
         f"asks kept {r.asks_kept} -> {'PASSED' if r.passed else 'NOT PASSED'}"
     )
     if r.passed and result.kept:  # tag before writing, so easy mode sees them
@@ -385,10 +390,25 @@ def write_cards_command(
             result = result.model_copy(update={"kept": kept})
             easy = sum(c.difficulty == "easy" for c in kept)
             write(f"tagged: {easy} easy, {len(kept) - easy} hard")
+        if only_asks and primer_pages is not None:  # a gap fill keeps easy cards only
+            if tags is None:
+                result = result.model_copy(update={"kept": []})
+                gap_fill_empty = True
+            else:
+                for card in result.kept:
+                    if card.difficulty != "easy":
+                        write(_wrap(f"not kept (hard): {card.question}"))
+                easy_only = [c for c in result.kept if c.difficulty == "easy"]
+                result = result.model_copy(update={"kept": easy_only})
+                gap_fill_empty = not easy_only
     write(_cost_line(replies))
     ok = r.passed and bool(result.kept)
     new_ids = [c.id for c in result.kept] if ok else []
     coverage = _coverage(slug(topic), topic_ids + new_ids)
+    if gap_fill_empty:
+        write(coverage)
+        write("nothing written: a gap fill keeps only easy cards")
+        return 0 if r.passed else 1
     if not ok:
         write(coverage)
         write("nothing written")
@@ -662,6 +682,13 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="your primer's pages on this topic, e.g. 9-11: aim at them first",
     )
+    writer.add_argument(
+        "--ask",
+        action="append",
+        choices=ASKS,
+        default=None,
+        help="fill a gap: write only this ask (repeatable), e.g. --ask how",
+    )
     grow = writer.add_mutually_exclusive_group()
     grow.add_argument(
         "--add", action="store_true", help="add cards to the topic's card file"
@@ -684,6 +711,8 @@ def main(argv: list[str] | None = None) -> int:
         "topic_id", nargs="?", default=None, help='e.g. "hallmarks"; none = all'
     )
     args = parser.parse_args(argv)
+    if args.command == "write-cards" and args.ask and args.replace:
+        parser.error("--ask fills a gap: use it with --add, not --replace")
 
     if hasattr(sys.stdout, "reconfigure"):  # Windows consoles: show ✓ and quotes
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -712,6 +741,7 @@ def main(argv: list[str] | None = None) -> int:
             pages=args.pages,
             add=args.add,
             primer_pages=args.primer_pages,
+            only_asks=[a for a in ASKS if a in args.ask] if args.ask else None,
         )
     options = RoundOptions(
         topic=args.topic,
