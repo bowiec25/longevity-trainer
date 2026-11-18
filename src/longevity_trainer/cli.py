@@ -531,6 +531,11 @@ def main(argv: list[str] | None = None) -> int:
         "--no-save", action="store_true", help="play without saving progress"
     )
     quiz.add_argument(
+        "--hard",
+        action="store_true",
+        help="all cards, not only the facts your primer states",
+    )
+    quiz.add_argument(
         "--practise",
         action="store_true",
         help="also cards that aren't due yet; nothing is saved",
@@ -623,6 +628,7 @@ def main(argv: list[str] | None = None) -> int:
         topic=args.topic,
         n=args.n,
         practise=args.practise,
+        easy=not args.hard,
         judge=not args.no_judge,
         save=not args.no_save,
         seed=args.seed,

@@ -38,6 +38,13 @@ with st.sidebar:
     n = st.number_input(
         "How many", min_value=1, max_value=200, value=10, key="n", disabled=running
     )
+    hard = st.checkbox(
+        "Hard mode",
+        value=False,
+        key="hard",
+        disabled=running,
+        help="Off: only facts your primer states. On: the extra reading too.",
+    )
     practise = st.checkbox(
         "Practise",
         value=False,
@@ -65,6 +72,7 @@ with st.sidebar:
                 areas=tuple(picked),
                 n=int(n),
                 practise=practise,
+                easy=not hard,
                 judge=judge,
                 save=save,
             )

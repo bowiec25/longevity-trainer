@@ -438,10 +438,13 @@ def all_answered_right(files, cards):
         save_answer(files.progress, c, c.answers[0], NOW)
 
 
-def expected_nothing_due(files, cards, hint):
+def expected_nothing_due(files, cards, hint, hard_hint=None):
+    """The nothing-due line; in easy mode (`hard_hint` given) it ends with the hard
+    hint too, since hard cards may be due."""
     soonest = next_due(cards, schedule(ProgressStore(files.progress)))
     when = soonest.astimezone().strftime("%a %d %b %H:%M")
-    return f"Nothing due. Next card due {when}. ({hint} to review anyway)"
+    tail = "" if hard_hint is None else f", or {hard_hint} for all cards"
+    return f"Nothing due. Next card due {when}. ({hint} to review anyway{tail})"
 
 
 def test_nothing_due_says_when_next_with_the_hint(files):
@@ -1376,3 +1379,334 @@ def test_an_unreadable_topic_map_is_a_setup_problem(
     assert problem.value.lines[0].startswith("can't read the topic map: ")
     assert problem.value.nothing_due is False
     assert not files.progress.exists()
+
+
+# --- easy / hard (SPEC "easy"; ADR 0010) -----------------------------------------------
+
+
+def test_block_spec_lists_web_hard_hint_and_hard_hint():
+    """SPEC.md gained the output `WEB_HARD_HINT` and the input `hard_hint`."""
+    assert "WEB_HARD_HINT" in block.BLOCK_SPEC.outputs
+    assert "hard_hint" in block.BLOCK_SPEC.inputs
+
+
+def test_web_hard_hint_wording():
+    assert block.WEB_HARD_HINT == "turn on Hard mode"
+
+
+def no_easy_line(hint):
+    return (
+        "no easy cards there yet (easy = facts your primer states). "
+        f"({hint} for all cards)"
+    )
+
+
+def tagged(card_id, difficulty, topic="alpha"):
+    """A hand-made card with an explicit `difficulty` ("easy", "hard" or None)."""
+    return LongevityCard(
+        id=card_id,
+        kind="name",
+        topic=topic,
+        question=f"What is the answer to question {card_id}?",
+        answers=[f"answer {card_id}"],
+        receipt=Receipt(source="src-1", quote=QUOTE, page=3),
+        difficulty=difficulty,
+    )
+
+
+def mixed_cards():
+    """Two easy, two hard and two untagged cards, across topics alpha and beta."""
+    return [
+        tagged("e-1", "easy", topic="alpha: one"),
+        tagged("e-2", "easy", topic="beta"),
+        tagged("h-1", "hard", topic="alpha: two"),
+        tagged("h-2", "hard", topic="beta"),
+        tagged("u-1", None, topic="alpha: one"),
+        tagged("u-2", None, topic="beta"),
+    ]
+
+
+def ids(round_):
+    return {c.id for c in round_.cards}
+
+
+def test_round_options_easy_defaults_to_false():
+    assert block.RoundOptions().easy is False
+    assert block.RoundOptions(easy=True).easy is True
+
+
+def test_easy_deals_only_easy_cards_never_hard_or_untagged(files):
+    r = block.setup(
+        block.RoundOptions(easy=True, judge=False), files, bank=mixed_cards(), now=NOW
+    )
+    assert ids(r) == {"e-1", "e-2"}
+
+
+@pytest.mark.parametrize("options", [{}, {"easy": False}])
+def test_not_easy_deals_easy_hard_and_untagged(files, options):
+    r = block.setup(
+        block.RoundOptions(judge=False, **options),
+        files,
+        bank=mixed_cards(),
+        now=NOW,
+    )
+    assert ids(r) == {"e-1", "e-2", "h-1", "h-2", "u-1", "u-2"}
+
+
+def test_easy_works_with_a_topic(files):
+    r = block.setup(
+        block.RoundOptions(topic="alpha", easy=True, judge=False),
+        files,
+        bank=mixed_cards(),
+        now=NOW,
+    )
+    assert ids(r) == {"e-1"}
+
+
+def easy_shelf_cards():
+    """shelf_cards() plus their difficulty: one easy card on two of the shelves."""
+    return [
+        tagged("h-1", "easy", topic="hallmarks: senescence"),
+        tagged("h-2", "hard", topic="hallmarks: telomeres"),
+        tagged("d-1", "hard", topic="rapamycin"),
+        tagged("d-2", None, topic="metformin"),
+        tagged("l-1", "easy", topic="Physical Activity"),
+    ]
+
+
+def test_easy_works_with_areas(files):
+    r = block.setup(
+        block.RoundOptions(areas=("How we age", "Lifestyle"), easy=True, judge=False),
+        files,
+        bank=easy_shelf_cards(),
+        now=NOW,
+        topics=shelf_topics(),
+    )
+    assert ids(r) == {"h-1", "l-1"}
+
+
+def test_a_topic_with_only_hard_cards_gives_the_no_easy_line_and_no_file(files):
+    """A topic that has cards, none easy: the no-easy line, not the topic lines."""
+    bank = [tagged("e-1", "easy", topic="alpha"), tagged("h-1", "hard", topic="beta")]
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(topic="beta", easy=True, judge=False),
+            files,
+            bank=bank,
+            now=NOW,
+        )
+    assert problem.value.lines == [no_easy_line("--hard")]
+    assert problem.value.nothing_due is False
+    assert not files.progress.exists()
+
+
+def test_untagged_cards_count_as_hard_for_the_no_easy_line(files):
+    bank = [tagged("h-1", "hard"), tagged("u-1", None)]
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(easy=True, judge=False), files, bank=bank, now=NOW
+        )
+    assert problem.value.lines == [no_easy_line("--hard")]
+    assert not files.progress.exists()
+
+
+def test_a_shelf_with_only_hard_cards_gives_the_no_easy_line_and_no_file(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(areas=("Drugs & treatments",), easy=True, judge=False),
+            files,
+            bank=easy_shelf_cards(),
+            now=NOW,
+            topics=shelf_topics(),
+        )
+    assert problem.value.lines == [no_easy_line("--hard")]
+    assert not files.progress.exists()
+
+
+def test_the_no_easy_line_uses_the_screens_hard_hint(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(easy=True, judge=False),
+            files,
+            bank=[tagged("h-1", "hard")],
+            now=NOW,
+            hard_hint="tick the box",
+        )
+    assert problem.value.lines == [no_easy_line("tick the box")]
+
+
+def test_quiz_screen_no_easy_line_says_turn_on_hard_mode(files):
+    screen = screen_for(files, [tagged("h-1", "hard"), tagged("u-1", None)])
+    screen.start(block.RoundOptions(easy=True, judge=False))
+    assert screen.phase == "setup"
+    assert screen.problems == [no_easy_line(block.WEB_HARD_HINT)]
+    assert screen.nothing_due is False
+    assert not files.progress.exists()
+
+
+def test_quiz_screen_easy_deals_only_easy_cards(files):
+    cards = mixed_cards()
+    screen = started(files, cards, easy=True)
+    assert screen.phase == "asking"
+    assert screen.view.total == 2
+    assert card_of(screen, cards).difficulty == "easy"
+
+
+def test_easy_nothing_due_says_when_the_next_easy_card_is_due(files):
+    """Easy card answered (not due), a hard card new and another due sooner: easy
+    mode says "Nothing due", timed from the easy card only, and deals no hard card."""
+    easy = tagged("e-1", "easy")
+    hard_new = tagged("h-1", "hard")
+    hard_sooner = tagged("h-2", "hard")
+    save_answer(files.progress, easy, easy.answers[0], NOW)
+    save_answer(
+        files.progress, hard_sooner, hard_sooner.answers[0], NOW - timedelta(hours=12)
+    )
+    bank = [easy, hard_new, hard_sooner]
+    sched = schedule(ProgressStore(files.progress))
+    assert next_due([easy], sched) != next_due(bank, sched)  # the test means something
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(easy=True, judge=False), files, bank=bank, now=NOW
+        )
+    assert problem.value.nothing_due is True
+    assert problem.value.lines == [
+        expected_nothing_due(files, [easy], "--practise", "--hard")
+    ]
+
+
+def test_easy_with_a_topic_that_has_no_cards_still_gets_the_topic_lines(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(topic="zzz", easy=True, judge=False),
+            files,
+            bank=mixed_cards(),
+            now=NOW,
+        )
+    assert problem.value.lines == [
+        "no cards on a topic containing 'zzz'. Topics:",
+        "  alpha",
+        "  beta",
+    ]
+    assert not files.progress.exists()
+
+
+def test_easy_with_an_empty_handed_shelf_still_gets_the_shelf_lines(files):
+    """The shelf check comes before the easy check."""
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(areas=("Industry",), easy=True, judge=False),
+            files,
+            bank=easy_shelf_cards(),
+            now=NOW,
+            topics=shelf_topics(),
+        )
+    assert problem.value.lines[0] == "no cards on the shelf 'Industry'. Shelves:"
+    assert not files.progress.exists()
+
+
+def test_easy_unknown_topic_lists_hard_only_groups_too(files):
+    """A misspelt `metformin` still shows `metformin`, though it has no easy cards."""
+    bank = [
+        tagged("e-1", "easy", topic="alpha: one"),
+        tagged("m-1", "hard", topic="metformin"),
+        tagged("m-2", None, topic="metformin"),
+    ]
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(topic="metfromin", easy=True, judge=False),
+            files,
+            bank=bank,
+            now=NOW,
+        )
+    assert problem.value.lines == [
+        "no cards on a topic containing 'metfromin'. Topics:",
+        "  alpha",
+        "  metformin",
+    ]
+    assert not files.progress.exists()
+
+
+def test_easy_unknown_topic_on_shelves_lists_their_hard_only_groups_too(files):
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(
+                areas=("How we age", "Drugs & treatments"),
+                topic="zzz",
+                easy=True,
+                judge=False,
+            ),
+            files,
+            bank=easy_shelf_cards(),
+            now=NOW,
+            topics=shelf_topics(),
+        )
+    assert problem.value.lines == [
+        "no cards on a topic containing 'zzz'. Topics:",
+        "  hallmarks",
+        "  metformin",
+        "  rapamycin",
+    ]
+
+
+def test_easy_with_practise_deals_only_easy_cards_not_due_included(files):
+    cards = mixed_cards()
+    all_answered_right(files, cards)  # nothing due: practise deals not-due cards
+    r = block.setup(
+        block.RoundOptions(easy=True, practise=True, judge=False),
+        files,
+        bank=cards,
+        now=NOW,
+    )
+    assert ids(r) == {"e-1", "e-2"}
+    assert r.saver is None
+
+
+def test_the_no_easy_line_leaves_an_existing_progress_file_as_it_was(files):
+    hard = tagged("h-1", "hard")
+    save_answer(files.progress, hard, "wrong", NOW - timedelta(days=10))
+    before = files.progress.read_bytes()
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(easy=True, judge=False), files, bank=[hard], now=NOW
+        )
+    assert problem.value.lines == [no_easy_line("--hard")]
+    assert files.progress.read_bytes() == before
+    assert len(answers_saved(files)) == 1
+
+
+def test_easy_nothing_due_line_uses_the_screens_hints(files):
+    cards = [tagged("e-1", "easy"), tagged("h-1", "hard")]
+    all_answered_right(files, cards)
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(
+            block.RoundOptions(easy=True, judge=False),
+            files,
+            bank=cards,
+            now=NOW,
+            practise_hint="tick Practise",
+            hard_hint="tick Hard",
+        )
+    assert problem.value.lines == [
+        expected_nothing_due(files, cards[:1], "tick Practise", "tick Hard")
+    ]
+
+
+def test_not_easy_nothing_due_line_has_no_hard_hint(files):
+    cards = [tagged("e-1", "easy"), tagged("h-1", "hard")]
+    all_answered_right(files, cards)
+    with pytest.raises(block.SetupProblem) as problem:
+        block.setup(block.RoundOptions(judge=False), files, bank=cards, now=NOW)
+    assert problem.value.lines == [expected_nothing_due(files, cards, "--practise")]
+    assert "--hard" not in problem.value.lines[0]
+
+
+def test_quiz_screen_easy_nothing_due_uses_both_web_hints(files):
+    cards = [tagged("e-1", "easy"), tagged("h-1", "hard")]
+    all_answered_right(files, cards)
+    screen = screen_for(files, cards)
+    screen.start(block.RoundOptions(easy=True, judge=False))
+    assert screen.nothing_due is True
+    assert screen.problems == [
+        expected_nothing_due(files, cards[:1], "turn on Practise", block.WEB_HARD_HINT)
+    ]
