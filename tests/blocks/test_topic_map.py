@@ -75,6 +75,8 @@ def test_block_spec_lists_every_spec_input_and_output():
         "coverage_lines",
         "misfiled",
         "areas_in",
+        "CHAPTERS",
+        "syllabus_lines",
     }
 
 
@@ -184,6 +186,21 @@ def test_extra_keys_primer_and_kinds_are_accepted(tmp_path):
     assert [t.id for t in block.load_topic_map(path)] == ["a"]
 
 
+def test_primer_and_kinds_default_to_empty_and_are_read(tmp_path):
+    path = write_lines(
+        tmp_path / "t.jsonl",
+        [row("a"), row("b", primer="11.4-11.5", kinds=["name", "explain"])],
+    )
+    a, b = block.load_topic_map(path)
+    assert (a.primer, a.kinds) == ("", [])
+    assert (b.primer, b.kinds) == ("11.4-11.5", ["name", "explain"])
+
+
+def test_other_extra_keys_like_note_are_accepted(tmp_path):
+    path = write_lines(tmp_path / "t.jsonl", [row("a", note="a free-text note")])
+    assert [t.id for t in block.load_topic_map(path)] == ["a"]
+
+
 def test_missing_file_raises_file_not_found(tmp_path):
     with pytest.raises(FileNotFoundError):
         block.load_topic_map(tmp_path / "nope.jsonl")
@@ -217,6 +234,8 @@ def test_no_argument_with_a_missing_patched_file_raises(tmp_path, monkeypatch):
         json.dumps(row("x") | {"group": ["g"]}),
         json.dumps(row("x") | {"area": 3}),
         json.dumps(row("x") | {"status": True}),
+        json.dumps(row("x") | {"primer": 2.1}),
+        json.dumps(row("x") | {"kinds": "name"}),
     ],
     ids=[
         "not-json",
@@ -232,6 +251,8 @@ def test_no_argument_with_a_missing_patched_file_raises(tmp_path, monkeypatch):
         "list-group",
         "int-area",
         "bool-status",
+        "float-primer",
+        "string-kinds",
     ],
 )
 def test_a_bad_line_raises_value_error_naming_the_line(tmp_path, bad):
@@ -245,6 +266,21 @@ def test_an_unknown_area_raises_naming_line_and_area(tmp_path):
     with pytest.raises(ValueError, match="line 2") as err:
         block.load_topic_map(path)
     assert "Gardening" in str(err.value)
+
+
+def test_an_unknown_kind_raises_naming_line_and_kind(tmp_path):
+    path = write_lines(
+        tmp_path / "t.jsonl", [row("a"), row("b", kinds=["name", "explian"])]
+    )
+    with pytest.raises(ValueError, match="line 2") as err:
+        block.load_topic_map(path)
+    assert "explian" in str(err.value)
+
+
+def test_every_known_kind_is_accepted(tmp_path):
+    kinds = ["name", "term", "fact", "explain", "grade"]
+    path = write_lines(tmp_path / "t.jsonl", [row("a", kinds=kinds)])
+    assert block.load_topic_map(path)[0].kinds == kinds
 
 
 def test_a_repeated_id_raises_naming_the_line(tmp_path):
@@ -529,6 +565,302 @@ def test_misfiled_one_line_per_bad_card():
     assert lines[1] == "c-3: 'zone 5' isn't one of exercise's parts"
 
 
+# --- CHAPTERS and syllabus_lines ---------------------------------------------------
+
+CHAPTER_NAMES = {
+    0: "How to read the evidence",
+    1: "What ageing is",
+    2: "Hallmarks and pathways",
+    3: "Big ideas",
+    4: "Judging the evidence",
+    5: "Consumer longevity",
+    6: "Drugs",
+    7: "Peptides",
+    8: "Hormones",
+    9: "Supplements",
+    10: "Procedures and lifestyle",
+    11: "Blood tests",
+    12: "Ageing clocks",
+    13: "Scans",
+    14: "Wearables",
+    15: "Glucose and genes",
+    16: "Health data",
+    17: "The drug pipeline",
+    18: "Landmark trials",
+    19: "Regulators",
+    20: "Money and deals",
+    21: "What changed",
+    22: "Where the news is",
+    23: "People, events and books",
+}
+LATER = "Later (dated facts, wait for M5): "
+READ = "Read, don't quiz: "
+OTHER = "Other status: "
+
+
+def test_chapters_are_the_24_named_chapters():
+    assert block.CHAPTERS == CHAPTER_NAMES
+    assert sorted(block.CHAPTERS) == list(range(24))
+
+
+def stopic(id_, primer="", kinds=(), status="v1", aliases=(), parts=None):
+    """A Topic for the syllabus tests (area doesn't matter there)."""
+    extra = {} if parts is None else {"parts": list(parts)}
+    return block.Topic(
+        id=id_,
+        topic=f"The topic {id_}",
+        group="g",
+        area="How we age",
+        status=status,
+        aliases=list(aliases),
+        primer=primer,
+        kinds=list(kinds),
+        **extra,
+    )
+
+
+def syllabus_map():
+    """Chapters out of file order; one with parts, after-m5 + read, one chapterless."""
+    return [
+        stopic("blood", primer="11.4-11.5", kinds=["grade"]),
+        stopic("hallmarks", primer="2.1", parts=["Senescence", "Dysbiosis"]),
+        stopic("deals", primer="20", status="after-m5"),
+        stopic("essay", primer="21", status="read"),
+        stopic("aging", primer="1.2", kinds=["term", "explain"], aliases=["ageing"]),
+        stopic("misc"),
+        stopic("dials", primer="2", kinds=["explain"]),
+    ]
+
+
+def syllabus_cards():
+    return [
+        make_card("c-1", "aging", "term", "easy"),
+        make_card("c-2", "Ageing: why", "explain", "easy"),  # through the alias
+        make_card("c-3", "aging", "name", "hard"),
+        make_card("c-4", "hallmarks: senescence", "name", "easy"),
+        make_card("c-5", "hallmarks: senescence", "explain", "easy"),
+        make_card("c-6", "dials", "name", "easy"),
+        make_card("c-7", "misc", "explain", "easy"),
+        make_card("c-8", "deals", "name", "easy"),
+    ]
+
+
+def test_syllabus_lines_whole_report():
+    assert block.syllabus_lines(syllabus_cards(), syllabus_map()) == [
+        "Syllabus: 2 of 5 sub-topics covered in easy mode",
+        "01 What ageing is: 1 of 1 covered",
+        "  aging: easy 1 what, 1 how; 1 hard ✓",
+        "02 Hallmarks and pathways: 0 of 2 covered",
+        "  hallmarks: 1 of 2 parts covered (see: coverage hallmarks)",
+        "  dials: easy 1 what, 0 how; 0 hard (needs: easy how)",
+        "11 Blood tests: 0 of 1 covered",
+        "  blood: easy 0 what, 0 how; 0 hard (needs: an easy card)",
+        "?? no chapter: 1 of 1 covered",
+        "  misc: easy 0 what, 1 how; 0 hard ✓",
+        f"{LATER}1 sub-topics",
+        f"{READ}1 sub-topics",
+    ]
+
+
+def topic_line(lines, id_):
+    found = [x for x in lines if x.startswith(f"  {id_}:")]
+    assert len(found) == 1, lines
+    return found[0]
+
+
+def one(id_, cards, **kw):
+    """The report line for a single topic `id_` built from `kw`."""
+    return topic_line(block.syllabus_lines(cards, [stopic(id_, **kw)]), id_)
+
+
+TERM_EXPLAIN = {"primer": "1.3", "kinds": ["term", "explain"]}
+
+
+def test_syllabus_easy_term_and_explain_is_ticked():
+    cards = [
+        make_card("c-1", "t", "term", "easy"),
+        make_card("c-2", "t", "explain", "easy"),
+    ]
+    assert one("t", cards, **TERM_EXPLAIN) == "  t: easy 1 what, 1 how; 0 hard ✓"
+
+
+def test_syllabus_only_easy_term_needs_easy_how():
+    cards = [make_card("c-1", "t", "term", "easy")]
+    assert one("t", cards, **TERM_EXPLAIN) == (
+        "  t: easy 1 what, 0 how; 0 hard (needs: easy how)"
+    )
+
+
+def test_syllabus_only_hard_cards_needs_both_and_counts_hard():
+    cards = [
+        make_card("c-1", "t", "term", "hard"),
+        make_card("c-2", "t", "explain", "hard"),
+        make_card("c-3", "t", "name", None),  # untagged counts as hard
+    ]
+    assert one("t", cards, **TERM_EXPLAIN) == (
+        f"  t: easy 0 what, 0 how; 3 hard {NEEDS_BOTH}"
+    )
+
+
+def test_syllabus_kinds_explain_needs_only_an_easy_how():
+    kw = {"primer": "1", "kinds": ["explain"]}
+    assert one("t", [make_card("c-1", "t", "explain", "easy")], **kw) == (
+        "  t: easy 0 what, 1 how; 0 hard ✓"
+    )
+    assert one("t", [make_card("c-1", "t", "name", "easy")], **kw) == (
+        "  t: easy 1 what, 0 how; 0 hard (needs: easy how)"
+    )
+
+
+@pytest.mark.parametrize("kinds", [["name"], ["fact"], ["term"]])
+def test_syllabus_recall_kinds_need_only_an_easy_what(kinds):
+    cards = [make_card("c-1", "t", "fact", "easy")]
+    assert one("t", cards, primer="1", kinds=kinds) == (
+        "  t: easy 1 what, 0 how; 0 hard ✓"
+    )
+
+
+@pytest.mark.parametrize("kinds", [["grade"], []])
+def test_syllabus_no_what_or_how_kinds_need_any_easy_card(kinds):
+    hard = [make_card("c-1", "t", "name", "hard")]
+    assert one("t", hard, primer="1", kinds=kinds) == (
+        "  t: easy 0 what, 0 how; 1 hard (needs: an easy card)"
+    )
+    easy = [make_card("c-1", "t", "explain", "easy")]
+    assert one("t", easy, primer="1", kinds=kinds) == (
+        "  t: easy 0 what, 1 how; 0 hard ✓"
+    )
+
+
+def test_syllabus_topic_with_parts_covered_only_when_every_part_is():
+    topics = [stopic("h", primer="2.1", parts=["One", "Two"])]
+    half = [
+        make_card("c-1", "h: one", "name", "easy"),
+        make_card("c-2", "h: one", "explain", "easy"),
+        make_card("c-3", "h: two", "name", "easy"),
+    ]
+    lines = block.syllabus_lines(half, topics)
+    assert topic_line(lines, "h") == "  h: 1 of 2 parts covered (see: coverage h)"
+    assert lines[0] == "Syllabus: 0 of 1 sub-topics covered in easy mode"
+    full = [*half, make_card("c-4", "h: two", "explain", "easy")]
+    lines = block.syllabus_lines(full, topics)
+    assert topic_line(lines, "h") == "  h: 2 of 2 parts covered (see: coverage h) ✓"
+    assert lines[0] == "Syllabus: 1 of 1 sub-topics covered in easy mode"
+    assert "02 Hallmarks and pathways: 1 of 1 covered" in lines
+
+
+def test_syllabus_topic_with_parts_and_a_non_slug_id_is_counted():
+    """Parts are counted on the topic itself, not looked up again by its id."""
+    topics = [
+        stopic("Hall_marks", primer="2.1", aliases=["hall-marks"], parts=["One", "Two"])
+    ]
+    half = [
+        make_card("c-1", "Hall marks: one", "name", "easy"),
+        make_card("c-2", "hall-marks: one", "explain", "easy"),
+    ]
+    lines = block.syllabus_lines(half, topics)
+    assert topic_line(lines, "Hall_marks") == (
+        "  Hall_marks: 1 of 2 parts covered (see: coverage Hall_marks)"
+    )
+    full = [
+        *half,
+        make_card("c-3", "hall-marks: two", "fact", "easy"),
+        make_card("c-4", "hall-marks: two", "explain", "easy"),
+    ]
+    lines = block.syllabus_lines(full, topics)
+    assert topic_line(lines, "Hall_marks") == (
+        "  Hall_marks: 2 of 2 parts covered (see: coverage Hall_marks) ✓"
+    )
+    assert lines[0] == "Syllabus: 1 of 1 sub-topics covered in easy mode"
+
+
+@pytest.mark.parametrize(
+    ("primer", "header"),
+    [
+        ("11.4-11.5", "11 Blood tests: 0 of 1 covered"),
+        ("5", "05 Consumer longevity: 0 of 1 covered"),
+        ("0.2", "00 How to read the evidence: 0 of 1 covered"),
+        ("2.1", "02 Hallmarks and pathways: 0 of 1 covered"),
+    ],
+)
+def test_syllabus_chapter_is_the_leading_whole_number(primer, header):
+    lines = block.syllabus_lines([], [stopic("t", primer=primer)])
+    assert lines[1] == header
+    assert lines[2].startswith("  t: ")
+
+
+def test_syllabus_chapter_missing_from_chapters_uses_chapter_k():
+    lines = block.syllabus_lines([], [stopic("t", primer="99.1")])
+    assert lines[1] == "99 chapter 99: 0 of 1 covered"
+
+
+@pytest.mark.parametrize("primer", ["", "Appendix", "A.1"])
+def test_syllabus_no_leading_number_goes_under_no_chapter_last(primer):
+    topics = [stopic("x", primer=primer), stopic("y", primer="3.1")]
+    lines = block.syllabus_lines([], topics)
+    assert lines[1] == "03 Big ideas: 0 of 1 covered"
+    assert lines[-4:] == [
+        "?? no chapter: 0 of 1 covered",
+        "  x: easy 0 what, 0 how; 0 hard (needs: an easy card)",
+        f"{LATER}0 sub-topics",
+        f"{READ}0 sub-topics",
+    ]
+
+
+def test_syllabus_chapters_in_number_order_topics_in_file_order():
+    lines = block.syllabus_lines([], syllabus_map())
+    headers = [x for x in lines if not x.startswith("  ")]
+    assert [x[:3] for x in headers[1:-2]] == ["01 ", "02 ", "11 ", "?? "]
+    ids = [x.split(":")[0].strip() for x in lines if x.startswith("  ")]
+    assert ids == ["aging", "hallmarks", "dials", "blood", "misc"]
+
+
+def test_syllabus_after_m5_and_read_topics_are_counted_not_listed():
+    topics = [
+        stopic("a", primer="1"),
+        stopic("b", primer="20", status="after-m5"),
+        stopic("c", primer="21", status="read"),
+        stopic("d", primer="22", status="after-m5"),
+    ]
+    lines = block.syllabus_lines([], topics)
+    assert lines[0] == "Syllabus: 0 of 1 sub-topics covered in easy mode"
+    assert lines[-2:] == [f"{LATER}2 sub-topics", f"{READ}1 sub-topics"]
+    assert not any(x.startswith(OTHER) for x in lines)
+    assert not any(x.startswith(("  b:", "  c:", "  d:", "20 ", "21 ")) for x in lines)
+
+
+def test_syllabus_always_has_later_and_read_lines():
+    lines = block.syllabus_lines([], [stopic("a", primer="1")])
+    assert lines[-2:] == [f"{LATER}0 sub-topics", f"{READ}0 sub-topics"]
+
+
+def test_syllabus_other_statuses_add_a_last_other_status_line():
+    topics = [
+        stopic("a", primer="1"),
+        stopic("b", primer="20", status="after-m5"),
+        stopic("c", primer="21", status="draft"),
+    ]
+    lines = block.syllabus_lines([], topics)
+    assert lines[-3:] == [
+        f"{LATER}1 sub-topics",
+        f"{READ}0 sub-topics",
+        f"{OTHER}1 sub-topics",
+    ]
+    assert not any(x.startswith(("  c:", "21 ")) for x in lines)
+
+
+def test_syllabus_card_filed_through_an_alias_counts_for_its_topic():
+    cards = [
+        make_card("c-1", "Physical Activity", "term", "easy"),
+        make_card("c-2", "physical-activity: zone 2", "explain", "easy"),
+    ]
+    topics = [
+        stopic("exercise", "10.2", ["term", "explain"], aliases=["physical-activity"])
+    ]
+    lines = block.syllabus_lines(cards, topics)
+    assert topic_line(lines, "exercise") == "  exercise: easy 1 what, 1 how; 0 hard ✓"
+
+
 # --- CLI: longevity coverage -------------------------------------------------------
 
 
@@ -576,6 +908,51 @@ def test_cli_coverage_unknown_topic_one_line_exit_1(cli_env, capsys, topic_id):
     assert code == 1
     assert len(lines) == 1
     assert "hallmarks" in lines[0]
+
+
+def test_cli_coverage_with_no_topic_prints_the_syllabus(cli_env, capsys):
+    cli, cards, topics = cli_env
+    code = cli.main(["coverage"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert out.splitlines() == block.syllabus_lines(cards, topics)
+    assert out.splitlines()[0].startswith("Syllabus: ")
+
+
+def one_line_exit_1(cli, args, capsys):
+    code = cli.main(args)
+    captured = capsys.readouterr()
+    lines = (captured.out + captured.err).strip().splitlines()
+    assert code == 1
+    assert len(lines) == 1, lines
+
+
+CLI_ARGS = [["coverage"], ["coverage", "hallmarks"]]
+
+
+@pytest.mark.parametrize("args", CLI_ARGS, ids=["no-topic", "topic"])
+def test_cli_coverage_missing_topic_map_one_line_exit_1(
+    cli_env, capsys, monkeypatch, tmp_path, args
+):
+    cli, _, _ = cli_env
+    gone = tmp_path / "gone.jsonl"
+    monkeypatch.setattr(block, "TOPICS_FILE", gone)
+    monkeypatch.setattr(cli, "TOPICS_FILE", gone, raising=False)
+    one_line_exit_1(cli, args, capsys)
+
+
+@pytest.mark.parametrize("args", CLI_ARGS, ids=["no-topic", "topic"])
+def test_cli_coverage_not_json_topic_map_one_line_exit_1(cli_env, capsys, args):
+    cli, _, _ = cli_env
+    block.TOPICS_FILE.write_text("{not json\n", encoding="utf-8")
+    one_line_exit_1(cli, args, capsys)
+
+
+@pytest.mark.parametrize("args", CLI_ARGS, ids=["no-topic", "topic"])
+def test_cli_coverage_bad_card_file_one_line_exit_1(cli_env, capsys, args):
+    cli, _, _ = cli_env
+    (cli.CARDS_DIR / "broken.jsonl").write_text("{not a card\n", encoding="utf-8")
+    one_line_exit_1(cli, args, capsys)
 
 
 # --- areas_in ----------------------------------------------------------------------
@@ -693,3 +1070,24 @@ def test_real_hallmarks_coverage_report_runs(real_map):
     lines = block.coverage_lines(load_cards(), real_map, "hallmarks")
     assert lines[0].startswith("hallmarks: ")
     assert len(lines) == 1 + len(HALLMARKS_2023)
+
+
+def test_every_real_v1_topic_has_a_chapter(real_map):
+    """Checked on syllabus_lines' own output: no chapterless or unnamed chapter."""
+    lines = block.syllabus_lines(load_cards(), real_map)
+    headers = [x for x in lines[1:] if re.match(r"\d\d ", x)]
+    assert not any(x.startswith("?? ") for x in lines)
+    assert not [x for x in headers if re.match(r"\d\d chapter \d+:", x)]
+    total = int(re.match(r"Syllabus: \d+ of (\d+) ", lines[0]).group(1))
+    counts = [int(re.search(r": \d+ of (\d+) covered$", x).group(1)) for x in headers]
+    assert sum(counts) == total
+    v1 = [t for t in real_map if t.status == "v1"]
+    assert total == len(v1)
+
+
+def test_real_syllabus_report_runs(real_map):
+    lines = block.syllabus_lines(load_cards(), real_map)
+    assert lines[0].startswith("Syllabus: ")
+    assert any(x.startswith(LATER) for x in lines)
+    assert any(x.startswith(READ) for x in lines)
+    assert not any(x.startswith("?? ") for x in lines)
