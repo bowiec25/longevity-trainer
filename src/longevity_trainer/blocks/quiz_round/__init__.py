@@ -69,7 +69,7 @@ WEB_PRACTISE_HINT = "turn on Practise"
 class RoundOptions:
     """What kind of round: which topic, how many, practise, Claude, saving."""
 
-    topic: str | None = None
+    topic: str | tuple[str, ...] | None = None  # several: cards matching any
     n: int = 10
     practise: bool = False
     judge: bool = True
@@ -173,9 +173,12 @@ def setup(
                 ],
                 nothing_due=True,
             )
-        if options.topic:
+        topics = [options.topic] if isinstance(options.topic, str) else options.topic
+        wanted = [t for t in topics or () if t]  # blanks are ignored, as in study
+        if wanted:
+            names = " or ".join(repr(t) for t in wanted)
             raise SetupProblem(
-                [f"no cards on a topic containing {options.topic!r}. Topics:"]
+                [f"no cards on a topic containing {names}. Topics:"]
                 + [f"  {group}" for group in groups(bank)]
             )
         raise SetupProblem(["no cards in the bank"])

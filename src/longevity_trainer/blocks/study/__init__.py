@@ -3,7 +3,7 @@
 See SPEC.md in this folder (ADR 0003).
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 
 from longevity_trainer.blocks.card_bank import LongevityCard
@@ -45,6 +45,9 @@ def _check_aware(now: datetime) -> None:
         raise ValueError("now must have a timezone (e.g. datetime.now(UTC))")
 
 
+Topics = str | Sequence[str] | None  # one text, several (match any), or all
+
+
 def group_of(topic: str) -> str:
     """'hallmarks: dysbiosis' -> 'hallmarks'; a topic without ':' is its own group."""
     return topic.split(":", 1)[0].strip()
@@ -53,7 +56,7 @@ def group_of(topic: str) -> str:
 def deal(
     cards: list[LongevityCard],
     n: int,
-    topic: str | None = None,
+    topic: Topics = None,
     schedule: dict[str, datetime] | None = None,
     now: datetime | None = None,
     seed: int | None = None,
@@ -84,14 +87,16 @@ def deal(
     return [by_id[q.card_id] for q in questions]
 
 
-def _matching(cards: list[LongevityCard], topic: str | None) -> list[LongevityCard]:
-    if not topic:
+def _matching(cards: list[LongevityCard], topic: Topics) -> list[LongevityCard]:
+    texts = [topic] if isinstance(topic, str) else list(topic or ())
+    texts = [t.lower() for t in texts if t]  # blank texts are ignored
+    if not texts:
         return list(cards)
-    return [c for c in cards if topic.lower() in c.topic.lower()]
+    return [c for c in cards if any(t in c.topic.lower() for t in texts)]
 
 
 def next_due(
-    cards: list[LongevityCard], schedule: dict[str, datetime], topic: str | None = None
+    cards: list[LongevityCard], schedule: dict[str, datetime], topic: Topics = None
 ) -> datetime | None:
     """The soonest due time among the matching cards in the schedule."""
     times = [schedule[c.id] for c in _matching(cards, topic) if c.id in schedule]

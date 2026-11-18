@@ -361,3 +361,18 @@ A plain-English record of each step: **what** it does, **why** it's best practic
   - Two good questions about the ITP mouse study were dropped at the link gate. The writer filed them as "how sure" but also filled in a link. Idea in FUTURE: keep such cards and ignore the link.
 - **Still missing:** a "how sure" card for NAD+ and a "what" card for senolytics. One more `--add` run each didn't produce them.
 - **Cost:** 6 writer runs, about 80 cents in total.
+
+## Pick several topics at once (2026-11-14)
+
+> **In plain words:** a menu where you can tick more than one dish. On the web page, the topic box now takes several topics (e.g. metformin + senolytics); leave it empty for all topics.
+
+- **Why:** you asked to select several topics with a click box.
+- **What changed:**
+  - `study` deals from a list of topics: a card counts if it matches any of them.
+  - `quiz_round` passes the list through. Its "no cards" message names each topic ("'a' or 'b'").
+  - The page's single dropdown became a multi-select. The terminal's `--topic` still takes one.
+- **Reviewer catches, fixed:**
+  - Blank topics no longer show up in the "no cards" message.
+  - The page's setting got a new name (`topics`), so a tab open from before can't feed the old single-topic setting into the new box.
+  - The page's hint now says you can pick several.
+- **Known limit (in FUTURE):** a picked group matches any card whose topic contains its name, so overlapping names could pull in extra cards. No two of today's groups overlap.

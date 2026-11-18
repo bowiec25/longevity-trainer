@@ -142,7 +142,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>81</b><span>quiz cards (hallmarks, rapamycin, metformin, NAD+, senolytics, clocks, exercise), every quote checked</span></div>
-    <div class="tile"><b>1492</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>1508</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>8</b><span>decision records (ADRs)</span></div>
@@ -262,7 +262,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 1492 tests guard</h2>
+    <h2>4. What the 1508 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
@@ -270,10 +270,10 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
       <tbody>
         <tr><td class="mono">test_cli.py</td><td class="n">11</td><td class="bar"><span style="width:2%"></span></td><td>the quiz: right answers score, typos forgiven, Claude's mark shown (fake Claude), own mark y/n when Claude can't check, q quits and keeps the score, receipt shown</td></tr>
         <tr><td class="mono">blocks/test_source_text.py</td><td class="n">65</td><td class="bar"><span style="width:12%"></span></td><td>quizkit block, by the test-writer: text from web pages and journal XML; hidden parts, reference lists and author notes left out; all 4 real sources read</td></tr>
-        <tr><td class="mono">test_web_app.py</td><td class="n">15</td><td class="bar"><span style="width:4%"></span></td><td>the web page, played by Streamlit's AppTest (no browser): right/wrong answers, the receipt, Yes/No marking, stop, nothing due, Save off, Practise, the stats page, and the page stays local</td></tr>
+        <tr><td class="mono">test_web_app.py</td><td class="n">16</td><td class="bar"><span style="width:4%"></span></td><td>the web page, played by Streamlit's AppTest (no browser): right/wrong answers, the receipt, Yes/No marking, stop, nothing due, Save off, Practise, the stats page, and the page stays local</td></tr>
         <tr><td class="mono">blocks/test_web_launch.py</td><td class="n">52</td><td class="bar"><span style="width:10%"></span></td><td>quizkit block, by the test-writer: the launcher starts Streamlit on this computer only, opens the browser once, never leaves a copy holding the port after Ctrl-C (fake process, real Streamlit never started); text shown as written</td></tr>
-        <tr><td class="mono">blocks/test_quiz_round.py</td><td class="n">90</td><td class="bar"><span style="width:17%"></span></td><td>longevity block, by the test-writer: one brain for the terminal and the web page: what's said after each answer, setting up a round (nothing due, unknown topic, bad progress file), and the click-by-click quiz (double or late clicks ignored, each answer saved once, never on stop)</td></tr>
-        <tr><td class="mono">blocks/test_study.py + test_cli_progress.py</td><td class="n">60</td><td class="bar"><span style="width:12%"></span></td><td>longevity block, by the test-writer: due cards first, then new, never early reviews; a missed card comes back first; boxes move right; a busy file warns once and keeps trying; stats per topic group; tests never touch your real progress file</td></tr>
+        <tr><td class="mono">blocks/test_quiz_round.py</td><td class="n">95</td><td class="bar"><span style="width:17%"></span></td><td>longevity block, by the test-writer: one brain for the terminal and the web page: what's said after each answer, setting up a round (nothing due, unknown topic, bad progress file), and the click-by-click quiz (double or late clicks ignored, each answer saved once, never on stop)</td></tr>
+        <tr><td class="mono">blocks/test_study.py + test_cli_progress.py</td><td class="n">70</td><td class="bar"><span style="width:12%"></span></td><td>longevity block, by the test-writer: due cards first, then new, never early reviews; a missed card comes back first; boxes move right; a busy file warns once and keeps trying; stats per topic group; tests never touch your real progress file</td></tr>
         <tr><td class="mono">blocks/test_card_writer.py</td><td class="n">180</td><td class="bar"><span style="width:25%"></span></td><td>longevity block, tests written <b>before</b> the code: the writer's prompt carries your whole standard; each gate (shape, quote in the source, a connect card links to a real other topic, repeats, checker) drops the right drafts; ids never clash with the bank; the bar; the write-cards command (dry run, --add / --replace, --pages, a broken bank stops it, coverage and cost lines)</td></tr>
         <tr><td class="mono">blocks/test_card_checker.py</td><td class="n">74</td><td class="bar"><span style="width:14%"></span></td><td>longevity block, by the test-writer: the checker's prompt carries your rules word for word; bad replies rejected; exam scoring and the bar; the exam command (dry run, limit, held-out)</td></tr>
         <tr><td class="mono">blocks/test_marking.py</td><td class="n">51</td><td class="bar"><span style="width:10%"></span></td><td>longevity block, by the test-writer: names vs explanations get the right marking rules, length limits, cache, "asking Claude" only on real calls, offline switch-off after 2 failures</td></tr>
@@ -286,7 +286,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">1492</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">1508</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -326,6 +326,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-14</span><span class="what">Pick several topics at once</span><span>Your ask: tick more than one topic. The web page's topic box is now a multi-select (empty = all topics); <code>study</code> deals from any of the picked topics. <a href="snapshots/multi-topic.html">snapshot</a></span></li>
     <li><span class="when">2026-11-13</span><span class="what">Filling the bank: drugs and supplements</span><span>Four trusted reviews pinned (rapamycin/mTOR, metformin, NAD+, senolytics); the writer added 19 cards (bank 81), 4 of them connecting topics (metformin → AMPK, NAD+ → sirtuins). Rapamycin finally has its "how" card. <a href="snapshots/bank-drugs.html">snapshot</a></span></li>
     <li><span class="when">2026-11-13</span><span class="what">Connect cards: questions that build an expert</span><span>Your steer: questions should make you a longevity expert; you picked "connecting things" first. The writer now also asks "what does it connect to?" (question 6 in your standard), and a code gate checks the link names a real other topic. First real run: rapamycin → dogs (TRIAD). <a href="snapshots/connect-cards.html">snapshot</a></span></li>
     <li><span class="when">2026-11-13</span><span class="what">M4 Step 3: the web page</span><span><code>uv run longevity web</code> opens the quiz in your browser: type an answer, see Claude's mark and the 🧾 receipt quote, Yes/No when Claude can't check, and a Stats page. Local only (127.0.0.1, no usage data). The launcher became a generic quizkit block, <code>web_launch</code>. M4 done: a quiz you can use every day. <a href="snapshots/m4-done.html">snapshot</a></span></li>
