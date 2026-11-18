@@ -401,3 +401,14 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Your primer stays private:** only the word "easy" or "hard" is saved on each card. The primer's text is never printed or committed (a test checks this). Every card still has its trusted-source receipt (ADR 0010).
 - **Run it:** `uv run longevity tag-levels` (add `--dry-run` to look first, `--retag` to re-check everything). It skips cards already tagged, and prints the model, prompt version and cost.
 - **Reviewer catches, fixed:** the one-word "proof"; a broken or scanned primer PDF now gives one clear line instead of a crash; a card id with stray spaces is still saved; a failed write leaves no stray temp file; ADR 0010 now describes ADR 0004 correctly.
+
+## The easy / hard switch (2026-11-18)
+
+> **In plain words:** easy mode is the exam on your primer; hard mode adds the extra reading. The quiz now starts in easy mode. Tick **Hard mode** on the page, or add `--hard` in the terminal, for every card.
+
+- **What changed:** `quiz_round` can deal only easy cards (`RoundOptions.easy`). Untagged cards count as hard.
+- **Clear messages:**
+  - A topic with only hard cards (today: metformin, senolytics, physical activity) says "no easy cards there yet", and how to turn on hard mode.
+  - "Nothing due" in easy mode also says hard mode, since hard cards may be due.
+- **Reviewer catches, fixed:** a misspelt topic now still lists the topics that have only hard cards.
+- **Known limits (in FUTURE):** cards written after a tagging run are untagged, so easy mode doesn't show them until `tag-levels` runs again (step 4 tags new cards as they're written). The shelf box lists every shelf even in easy mode.

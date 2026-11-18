@@ -1,5 +1,7 @@
 """`longevity quiz`: fake typing in, collected lines out. No real keyboard, no Claude."""
 
+import pytest
+
 from longevity_trainer.blocks.card_bank import load_cards
 from longevity_trainer.cli import main, play
 
@@ -113,3 +115,57 @@ def test_claude_unreachable_falls_back_to_own_mark():
     score, out = run_judged([card("hm-telomeres-why")], ["no telomerase", "y"], judge)
     assert score == (1, 1)
     assert "(Claude: couldn't check: offline)" in out and "Counted" in out
+
+
+# --- easy by default, --hard (quiz_round SPEC "Terminal"; ADR 0010) ------------------
+# `longevity quiz` deals from the real bank (there is no way to hand it cards), so
+# these count from load_cards() rather than assume how the bank is tagged.
+
+NO_EASY = (
+    "no easy cards there yet (easy = facts your primer states). (--hard for all cards)"
+)
+
+
+def quiz_out(monkeypatch, capsys, *args):
+    monkeypatch.setattr("builtins.input", lambda _prompt: "q")
+    code = main(["quiz", "--no-save", "--no-judge", "--seed", "1", *args])
+    return code, capsys.readouterr().out
+
+
+def first_question(out):
+    line = next(x for x in out.splitlines() if x.startswith("1. "))
+    return line[3:]
+
+
+def test_quiz_deals_only_easy_cards_by_default(monkeypatch, capsys):
+    bank = load_cards()
+    easy = [c for c in bank if c.difficulty == "easy"]
+    assert easy and len(easy) < len(bank)  # the real bank is tagged, with both kinds
+    code, out = quiz_out(monkeypatch, capsys, "-n", str(len(bank)))
+    assert code == 0
+    assert f"{len(easy)} questions" in out
+    assert any(c.question.startswith(first_question(out)) for c in easy)
+
+
+def test_quiz_hard_deals_every_card(monkeypatch, capsys):
+    bank = load_cards()
+    code, out = quiz_out(monkeypatch, capsys, "-n", str(len(bank)), "--hard")
+    assert code == 0
+    assert f"{len(bank)} questions" in out
+
+
+def test_quiz_with_only_hard_cards_says_pass_hard(monkeypatch, capsys):
+    """A topic whose cards are all hard (or untagged): the no-easy line, exit 1."""
+    bank = load_cards()
+    easy_topics = [c.topic.lower() for c in bank if c.difficulty == "easy"]
+    hard_only = [
+        c.topic for c in bank if not any(c.topic.lower() in t for t in easy_topics)
+    ]
+    if not hard_only:
+        pytest.skip("every topic in the real bank has an easy card")
+    code, out = quiz_out(monkeypatch, capsys, "--topic", hard_only[0])
+    assert code == 1
+    assert NO_EASY in out
+    code, out = quiz_out(monkeypatch, capsys, "--topic", hard_only[0], "--hard")
+    assert code == 0
+    assert "questions" in out

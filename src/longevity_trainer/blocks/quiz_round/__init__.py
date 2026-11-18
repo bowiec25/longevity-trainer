@@ -34,6 +34,7 @@ BLOCK_SPEC = BlockSpec(
         "practise_hint",
         "clock",
         "topics",
+        "hard_hint",
     ],
     outputs=[
         "RoundOptions",
@@ -48,6 +49,7 @@ BLOCK_SPEC = BlockSpec(
         "feedback",
         "own_mark_line",
         "NOT_THIS_TIME",
+        "WEB_HARD_HINT",
         "receipt_line",
         "score_line",
         "QuizScreen",
@@ -62,6 +64,7 @@ SELF_NO = Verdict(correct=False, reason="you marked it wrong", source="self")
 OWN_MARK_QUESTION = "Count it as right?"
 NOT_THIS_TIME = "✗ Not this time"
 WEB_PRACTISE_HINT = "turn on Practise"
+WEB_HARD_HINT = "turn on Hard mode"
 
 
 # --- settings ----------------------------------------------------------------------
@@ -78,6 +81,7 @@ class RoundOptions:
     judge: bool = True
     save: bool = True
     seed: int | None = None
+    easy: bool = False  # only cards your primer states (ADR 0010); False = all
 
     def __post_init__(self) -> None:
         if self.n < 1:
@@ -146,6 +150,7 @@ def setup(
     practise_hint: str = "--practise",
     clock: Callable[[], datetime] | None = None,
     topics: list[Topic] | None = None,
+    hard_hint: str = "--hard",
 ) -> Round:
     """Deal a round (due, then new) and get its judge and saver ready."""
     files = files or RoundFiles()
@@ -165,6 +170,9 @@ def setup(
                 + [f"  {area}" for area in areas_in(bank, topics)]
             )
         bank = on_shelves
+    all_cards = bank
+    if options.easy:  # untagged cards count as hard
+        bank = [c for c in bank if c.difficulty == "easy"]
     now = now or _now()
     saving = options.save and not options.practise
     store = None
@@ -188,11 +196,19 @@ def setup(
         soonest = next_due(bank, plan or {}, topic=options.topic)
         if soonest is not None:
             when = soonest.astimezone().strftime("%a %d %b %H:%M")
+            more = f", or {hard_hint} for all cards" if options.easy else ""
             raise SetupProblem(
                 [
-                    f"Nothing due. Next card due {when}. ({practise_hint} to review anyway)"
+                    f"Nothing due. Next card due {when}. ({practise_hint} to review anyway{more})"
                 ],
                 nothing_due=True,
+            )
+        if options.easy and deal(
+            all_cards, 1, topic=options.topic, now=now, practise=True
+        ):  # there are cards here, just no easy ones
+            hint = f"({hard_hint} for all cards)"
+            raise SetupProblem(
+                [f"no easy cards there yet (easy = facts your primer states). {hint}"]
             )
         texts = [options.topic] if isinstance(options.topic, str) else options.topic
         wanted = [t for t in texts or () if t]  # blanks are ignored, as in study
@@ -200,7 +216,7 @@ def setup(
             names = " or ".join(repr(t) for t in wanted)
             raise SetupProblem(
                 [f"no cards on a topic containing {names}. Topics:"]
-                + [f"  {group}" for group in groups(bank)]
+                + [f"  {group}" for group in groups(all_cards)]
             )
         raise SetupProblem(["no cards in the bank"])
     saver = None
@@ -323,6 +339,7 @@ class QuizScreen:
                 before_asking=None,
                 warn=self._warnings.append,
                 practise_hint=WEB_PRACTISE_HINT,
+                hard_hint=WEB_HARD_HINT,
                 clock=self.now,
                 topics=self.topics,
             )

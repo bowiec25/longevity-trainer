@@ -5,14 +5,16 @@ each screen shows what it says. The rules themselves are tested in
 tests/blocks/test_quiz_round.py. No real Claude, temp progress files.
 """
 
+import ast
 import re
 
 from streamlit.testing.v1 import AppTest
 
 from longevity_trainer import cli
-from longevity_trainer.blocks.card_bank import ROOT, load_cards
+from longevity_trainer.blocks.card_bank import ROOT, LongevityCard, load_cards
 from longevity_trainer.blocks.quiz_round import QuizScreen, RoundFiles
 from quizkit.blocks.progress_store import ProgressStore
+from quizkit.blocks.receipts import Receipt
 from quizkit.models import Verdict
 
 COULDNT = Verdict(correct=False, reason="offline", source="not_checked")
@@ -37,7 +39,7 @@ def page(tmp_path, cards=("hm-telomeres-name",), verdict=COULDNT):
     at = AppTest.from_file(str(cli.WEB_PAGE), default_timeout=30)
     at.session_state["quiz"] = QuizScreen(
         files=files,
-        bank=[card(c) for c in cards],
+        bank=[c if isinstance(c, LongevityCard) else card(c) for c in cards],
         make_judge=judge_saying(verdict),
     )
     at.run()
@@ -133,6 +135,7 @@ def test_nothing_due_says_turn_on_practise(tmp_path):
     at.button(key="start").click().run()
     out = texts(at)
     assert "Nothing due" in out and "turn on Practise" in out
+    assert "turn on Hard mode for all cards" in out  # easy mode: the default
 
 
 def test_a_bad_progress_file_is_shown_not_a_crash(tmp_path):
@@ -198,6 +201,7 @@ def test_picking_a_shelf_deals_only_its_cards(tmp_path):
     )
     assert at.multiselect(key="areas").options == ["How we age", "Drugs & treatments"]
     at.multiselect(key="areas").select("Drugs & treatments").run()
+    at.checkbox(key="hard").check().run()  # both Drugs cards are hard
     at.button(key="start").click().run()
     quiz = at.session_state["quiz"]
     assert quiz.view.total == 2
@@ -220,6 +224,87 @@ def test_stats_page_with_no_progress_creates_no_file(tmp_path):
     stats.run()
     assert not stats.exception
     assert "all new" in texts(stats)
+    assert not (tmp_path / "progress.db").exists()
+
+
+# --- Hard mode (quiz_round SPEC "Web page"; ADR 0010) ------------------------------
+
+NO_EASY = (
+    "no easy cards there yet (easy = facts your primer states). "
+    "(turn on Hard mode for all cards)"
+)
+
+
+def tagged(card_id, difficulty, topic="rapamycin"):
+    """A hand-made card with an explicit `difficulty`, so these tests don't depend
+    on how the real bank is tagged."""
+    return LongevityCard(
+        id=card_id,
+        kind="name",
+        topic=topic,
+        question=f"What is the answer to question {card_id}?",
+        answers=[f"answer {card_id}"],
+        receipt=Receipt(
+            source="src-1",
+            quote="A word-for-word quote that is long enough to count as a receipt.",
+            page=3,
+        ),
+        difficulty=difficulty,
+    )
+
+
+def test_hard_mode_checkbox_is_off_by_default(tmp_path):
+    at = page(tmp_path)
+    assert not at.exception
+    box = at.checkbox(key="hard")
+    assert box.label == "Hard mode"
+    assert box.value is False
+
+
+def test_hard_mode_is_locked_while_a_quiz_runs(tmp_path):
+    at = page(tmp_path, cards=(tagged("e-1", "easy"),))
+    at.button(key="start").click().run()
+    assert at.checkbox(key="hard").disabled
+
+
+def test_hard_mode_is_kept_across_pages():
+    """web_app.KEPT lists `hard`, like the other settings (read from the source: the
+    module runs Streamlit when imported)."""
+    tree = ast.parse(cli.WEB_PAGE.read_text(encoding="utf-8"))
+    [kept] = [
+        node.value
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and any(getattr(t, "id", None) == "KEPT" for t in node.targets)
+    ]
+    assert "hard" in ast.literal_eval(kept)
+
+
+def test_hard_mode_off_deals_only_easy_cards(tmp_path):
+    cards = (tagged("e-1", "easy"), tagged("h-1", "hard"), tagged("u-1", None))
+    at = page(tmp_path, cards=cards)
+    at.button(key="start").click().run()
+    assert not at.exception
+    quiz = at.session_state["quiz"]
+    assert quiz.view.total == 1
+    assert quiz.view.card_id == "e-1"
+
+
+def test_hard_mode_on_deals_hard_cards_too(tmp_path):
+    cards = (tagged("e-1", "easy"), tagged("h-1", "hard"), tagged("u-1", None))
+    at = page(tmp_path, cards=cards)
+    at.checkbox(key="hard").check().run()
+    at.button(key="start").click().run()
+    assert not at.exception
+    assert at.session_state["quiz"].view.total == 3
+
+
+def test_only_hard_cards_and_hard_mode_off_says_turn_on_hard_mode(tmp_path):
+    at = page(tmp_path, cards=(tagged("h-1", "hard"), tagged("u-1", None)))
+    at.button(key="start").click().run()
+    assert not at.exception
+    assert "Start quiz" in [b.label for b in at.button]  # still on the settings
+    assert NO_EASY in texts(at)
     assert not (tmp_path / "progress.db").exists()
 
 

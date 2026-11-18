@@ -96,6 +96,7 @@ def test_nothing_due_says_when_next_and_asks_nothing(progress, monkeypatch, caps
     out = capsys.readouterr().out
     assert "Nothing due" in out
     assert "--practise" in out
+    assert "--hard for all cards" in out  # easy mode: the default
 
 
 def test_practise_deals_not_due_cards_and_saves_nothing(progress, monkeypatch, capsys):
