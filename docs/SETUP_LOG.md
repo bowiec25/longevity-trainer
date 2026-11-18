@@ -441,3 +441,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
   - The primer is only read when it's needed.
   - A Claude error never prints Claude's raw reply, which could quote the primer.
 - **Primer pages:** the hallmarks are on primer pages 12-13 (one plain-English line each).
+
+## The whole-syllabus report (2026-11-18)
+
+> **In plain words:** a library's stock list. `uv run longevity coverage` (no topic) lists every chapter of your primer, every sub-topic in it, its easy and hard cards, and what's missing. Before, only the hallmarks had a report, which hid that most shelves were empty.
+
+- **First run:** 1 of 59 sub-topics covered in easy mode. 52 have no cards at all. Only 8 trusted sources exist, so the fills start with finding sources.
+- **Covered** = the easy cards a sub-topic's kinds call for: an easy "what" (name, term or fact), an easy "how" (explain), or both. A topic with parts (the hallmarks) is covered when every part is.
+- **Chapter names** are our own short words, not the primer's text (the repo is public).
+- Prices, companies and regulators (14 sub-topics) are counted as "later": they change fast.
+- **Reviewer catches, fixed:** the topics not quizzed are split into "dated facts, later" (9) and "read, don't quiz" (5); two chapter names were too close to the primer's headings and were reworded; a misspelt card kind in the topic map is now rejected; a broken topic map or card file gives one line, not a crash.

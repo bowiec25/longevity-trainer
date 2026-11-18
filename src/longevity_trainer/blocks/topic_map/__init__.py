@@ -27,6 +27,8 @@ BLOCK_SPEC = BlockSpec(
         "areas_in",
         "coverage_lines",
         "misfiled",
+        "CHAPTERS",
+        "syllabus_lines",
     ],
 )
 
@@ -42,6 +44,36 @@ AREAS = (
     "Industry",
 )
 
+# The primer's chapters, in our own short words (never the primer's text).
+CHAPTERS = {
+    0: "How to read the evidence",
+    1: "What ageing is",
+    2: "Hallmarks and pathways",
+    3: "Big ideas",
+    4: "Judging the evidence",
+    5: "Consumer longevity",
+    6: "Drugs",
+    7: "Peptides",
+    8: "Hormones",
+    9: "Supplements",
+    10: "Procedures and lifestyle",
+    11: "Blood tests",
+    12: "Ageing clocks",
+    13: "Scans",
+    14: "Wearables",
+    15: "Glucose and genes",
+    16: "Health data",
+    17: "The drug pipeline",
+    18: "Landmark trials",
+    19: "Regulators",
+    20: "Money and deals",
+    21: "What changed",
+    22: "Where the news is",
+    23: "People, events and books",
+}
+WHAT_KINDS = ("name", "term", "fact")
+KINDS = (*WHAT_KINDS, "explain", "grade")
+
 
 def _slug(text: str) -> str:
     """card_writer.slug's rule, kept here so the quiz doesn't import the writer
@@ -50,7 +82,7 @@ def _slug(text: str) -> str:
 
 
 class Topic(BaseModel):
-    """One line of the topic map (other keys, like `primer` and `kinds`, ignored)."""
+    """One line of the topic map (other keys ignored)."""
 
     model_config = ConfigDict(frozen=True, extra="ignore", strict=True)
 
@@ -61,6 +93,8 @@ class Topic(BaseModel):
     status: str
     aliases: list[str] = []
     parts: list[str] = []  # e.g. the 12 hallmarks: cards filed '<group>: <part>'
+    primer: str = ""  # its primer section, e.g. "2.1" or "11.4-11.5"
+    kinds: list[str] = []  # the card kinds it should have
 
 
 def load_topic_map(path: Path | None = None) -> list[Topic]:
@@ -82,6 +116,9 @@ def load_topic_map(path: Path | None = None) -> list[Topic]:
             raise ValueError(f"{path} line {number}: bad {where or 'line'}") from err
         if topic.area not in AREAS:
             raise ValueError(f"{path} line {number}: unknown area {topic.area!r}")
+        for kind in topic.kinds:
+            if kind not in KINDS:
+                raise ValueError(f"{path} line {number}: unknown kind {kind!r}")
         part_slugs = [_slug(part) for part in topic.parts]
         if len(set(part_slugs)) != len(part_slugs):
             raise ValueError(f"{path} line {number}: a part is listed twice")
@@ -129,28 +166,102 @@ def coverage_lines(
     if topic is None or not topic.parts:
         with_parts = ", ".join(t.id for t in topics if t.parts) or "none"
         raise ValueError(f"no parts for {topic_id!r}. Topics with parts: {with_parts}")
+    rows = _part_rows(cards, topics, topic)
+    covered = sum(ok for _, ok in rows)
+    head = (
+        f"{topic.id}: {covered} of {len(topic.parts)} parts covered in easy mode"
+        " (each needs an easy what and how card)"
+    )
+    return [head, *(line for line, _ in rows)]
+
+
+def _part_rows(
+    cards: list[LongevityCard], topics: list[Topic], topic: Topic
+) -> list[tuple[str, bool]]:
+    """(line, covered) for each of a topic's parts, in the topic's order."""
     on_part: dict[str, list[LongevityCard]] = {_slug(p): [] for p in topic.parts}
     for card in cards:
         found = _part_of(card, topics)
         if found and found[0] is topic:
             on_part.get(_slug(found[1]), []).append(card)
-    rows, covered = [], 0
-    for part in topic.parts:
-        here = on_part[_slug(part)]
-        easy = [c for c in here if c.difficulty == "easy"]
-        what = sum(c.kind in ("name", "term", "fact") for c in easy)
-        how = sum(c.kind == "explain" for c in easy)
-        needs = [n for n, ok in (("easy what", what), ("easy how", how)) if not ok]
-        covered += not needs
-        end = f" (needs: {', '.join(needs)})" if needs else " ✓"
-        rows.append(
-            f"  {part}: easy {what} what, {how} how; {len(here) - len(easy)} hard{end}"
-        )
-    head = (
-        f"{topic.id}: {covered} of {len(topic.parts)} parts covered in easy mode"
-        " (each needs an easy what and how card)"
-    )
-    return [head, *rows]
+    return [
+        _count_line(part, on_part[_slug(part)], ["what", "how"]) for part in topic.parts
+    ]
+
+
+def _count_line(
+    name: str, cards: list[LongevityCard], wanted: list[str]
+) -> tuple[str, bool]:
+    """'  <name>: easy w what, h how; x hard' + ' ✓' or the missing easy cards."""
+    easy = [c for c in cards if c.difficulty == "easy"]
+    what = sum(c.kind in WHAT_KINDS for c in easy)
+    how = sum(c.kind == "explain" for c in easy)
+    have = {"what": what, "how": how, "any": len(easy)}
+    label = {"what": "easy what", "how": "easy how", "any": "an easy card"}
+    needs = [label[w] for w in wanted if not have[w]]
+    end = f" (needs: {', '.join(needs)})" if needs else " ✓"
+    hard = len(cards) - len(easy)
+    return f"  {name}: easy {what} what, {how} how; {hard} hard{end}", not needs
+
+
+def _wanted(topic: Topic) -> list[str]:
+    """The easy cards a topic's kinds call for: what, how, or else any one."""
+    wanted = []
+    if any(k in WHAT_KINDS for k in topic.kinds):
+        wanted.append("what")
+    if "explain" in topic.kinds:
+        wanted.append("how")
+    return wanted or ["any"]
+
+
+def _chapter(topic: Topic) -> int | None:
+    """The whole number the primer section starts with ('11.4-11.5' -> 11)."""
+    digits = re.match(r"\d+", topic.primer)
+    return int(digits.group()) if digits else None
+
+
+def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:
+    """Every learnable sub-topic, chapter by chapter: easy / hard cards, gaps."""
+    learn = [t for t in topics if t.status == "v1"]
+    mine: dict[str, list[LongevityCard]] = {t.id: [] for t in learn}
+    for card in cards:
+        topic = _entry(card.topic, topics)
+        if topic is not None and topic.id in mine:
+            mine[topic.id].append(card)
+    chapters: dict[int | None, list[tuple[str, bool]]] = {}
+    for topic in learn:
+        if topic.parts:
+            parts = _part_rows(cards, topics, topic)
+            done = sum(ok for _, ok in parts)
+            ok = done == len(parts)
+            line = (
+                f"  {topic.id}: {done} of {len(parts)} parts covered"
+                f" (see: coverage {topic.id}){' ✓' if ok else ''}"
+            )
+        else:
+            line, ok = _count_line(topic.id, mine[topic.id], _wanted(topic))
+        chapters.setdefault(_chapter(topic), []).append((line, ok))
+    order = sorted(k for k in chapters if k is not None)
+    if None in chapters:
+        order.append(None)
+    covered = sum(ok for rows in chapters.values() for _, ok in rows)
+    lines = [f"Syllabus: {covered} of {len(learn)} sub-topics covered in easy mode"]
+    for number in order:
+        rows = chapters[number]
+        done = sum(ok for _, ok in rows)
+        if number is None:
+            head = "?? no chapter"
+        else:
+            head = f"{number:02d} {CHAPTERS.get(number, f'chapter {number}')}"
+        lines.append(f"{head}: {done} of {len(rows)} covered")
+        lines.extend(line for line, _ in rows)
+    status = [t.status for t in topics if t.status != "v1"]
+    later, read = status.count("after-m5"), status.count("read")
+    lines.append(f"Later (dated facts, wait for M5): {later} sub-topics")
+    lines.append(f"Read, don't quiz: {read} sub-topics")
+    if other := len(status) - later - read:
+        lines.append(f"Other status: {other} sub-topics")
+    return lines
 
 
 def misfiled(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:

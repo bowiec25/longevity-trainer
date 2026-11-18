@@ -74,7 +74,11 @@ from longevity_trainer.blocks.quiz_round import (
     setup,
 )
 from longevity_trainer.blocks.study import group_of, stats_lines
-from longevity_trainer.blocks.topic_map import coverage_lines, load_topic_map
+from longevity_trainer.blocks.topic_map import (
+    coverage_lines,
+    load_topic_map,
+    syllabus_lines,
+)
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.judge import PROMPT_VERSION as JUDGE_PROMPT_VERSION
 from quizkit.blocks.progress_store import ProgressFileError, ProgressStore
@@ -568,10 +572,16 @@ def tag_levels_command(
     return 1 if failed else 0
 
 
-def coverage_command(topic_id: str, write: Callable[[str], None] = print) -> int:
-    """Each part of a topic (e.g. the 12 hallmarks): easy what / how cards, gaps."""
+def coverage_command(
+    topic_id: str | None = None, write: Callable[[str], None] = print
+) -> int:
+    """No topic: the whole syllabus. A topic: each of its parts. Easy cards, gaps."""
     try:
-        lines = coverage_lines(load_cards(), load_topic_map(), topic_id)
+        cards, topics = load_cards(), load_topic_map()
+        if topic_id is None:
+            lines = syllabus_lines(cards, topics)
+        else:
+            lines = coverage_lines(cards, topics, topic_id)
     except (OSError, ValueError) as err:
         write(str(err).splitlines()[0])
         return 1
@@ -668,9 +678,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     tagger.add_argument("--primer", type=Path, default=None, help="the primer PDF")
     cover = sub.add_parser(
-        "coverage", help="each part of a topic: easy what / how cards, and gaps"
+        "coverage", help="the whole syllabus (or one topic's parts): easy cards, gaps"
     )
-    cover.add_argument("topic_id", help='e.g. "hallmarks"')
+    cover.add_argument(
+        "topic_id", nargs="?", default=None, help='e.g. "hallmarks"; none = all'
+    )
     args = parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):  # Windows consoles: show ✓ and quotes

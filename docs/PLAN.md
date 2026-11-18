@@ -49,8 +49,11 @@
   - [x] 2. The easy / hard switch: the page's "Hard mode" checkbox (off = easy), terminal `longevity quiz --hard`; `RoundOptions.easy` in `quiz_round`
   - [ ] 3. Every hallmark covered
     - [x] 3a. The 12 hallmarks are `parts` of `hallmarks` (`data/topics.jsonl`); the 25 bundle-topic cards re-filed to their one hallmark (only `topic` changed); one duplicate navitoclax card dropped; `longevity coverage hallmarks` shows each hallmark's easy what / how cards: 1 of 12 covered
-    - [ ] 3b. Fill the gaps (after step 4, so new cards aim at the primer and come out easy)
+    - [ ] 3b. Fill the gaps: now part of the chapter fills below (chapter 02)
   - [x] 4. The writer aims at the primer (`write-cards --primer-pages A-B`: the topic's primer pages go in the prompt, "facts the primer states first", quotes still from the source; prompt v6); every run that meets the bar tags its new cards easy/hard before writing
+- [ ] **Every chapter covered** (user, 2026-11-18: "lets make sure we dont have gaps elsewhere too"; the primer's chapters are the topics, the lines of `data/topics.jsonl` their sub-topics)
+  - [x] 1. The whole-syllabus report: `longevity coverage` with no topic lists every chapter and sub-topic with its easy / hard cards and gaps (`topic_map.syllabus_lines`). First run: 1 of 59 sub-topics covered in easy mode
+  - [ ] 2. Fill chapter by chapter, in primer order (01-04 first): a trusted source per sub-topic (listed in each PR, the user can veto), then `write-cards --primer-pages` until the chapter shows covered. One PR per chapter
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
 
