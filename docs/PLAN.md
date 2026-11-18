@@ -47,7 +47,9 @@
 - [ ] **Easy and hard mode, every hallmark covered** (user, 2026-11-18: "even if you fully memorized the full source document … I'm not sure you could get 100% right"; "as a learner it's important I learn all"; ADR 0010)
   - [x] 1. Tag each card easy (your primer states it, proven by a primer quote code finds) or hard: new agent block `primer_check`, `difficulty` on cards, `longevity tag-levels`. Whole bank tagged
   - [x] 2. The easy / hard switch: the page's "Hard mode" checkbox (off = easy), terminal `longevity quiz --hard`; `RoundOptions.easy` in `quiz_round`
-  - [ ] 3. Every hallmark covered: hallmark cards filed per hallmark, a coverage check, gaps filled
+  - [ ] 3. Every hallmark covered
+    - [x] 3a. The 12 hallmarks are `parts` of `hallmarks` (`data/topics.jsonl`); the 25 bundle-topic cards re-filed to their one hallmark (only `topic` changed); one duplicate navitoclax card dropped; `longevity coverage hallmarks` shows each hallmark's easy what / how cards: 1 of 12 covered
+    - [ ] 3b. Fill the gaps (after step 4, so new cards aim at the primer and come out easy)
   - [ ] 4. The writer aims at the primer; new cards tagged as they're written
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**

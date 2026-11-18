@@ -74,6 +74,7 @@ from longevity_trainer.blocks.quiz_round import (
     setup,
 )
 from longevity_trainer.blocks.study import group_of, stats_lines
+from longevity_trainer.blocks.topic_map import coverage_lines, load_topic_map
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.judge import PROMPT_VERSION as JUDGE_PROMPT_VERSION
 from quizkit.blocks.progress_store import ProgressFileError, ProgressStore
@@ -516,6 +517,18 @@ def tag_levels_command(
     return 1 if failed else 0
 
 
+def coverage_command(topic_id: str, write: Callable[[str], None] = print) -> int:
+    """Each part of a topic (e.g. the 12 hallmarks): easy what / how cards, gaps."""
+    try:
+        lines = coverage_lines(load_cards(), load_topic_map(), topic_id)
+    except (OSError, ValueError) as err:
+        write(str(err).splitlines()[0])
+        return 1
+    for line in lines:
+        write(line)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="longevity")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -597,6 +610,10 @@ def main(argv: list[str] | None = None) -> int:
         "--retag", action="store_true", help="also re-check cards already tagged"
     )
     tagger.add_argument("--primer", type=Path, default=None, help="the primer PDF")
+    cover = sub.add_parser(
+        "coverage", help="each part of a topic: easy what / how cards, and gaps"
+    )
+    cover.add_argument("topic_id", help='e.g. "hallmarks"')
     args = parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):  # Windows consoles: show ✓ and quotes
@@ -611,6 +628,8 @@ def main(argv: list[str] | None = None) -> int:
         return marking_eval(args.limit, args.dry_run)
     if args.command == "check-cards-exam":
         return cards_exam(args.model, args.holdout, args.limit, args.dry_run)
+    if args.command == "coverage":
+        return coverage_command(args.topic_id)
     if args.command == "tag-levels":
         return tag_levels_command(args.dry_run, args.retag, args.primer)
     if args.command == "write-cards":

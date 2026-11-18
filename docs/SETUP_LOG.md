@@ -412,3 +412,17 @@ A plain-English record of each step: **what** it does, **why** it's best practic
   - "Nothing due" in easy mode also says hard mode, since hard cards may be due.
 - **Reviewer catches, fixed:** a misspelt topic now still lists the topics that have only hard cards.
 - **Known limits (in FUTURE):** cards written after a tagging run are untagged, so easy mode doesn't show them until `tag-levels` runs again (step 4 tags new cards as they're written). The shelf box lists every shelf even in easy mode.
+
+## Every hallmark: the coverage report (2026-11-18)
+
+> **In plain words:** a checklist with 12 boxes. `uv run longevity coverage hallmarks` lists each hallmark with its easy "what is it" and "how does it work" cards, and says which are missing.
+
+- **Why:** you said "as a learner it's important I learn all". Before this, 25 hallmark cards sat under bundle topics like "genome, telomeres and epigenetics", so nobody could count per hallmark.
+- **What changed:**
+  - `hallmarks` in `data/topics.jsonl` lists its 12 parts (the 2023 review).
+  - Each of the 25 cards now names its one hallmark (only the topic label changed; the reviewer checked each one).
+  - One duplicate card was dropped (navitoclax, asked twice).
+  - A test fails if a hallmark card names something that isn't one of the 12.
+- **Where we stand:** 1 of 12 hallmarks fully covered in easy mode. Genomic instability has no cards at all. Most others have an easy "what" but no easy "how".
+- **Next:** step 4 makes the writer aim at your primer, then a writing run fills the gaps with easy cards.
+- **Reviewer catches, fixed:** easy "fact" cards now count as "what" (none were hidden); `coverage Hallmarks` works whatever the capitals; a blank part is rejected; how to write cards for one hallmark (`write-cards --topic "hallmarks: <part>"`) is written down.
