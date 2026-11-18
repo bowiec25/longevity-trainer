@@ -2,7 +2,7 @@
 {"id": "gompertz", "topic": "The Gompertz curve: death risk doubles about every 8 years", "primer": "1.2", "group": "ageing-basics", "kinds": ["fact", "explain"], "status": "v1", "area": "How we age"}
 {"id": "healthspan", "topic": "Lifespan vs healthspan, and the gap between them", "primer": "1.3", "group": "ageing-basics", "kinds": ["term", "explain"], "status": "v1", "area": "How we age"}
 {"id": "why-we-age", "topic": "Why we age: the evolutionary explanation", "primer": "1.4", "group": "ageing-basics", "kinds": ["explain"], "status": "v1", "area": "How we age"}
-{"id": "hallmarks", "topic": "The 12 hallmarks of ageing (2023)", "primer": "2.1", "group": "hallmarks", "kinds": ["name", "explain"], "status": "v1", "area": "How we age"}
+{"id": "hallmarks", "topic": "The 12 hallmarks of ageing (2023)", "primer": "2.1", "group": "hallmarks", "kinds": ["name", "explain"], "status": "v1", "area": "How we age", "parts": ["genomic instability", "telomere attrition", "epigenetic alterations", "loss of proteostasis", "disabled macroautophagy", "deregulated nutrient-sensing", "mitochondrial dysfunction", "cellular senescence", "stem cell exhaustion", "altered intercellular communication", "chronic inflammation", "dysbiosis"]}
 {"id": "mtor", "topic": "mTOR: the cell's growth switch", "primer": "2.2", "group": "hallmarks", "kinds": ["name", "term", "explain"], "status": "v1", "area": "How we age"}
 {"id": "ampk", "topic": "AMPK: the energy-shortage sensor", "primer": "2.2", "group": "hallmarks", "kinds": ["name", "term", "explain"], "status": "v1", "area": "How we age"}
 {"id": "insulin-igf1", "topic": "Insulin / IGF-1 signalling and lifespan", "primer": "2.2", "group": "hallmarks", "kinds": ["name", "explain"], "status": "v1", "area": "How we age"}
