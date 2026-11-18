@@ -1,0 +1,20 @@
+{
+  "id": "healthspan-gap-2021",
+  "title": "Longevity leap: mind the healthspan gap",
+  "authors": "Garmany A, Yamada S, Terzic A",
+  "publisher": "Nature Portfolio (npj Regenerative Medicine)",
+  "journal": "NPJ Regen Med 2021",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2021,
+  "doi": "10.1038/s41536-021-00169-5",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8460831/fullTextXML",
+  "retrieved": "2026-11-18",
+  "size": 128846,
+  "sha256": "3f3fb594a77673b24456350533a44861720234bc2f65d51d9b25c5ccbf5f0084",
+  "local_path": "data/raw/healthspan-gap-2021.xml",
+  "topics": [
+    "healthspan"
+  ],
+  "licence_note": "CC BY 4.0 (article licence): record and short quotes only, as for every source. Tier B review."
+}

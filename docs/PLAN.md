@@ -53,6 +53,8 @@
   - [x] 4. The writer aims at the primer (`write-cards --primer-pages A-B`: the topic's primer pages go in the prompt, "facts the primer states first", quotes still from the source; prompt v6); every run that meets the bar tags its new cards easy/hard before writing
 - [ ] **Every chapter covered** (user, 2026-11-18: "lets make sure we dont have gaps elsewhere too"; the primer's chapters are the topics, the lines of `data/topics.jsonl` their sub-topics)
   - [x] 1. The whole-syllabus report: `longevity coverage` with no topic lists every chapter and sub-topic with its easy / hard cards and gaps (`topic_map.syllabus_lines`). First run: 1 of 59 sub-topics covered in easy mode
+  - [x] 2a. The writer fills gaps: `write-cards --ask how` writes only the missing ask; with `--primer-pages` it keeps only easy cards; prompt v7 writes for a well-read non-specialist (user, 2026-11-18: "these questions are too niche")
+  - [ ] 2b. Chapter 01 "What ageing is": 3 sources pinned (Kirkwood 2015 on Gompertz, Garmany 2021 on the healthspan gap, Flatt & Partridge 2018 on why we age); healthspan and why-we-age covered; Gompertz still needs an easy "how" (its source is about the maths)
   - [ ] 2. Fill chapter by chapter, in primer order (01-04 first): a trusted source per sub-topic (listed in each PR, the user can veto), then `write-cards --primer-pages` until the chapter shows covered. One PR per chapter
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
