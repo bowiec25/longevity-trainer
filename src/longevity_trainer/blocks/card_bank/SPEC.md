@@ -34,7 +34,7 @@ card.to_question() -> quizkit.models.Question
 ## Outputs
 | Output | Type | Plain meaning |
 |---|---|---|
-| `LongevityCard` | pydantic model, frozen | `id` (non-empty), `kind` (one of `name`, `fact`, `term`, `explain`: ADR 0005), `topic` (non-empty), `question` (at least 10 characters), `answers` (at least one, none blank), `receipt` (a `quizkit.blocks.receipts.Receipt`). Surrounding spaces are stripped from every text field, `kind` included (and inside the receipt, per the receipts SPEC). Unknown fields are rejected |
+| `LongevityCard` | pydantic model, frozen | `id` (non-empty), `kind` (one of `name`, `fact`, `term`, `explain`: ADR 0005), `topic` (non-empty), `question` (at least 10 characters), `answers` (at least one, none blank), `receipt` (a `quizkit.blocks.receipts.Receipt`), `difficulty` (`"easy"`, `"hard"` or `None`, default `None`: easy = your primer states the card's fact, hard = it goes beyond the primer, `None` = not checked yet; set by `primer_check`, ADR 0010; a line without the key loads as `None`). Surrounding spaces are stripped from every text field, `kind` included (and inside the receipt, per the receipts SPEC). Unknown fields are rejected |
 | `load_cards` | `list[LongevityCard]` | Every card, in file order then line order |
 | `to_quizkit` | `quizkit.models.Card` | Same `id` and `answers`; `fields` = `{"question", "kind", "topic"}`; `level` = 1. The quiz builds its questions from this (one mapping, not two) |
 | `to_question` | `quizkit.models.Question` | The card as the quiz asks it: `quizkit.modes.build_question(card.to_quizkit(), Mode(name=card.kind, show=["question"]))`, so `mode` = the card's kind, `shown` = `{"question": ...}`, `accepted_answers` = the card's answers. The one place this is built: the CLI quiz and the marking eval call it (and the web page will, M4 Step 3) |
@@ -62,6 +62,7 @@ Nothing is written.
 Automatic tests in `tests/blocks/test_card_bank.py`, using small card files written to `tmp_path` (no network, no PDF).
 - **Loads:** two files, cards in file then line order; blank lines skipped; spaces stripped
 - **to_quizkit:** id, answers, the three fields, level 1
+- **difficulty:** a line without it loads as `None`; `"easy"` and `"hard"` load; any other value (`"medium"`) → `ValueError` with file and line; a card dumped with `model_dump_json()` loads back the same
 - **to_question:** `card_id` = id, `mode` = kind, `shown` = `{"question": the question}`, `accepted_answers` = the answers
 - **Each failure mode:** bad JSON, missing field, unknown field, unknown kind, blank answer, short quote in the receipt → `ValueError` with file name and line number; repeated id (same file, and across files) → `ValueError`; empty folder → `ValueError`; missing folder → `FileNotFoundError`
 - **The real bank:** `data/cards/` loads, has at least 15 cards (it grows), every card's `kind` is valid (a guard on the committed data)
