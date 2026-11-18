@@ -47,6 +47,7 @@ BLOCK_SPEC = BlockSpec(
         "fetch",
         "pages",
         "topics",
+        "primer_text",
     ],
     outputs=[
         "write_cards",
@@ -62,7 +63,7 @@ BLOCK_SPEC = BlockSpec(
     ],
 )
 
-PROMPT_VERSION = "5"
+PROMPT_VERSION = "6"
 SOURCES_DIR = ROOT / "data" / "sources"
 TOPICS_FILE = ROOT / "data" / "topics.jsonl"
 MAX_SOURCE_CHARS = 200_000
@@ -82,6 +83,7 @@ standard for a good question, which you must follow:
 Your task: write cards on ONE topic, using ONLY the source text you are given.
 - Every card's quote must be copied EXACTLY, character for character, from the source text (a script checks it): one to three consecutive sentences. Never paraphrase the quote.
 - If the source text is split into parts marked [page N], each quote must come from inside one page: a quote that runs across a page break can't be found.
+- Never quote the learner's primer, if it is given: every quote comes only from the source text.
 - THE QUOTE ALONE MUST BACK THE WHOLE CARD. A strict checker will reject any card whose answer, or whose question, states a fact the quote doesn't. So:
   - keep each answer to ONE short claim, taken from the quote; never add facts from elsewhere in the source or from your own knowledge;
   - the question must not assert anything the quote doesn't say (if the quote doesn't name the drug, the trial or the population, pick a quote that does, or leave it out of the question);
@@ -310,6 +312,7 @@ def write_cards(
     fetch: Callable[[str], bytes] = http_get,
     pages: tuple[int, int] | None = None,
     topics: dict[str, str] | None = None,
+    primer_text: str = "",
 ) -> WriterResult:
     """Draft `n` cards, run them through the gates, return what survived and why."""
     topic_slug = slug(topic)
@@ -338,9 +341,18 @@ def write_cards(
         links = f"Topics a connect card may link to (id: topic):\n{links}\n\n"
     else:
         links = "No topics to link to: write no connect cards.\n\n"
+    primer = ""
+    if primer_text.strip():  # ADR 0010: aim at the primer, so cards can be easy
+        primer = (
+            "The learner's primer (their syllabus) on this topic:\n"
+            f"{primer_text}\n\n"
+            "Write first about facts the primer states that the source text also "
+            "states (every quote still copied from the source text), then other "
+            "facts.\n\n"
+        )
     reply = ask(
         f"Topic: {topic}\nNumber of cards: {n}\nSource: {title}\n\n{known}"
-        f"{links}"
+        f"{links}{primer}"
         f"Source text:\n{text}",
         model=model,
         system=SYSTEM,
