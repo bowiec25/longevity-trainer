@@ -462,3 +462,11 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Coverage hint:** "missing: how (run again with --add --ask how)".
 - **Chapter 01:** 2 of 3 covered. Gompertz needs a plainer source for its easy "how".
 - **Reviewer catches, fixed:** off-topic drafts no longer make the quote check easier to pass; `--ask` with `--replace` is refused (it could wipe a topic's other cards); with `--ask how` the writer isn't also pushed to write connect cards.
+
+## Priorities: the important things first (2026-11-18)
+
+> **In plain words:** a reading list with stars. Every sub-topic is now **core** (what a longevity expert must know), **useful** (the second wave) or **extra** (last), and `uv run longevity coverage --todo` lists what to fill next, core first.
+
+- **Core (28):** the basics (Gompertz, healthspan, why we age, evidence grades), the hallmarks and four pathways, geroscience, senolytics, reprogramming, kinds of study and biomarkers, GLP-1s, statins, rapamycin, metformin, exercise, sleep, diet, other lifestyle factors, peptides, blood markers and the three clock sub-topics. You moved peptides and the clocks up.
+- **Today:** core 3 of 28, useful 0 of 20, extra 0 of 11.
+- The tiers live in `data/topics.jsonl` (`priority`), so moving one is a one-word change.

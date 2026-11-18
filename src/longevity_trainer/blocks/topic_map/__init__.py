@@ -6,6 +6,7 @@ See SPEC.md in this folder (ADR 0003).
 import json
 import re
 from pathlib import Path
+from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
@@ -29,6 +30,7 @@ BLOCK_SPEC = BlockSpec(
         "misfiled",
         "CHAPTERS",
         "syllabus_lines",
+        "todo_lines",
     ],
 )
 
@@ -72,6 +74,7 @@ CHAPTERS = {
     23: "People, events and books",
 }
 WHAT_KINDS = ("name", "term", "fact")
+PRIORITIES = ("core", "useful", "extra")
 KINDS = (*WHAT_KINDS, "explain", "grade")
 
 
@@ -95,6 +98,7 @@ class Topic(BaseModel):
     parts: list[str] = []  # e.g. the 12 hallmarks: cards filed '<group>: <part>'
     primer: str = ""  # its primer section, e.g. "2.1" or "11.4-11.5"
     kinds: list[str] = []  # the card kinds it should have
+    priority: Literal["core", "useful", "extra", ""] = ""  # "" = none
 
 
 def load_topic_map(path: Path | None = None) -> list[Topic]:
@@ -116,6 +120,11 @@ def load_topic_map(path: Path | None = None) -> list[Topic]:
             raise ValueError(f"{path} line {number}: bad {where or 'line'}") from err
         if topic.area not in AREAS:
             raise ValueError(f"{path} line {number}: unknown area {topic.area!r}")
+        if (topic.status == "v1") != bool(topic.priority):
+            raise ValueError(
+                f"{path} line {number}: a v1 sub-topic needs a priority, and only v1 "
+                f"has one (status {topic.status!r}, priority {topic.priority!r})"
+            )
         for kind in topic.kinds:
             if kind not in KINDS:
                 raise ValueError(f"{path} line {number}: unknown kind {kind!r}")
@@ -184,14 +193,13 @@ def _part_rows(
         found = _part_of(card, topics)
         if found and found[0] is topic:
             on_part.get(_slug(found[1]), []).append(card)
-    return [
-        _count_line(part, on_part[_slug(part)], ["what", "how"]) for part in topic.parts
-    ]
+    rows = [_count_line(p, on_part[_slug(p)], ["what", "how"]) for p in topic.parts]
+    return [(line, not needs) for line, needs in rows]
 
 
 def _count_line(
     name: str, cards: list[LongevityCard], wanted: list[str]
-) -> tuple[str, bool]:
+) -> tuple[str, list[str]]:
     """'  <name>: easy w what, h how; x hard' + ' ✓' or the missing easy cards."""
     easy = [c for c in cards if c.difficulty == "easy"]
     what = sum(c.kind in WHAT_KINDS for c in easy)
@@ -201,7 +209,7 @@ def _count_line(
     needs = [label[w] for w in wanted if not have[w]]
     end = f" (needs: {', '.join(needs)})" if needs else " ✓"
     hard = len(cards) - len(easy)
-    return f"  {name}: easy {what} what, {how} how; {hard} hard{end}", not needs
+    return f"  {name}: easy {what} what, {how} how; {hard} hard{end}", needs
 
 
 def _wanted(topic: Topic) -> list[str]:
@@ -220,47 +228,92 @@ def _chapter(topic: Topic) -> int | None:
     return int(digits.group()) if digits else None
 
 
-def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:
-    """Every learnable sub-topic, chapter by chapter: easy / hard cards, gaps."""
+class _Row(NamedTuple):
+    """One learnable sub-topic's state, shared by the reports."""
+
+    topic: Topic
+    line: str  # its syllabus line
+    ok: bool  # covered in easy mode
+    gap: str  # what's missing, e.g. "needs easy how" or "1 of 12 parts covered"
+
+
+def _rows(cards: list[LongevityCard], topics: list[Topic]) -> list[_Row]:
+    """Every v1 topic, in file order, with its line and whether it's covered."""
     learn = [t for t in topics if t.status == "v1"]
     mine: dict[str, list[LongevityCard]] = {t.id: [] for t in learn}
     for card in cards:
         topic = _entry(card.topic, topics)
         if topic is not None and topic.id in mine:
             mine[topic.id].append(card)
-    chapters: dict[int | None, list[tuple[str, bool]]] = {}
+    rows = []
     for topic in learn:
         if topic.parts:
             parts = _part_rows(cards, topics, topic)
             done = sum(ok for _, ok in parts)
             ok = done == len(parts)
-            line = (
-                f"  {topic.id}: {done} of {len(parts)} parts covered"
-                f" (see: coverage {topic.id}){' ✓' if ok else ''}"
-            )
+            gap = f"{done} of {len(parts)} parts covered"
+            line = f"  {topic.id}: {gap} (see: coverage {topic.id}){' ✓' if ok else ''}"
         else:
-            line, ok = _count_line(topic.id, mine[topic.id], _wanted(topic))
-        chapters.setdefault(_chapter(topic), []).append((line, ok))
+            line, needs = _count_line(topic.id, mine[topic.id], _wanted(topic))
+            ok, gap = not needs, f"needs {', '.join(needs)}"
+        rows.append(_Row(topic, line, ok, gap))
+    return rows
+
+
+def _score(rows: list[_Row]) -> str:
+    return f"{sum(r.ok for r in rows)} of {len(rows)}"
+
+
+def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:
+    """Every learnable sub-topic, chapter by chapter: easy / hard cards, gaps."""
+    rows = _rows(cards, topics)
+    tiers = [
+        f"{tier} {_score([r for r in rows if r.topic.priority == tier])}"
+        for tier in PRIORITIES
+    ]
+    unset = [r for r in rows if not r.topic.priority]
+    if unset:
+        tiers.append(f"none {_score(unset)}")
+    lines = [
+        f"Syllabus: {_score(rows)} sub-topics covered in easy mode",
+        f"By priority: {', '.join(tiers)}",
+    ]
+    chapters: dict[int | None, list[_Row]] = {}
+    for row in rows:
+        chapters.setdefault(_chapter(row.topic), []).append(row)
     order = sorted(k for k in chapters if k is not None)
     if None in chapters:
         order.append(None)
-    covered = sum(ok for rows in chapters.values() for _, ok in rows)
-    lines = [f"Syllabus: {covered} of {len(learn)} sub-topics covered in easy mode"]
     for number in order:
-        rows = chapters[number]
-        done = sum(ok for _, ok in rows)
         if number is None:
             head = "?? no chapter"
         else:
             head = f"{number:02d} {CHAPTERS.get(number, f'chapter {number}')}"
-        lines.append(f"{head}: {done} of {len(rows)} covered")
-        lines.extend(line for line, _ in rows)
+        lines.append(f"{head}: {_score(chapters[number])} covered")
+        lines.extend(r.line for r in chapters[number])
     status = [t.status for t in topics if t.status != "v1"]
     later, read = status.count("after-m5"), status.count("read")
     lines.append(f"Later (dated facts, wait for M5): {later} sub-topics")
     lines.append(f"Read, don't quiz: {read} sub-topics")
     if other := len(status) - later - read:
         lines.append(f"Other status: {other} sub-topics")
+    return lines
+
+
+def todo_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:
+    """What to fill next: the uncovered sub-topics, core first."""
+    todo = [r for r in _rows(cards, topics) if not r.ok]
+    if not todo:
+        return ["Nothing to fill: every sub-topic is covered"]
+    lines = []
+    for tier, name in [*((t, t.capitalize()) for t in PRIORITIES), ("", "No priority")]:
+        here = [r for r in todo if r.topic.priority == tier]
+        if here:
+            lines.append(f"{name}: {len(here)} to fill")
+        for row in here:
+            number = _chapter(row.topic)
+            nn = "??" if number is None else f"{number:02d}"
+            lines.append(f"  {nn} {row.topic.id}: {row.gap}")
     return lines
 
 

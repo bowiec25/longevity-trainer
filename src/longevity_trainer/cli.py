@@ -78,6 +78,7 @@ from longevity_trainer.blocks.topic_map import (
     coverage_lines,
     load_topic_map,
     syllabus_lines,
+    todo_lines,
 )
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.judge import PROMPT_VERSION as JUDGE_PROMPT_VERSION
@@ -593,12 +594,20 @@ def tag_levels_command(
 
 
 def coverage_command(
-    topic_id: str | None = None, write: Callable[[str], None] = print
+    topic_id: str | None = None,
+    write: Callable[[str], None] = print,
+    todo: bool = False,
 ) -> int:
-    """No topic: the whole syllabus. A topic: each of its parts. Easy cards, gaps."""
+    """No topic: the whole syllabus. A topic: each of its parts. --todo: what to
+    fill next, core first. Easy cards, gaps."""
+    if todo and topic_id is not None:
+        write("--todo lists every sub-topic: give no topic with it")
+        return 1
     try:
         cards, topics = load_cards(), load_topic_map()
-        if topic_id is None:
+        if todo:
+            lines = todo_lines(cards, topics)
+        elif topic_id is None:
             lines = syllabus_lines(cards, topics)
         else:
             lines = coverage_lines(cards, topics, topic_id)
@@ -710,6 +719,9 @@ def main(argv: list[str] | None = None) -> int:
     cover.add_argument(
         "topic_id", nargs="?", default=None, help='e.g. "hallmarks"; none = all'
     )
+    cover.add_argument(
+        "--todo", action="store_true", help="what to fill next, core first"
+    )
     args = parser.parse_args(argv)
     if args.command == "write-cards" and args.ask and args.replace:
         parser.error("--ask fills a gap: use it with --add, not --replace")
@@ -727,7 +739,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "check-cards-exam":
         return cards_exam(args.model, args.holdout, args.limit, args.dry_run)
     if args.command == "coverage":
-        return coverage_command(args.topic_id)
+        if args.todo and args.topic_id is not None:
+            parser.error("--todo lists every sub-topic: give no topic with it")
+        return coverage_command(args.topic_id, todo=args.todo)
     if args.command == "tag-levels":
         return tag_levels_command(args.dry_run, args.retag, args.primer)
     if args.command == "write-cards":

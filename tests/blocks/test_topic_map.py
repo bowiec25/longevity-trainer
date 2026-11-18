@@ -77,6 +77,7 @@ def test_block_spec_lists_every_spec_input_and_output():
         "areas_in",
         "CHAPTERS",
         "syllabus_lines",
+        "todo_lines",
     }
 
 
@@ -84,13 +85,17 @@ def test_block_spec_lists_every_spec_input_and_output():
 
 
 def row(id_, area="How we age", **extra):
-    return {
+    """A valid topic-map line: a v1 line gets priority "core" unless given."""
+    line = {
         "id": id_,
         "topic": f"The topic {id_}",
         "group": "g",
         "area": area,
         "status": "v1",
     } | extra
+    if line["status"] == "v1" and "priority" not in extra:
+        line["priority"] = "core"
+    return line
 
 
 def write_lines(path, lines):
@@ -603,9 +608,13 @@ def test_chapters_are_the_24_named_chapters():
     assert sorted(block.CHAPTERS) == list(range(24))
 
 
-def stopic(id_, primer="", kinds=(), status="v1", aliases=(), parts=None):
+def stopic(
+    id_, primer="", kinds=(), status="v1", aliases=(), parts=None, priority=None
+):
     """A Topic for the syllabus tests (area doesn't matter there)."""
     extra = {} if parts is None else {"parts": list(parts)}
+    if priority is not None:
+        extra["priority"] = priority
     return block.Topic(
         id=id_,
         topic=f"The topic {id_}",
@@ -648,6 +657,7 @@ def syllabus_cards():
 def test_syllabus_lines_whole_report():
     assert block.syllabus_lines(syllabus_cards(), syllabus_map()) == [
         "Syllabus: 2 of 5 sub-topics covered in easy mode",
+        "By priority: core 0 of 0, useful 0 of 0, extra 0 of 0, none 2 of 5",
         "01 What ageing is: 1 of 1 covered",
         "  aging: easy 1 what, 1 how; 1 hard ✓",
         "02 Hallmarks and pathways: 0 of 2 covered",
@@ -785,20 +795,20 @@ def test_syllabus_topic_with_parts_and_a_non_slug_id_is_counted():
 )
 def test_syllabus_chapter_is_the_leading_whole_number(primer, header):
     lines = block.syllabus_lines([], [stopic("t", primer=primer)])
-    assert lines[1] == header
-    assert lines[2].startswith("  t: ")
+    assert lines[2] == header
+    assert lines[3].startswith("  t: ")
 
 
 def test_syllabus_chapter_missing_from_chapters_uses_chapter_k():
     lines = block.syllabus_lines([], [stopic("t", primer="99.1")])
-    assert lines[1] == "99 chapter 99: 0 of 1 covered"
+    assert lines[2] == "99 chapter 99: 0 of 1 covered"
 
 
 @pytest.mark.parametrize("primer", ["", "Appendix", "A.1"])
 def test_syllabus_no_leading_number_goes_under_no_chapter_last(primer):
     topics = [stopic("x", primer=primer), stopic("y", primer="3.1")]
     lines = block.syllabus_lines([], topics)
-    assert lines[1] == "03 Big ideas: 0 of 1 covered"
+    assert lines[2] == "03 Big ideas: 0 of 1 covered"
     assert lines[-4:] == [
         "?? no chapter: 0 of 1 covered",
         "  x: easy 0 what, 0 how; 0 hard (needs: an easy card)",
@@ -810,7 +820,8 @@ def test_syllabus_no_leading_number_goes_under_no_chapter_last(primer):
 def test_syllabus_chapters_in_number_order_topics_in_file_order():
     lines = block.syllabus_lines([], syllabus_map())
     headers = [x for x in lines if not x.startswith("  ")]
-    assert [x[:3] for x in headers[1:-2]] == ["01 ", "02 ", "11 ", "?? "]
+    assert headers[1].startswith("By priority: ")
+    assert [x[:3] for x in headers[2:-2]] == ["01 ", "02 ", "11 ", "?? "]
     ids = [x.split(":")[0].strip() for x in lines if x.startswith("  ")]
     assert ids == ["aging", "hallmarks", "dials", "blood", "misc"]
 
@@ -859,6 +870,165 @@ def test_syllabus_card_filed_through_an_alias_counts_for_its_topic():
     ]
     lines = block.syllabus_lines(cards, topics)
     assert topic_line(lines, "exercise") == "  exercise: easy 1 what, 1 how; 0 hard ✓"
+
+
+# --- priority -----------------------------------------------------------------------
+
+
+def test_priority_defaults_to_empty_on_a_topic_built_directly():
+    assert topic("a", "How we age").priority == ""
+
+
+def test_a_non_v1_line_without_a_priority_loads_as_empty(tmp_path):
+    path = write_lines(tmp_path / "t.jsonl", [row("a", status="after-m5")])
+    assert block.load_topic_map(path)[0].priority == ""
+
+
+def test_core_useful_extra_and_empty_priorities_load(tmp_path):
+    path = write_lines(
+        tmp_path / "t.jsonl",
+        [
+            row("a", priority="core"),
+            row("b", priority="useful"),
+            row("c", priority="extra"),
+        ],
+    )
+    got = [t.priority for t in block.load_topic_map(path)]
+    assert got == ["core", "useful", "extra"]
+
+
+@pytest.mark.parametrize("bad", ["high", "Core", 1], ids=["high", "capital", "int"])
+def test_an_unknown_priority_raises_naming_the_line(tmp_path, bad):
+    path = write_lines(tmp_path / "t.jsonl", [row("a"), row("b", priority=bad)])
+    with pytest.raises(ValueError, match=r"line 2.*priority"):
+        block.load_topic_map(path)
+
+
+@pytest.mark.parametrize("empty", [None, ""], ids=["missing", "empty"])
+def test_a_v1_line_without_a_priority_raises_naming_the_line(tmp_path, empty):
+    bad = {k: v for k, v in row("b").items() if k != "priority"}
+    if empty is not None:
+        bad["priority"] = empty
+    path = write_lines(tmp_path / "t.jsonl", [row("a"), bad])
+    with pytest.raises(ValueError, match="line 2"):
+        block.load_topic_map(path)
+
+
+@pytest.mark.parametrize("status", ["after-m5", "read"])
+def test_a_non_v1_line_with_a_priority_raises_naming_the_line(tmp_path, status):
+    path = write_lines(
+        tmp_path / "t.jsonl", [row("a"), row("b", status=status, priority="core")]
+    )
+    with pytest.raises(ValueError, match="line 2"):
+        block.load_topic_map(path)
+
+
+def priority_map():
+    """Every tier; uncovered and covered, a non-v1, parts, a chapterless one."""
+    return [
+        stopic("gompertz", "1.1", ["term", "explain"], priority="core"),
+        stopic("x", "", ["fact"], priority="extra"),
+        stopic("healthspan", "1.2", ["name", "explain"], priority="useful"),
+        stopic("evidence-grades", "0.3", ["grade"], priority="core"),
+        stopic("done", "3", ["explain"], priority="core"),
+        stopic("later", "20", status="after-m5", priority="core"),
+        stopic("nopri", "5"),
+        stopic("hallmarks", "2.1", parts=["One", "Two"], priority="core"),
+    ]
+
+
+def priority_cards():
+    return [
+        make_card("c-1", "gompertz", "term", "easy"),
+        make_card("c-2", "evidence-grades", "name", "hard"),
+        make_card("c-3", "done", "explain", "easy"),
+        make_card("c-4", "hallmarks: one", "name", "easy"),
+        make_card("c-5", "hallmarks: one", "explain", "easy"),
+        make_card("c-6", "x", "explain", "easy"),
+    ]
+
+
+def test_syllabus_second_line_counts_each_tier_and_none():
+    lines = block.syllabus_lines(priority_cards(), priority_map())
+    assert lines[1] == (
+        "By priority: core 1 of 4, useful 0 of 1, extra 0 of 1, none 0 of 1"
+    )
+
+
+def test_syllabus_second_line_empty_tiers_are_0_of_0_and_no_none_part():
+    topics = [
+        stopic("a", "1", ["explain"], priority="core"),
+        stopic("b", "1", ["explain"], priority="core"),
+        stopic("c", "20", status="read"),  # not v1: no "none" part
+    ]
+    cards = [make_card("c-1", "a", "explain", "easy")]
+    lines = block.syllabus_lines(cards, topics)
+    assert lines[1] == "By priority: core 1 of 2, useful 0 of 0, extra 0 of 0"
+
+
+# --- todo_lines ----------------------------------------------------------------------
+
+
+def test_todo_lines_whole_report():
+    assert block.todo_lines(priority_cards(), priority_map()) == [
+        "Core: 3 to fill",
+        "  01 gompertz: needs easy how",
+        "  00 evidence-grades: needs an easy card",
+        "  02 hallmarks: 1 of 2 parts covered",
+        "Useful: 1 to fill",
+        "  01 healthspan: needs easy what, easy how",
+        "Extra: 1 to fill",
+        "  ?? x: needs easy what",
+        "No priority: 1 to fill",
+        "  05 nopri: needs an easy card",
+    ]
+
+
+def test_todo_lines_leaves_out_covered_and_non_v1_topics():
+    lines = block.todo_lines(priority_cards(), priority_map())
+    assert not any(" done:" in x or " later:" in x for x in lines)
+
+
+def test_todo_lines_skips_a_tier_with_nothing_to_fill():
+    topics = [
+        stopic("a", "1", ["explain"], priority="extra"),
+        stopic("b", "1", ["explain"], priority="useful"),
+        stopic("c", "1", ["explain"], priority="core"),
+    ]
+    cards = [make_card("c-1", "b", "explain", "easy")]
+    assert block.todo_lines(cards, topics) == [
+        "Core: 1 to fill",
+        "  01 c: needs easy how",
+        "Extra: 1 to fill",
+        "  01 a: needs easy how",
+    ]
+
+
+def test_todo_lines_topic_with_parts_counts_its_parts():
+    topics = [stopic("hallmarks", "2.1", parts=PARTS, priority="core")]
+    cards = [
+        make_card("c-1", "hallmarks: dysbiosis", "fact", "easy"),
+        make_card("c-2", "hallmarks: dysbiosis", "explain", "easy"),
+    ]
+    assert block.todo_lines(cards, topics) == [
+        "Core: 1 to fill",
+        "  02 hallmarks: 1 of 3 parts covered",
+    ]
+
+
+def test_todo_lines_nothing_to_fill_is_one_line():
+    topics = [
+        stopic("a", "1", ["explain"], priority="core"),
+        stopic("b", "20", status="after-m5", priority="core"),
+    ]
+    cards = [make_card("c-1", "a", "explain", "easy")]
+    assert block.todo_lines(cards, topics) == [
+        "Nothing to fill: every sub-topic is covered"
+    ]
+
+
+def test_todo_lines_with_no_topics_has_nothing_to_fill():
+    assert block.todo_lines([], []) == ["Nothing to fill: every sub-topic is covered"]
 
 
 # --- CLI: longevity coverage -------------------------------------------------------
@@ -919,6 +1089,43 @@ def test_cli_coverage_with_no_topic_prints_the_syllabus(cli_env, capsys):
     assert out.splitlines()[0].startswith("Syllabus: ")
 
 
+def test_cli_coverage_todo_prints_the_todo_lines(cli_env, capsys):
+    cli, cards, topics = cli_env
+    code = cli.main(["coverage", "--todo"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert out.splitlines() == block.todo_lines(cards, topics)
+    assert out.splitlines()[0] == "Core: 2 to fill"
+
+
+def test_cli_coverage_todo_with_a_topic_is_an_argparse_error(cli_env, capsys):
+    cli, _, _ = cli_env
+    try:
+        code = cli.main(["coverage", "--todo", "hallmarks"])
+    except SystemExit as stop:
+        code = stop.code
+    assert code == 2
+
+
+def test_cli_coverage_todo_with_an_empty_topic_is_an_argparse_error(cli_env, capsys):
+    cli, _, _ = cli_env
+    try:
+        code = cli.main(["coverage", "", "--todo"])
+    except SystemExit as stop:
+        code = stop.code
+    assert code == 2
+
+
+def test_coverage_command_with_a_topic_and_todo_one_line_exit_1(cli_env, capsys):
+    """Called directly (no argparse): a topic with todo=True is refused."""
+    cli, _, _ = cli_env
+    code = cli.coverage_command("hallmarks", todo=True)
+    captured = capsys.readouterr()
+    lines = (captured.out + captured.err).strip().splitlines()
+    assert code == 1
+    assert len(lines) == 1, lines
+
+
 def one_line_exit_1(cli, args, capsys):
     code = cli.main(args)
     captured = capsys.readouterr()
@@ -927,10 +1134,11 @@ def one_line_exit_1(cli, args, capsys):
     assert len(lines) == 1, lines
 
 
-CLI_ARGS = [["coverage"], ["coverage", "hallmarks"]]
+CLI_ARGS = [["coverage"], ["coverage", "hallmarks"], ["coverage", "--todo"]]
+CLI_IDS = ["no-topic", "topic", "todo"]
 
 
-@pytest.mark.parametrize("args", CLI_ARGS, ids=["no-topic", "topic"])
+@pytest.mark.parametrize("args", CLI_ARGS, ids=CLI_IDS)
 def test_cli_coverage_missing_topic_map_one_line_exit_1(
     cli_env, capsys, monkeypatch, tmp_path, args
 ):
@@ -941,14 +1149,14 @@ def test_cli_coverage_missing_topic_map_one_line_exit_1(
     one_line_exit_1(cli, args, capsys)
 
 
-@pytest.mark.parametrize("args", CLI_ARGS, ids=["no-topic", "topic"])
+@pytest.mark.parametrize("args", CLI_ARGS, ids=CLI_IDS)
 def test_cli_coverage_not_json_topic_map_one_line_exit_1(cli_env, capsys, args):
     cli, _, _ = cli_env
     block.TOPICS_FILE.write_text("{not json\n", encoding="utf-8")
     one_line_exit_1(cli, args, capsys)
 
 
-@pytest.mark.parametrize("args", CLI_ARGS, ids=["no-topic", "topic"])
+@pytest.mark.parametrize("args", CLI_ARGS, ids=CLI_IDS)
 def test_cli_coverage_bad_card_file_one_line_exit_1(cli_env, capsys, args):
     cli, _, _ = cli_env
     (cli.CARDS_DIR / "broken.jsonl").write_text("{not a card\n", encoding="utf-8")
@@ -1083,6 +1291,24 @@ def test_every_real_v1_topic_has_a_chapter(real_map):
     assert sum(counts) == total
     v1 = [t for t in real_map if t.status == "v1"]
     assert total == len(v1)
+
+
+def test_every_real_v1_topic_has_a_priority(real_map):
+    missing = [
+        t.id
+        for t in real_map
+        if t.status == "v1" and t.priority not in ("core", "useful", "extra")
+    ]
+    assert missing == []
+    second = block.syllabus_lines(load_cards(), real_map)[1]
+    assert second.startswith("By priority: core ")
+    assert ", none " not in second
+
+
+def test_real_todo_report_runs(real_map):
+    lines = block.todo_lines(load_cards(), real_map)
+    assert lines
+    assert not any(x.startswith(("No priority:", "  ?? ")) for x in lines)
 
 
 def test_real_syllabus_report_runs(real_map):
