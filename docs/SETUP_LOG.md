@@ -376,3 +376,15 @@ A plain-English record of each step: **what** it does, **why** it's best practic
   - The page's setting got a new name (`topics`), so a tab open from before can't feed the old single-topic setting into the new box.
   - The page's hint now says you can pick several.
 - **Known limit (in FUTURE):** a picked group matches any card whose topic contains its name, so overlapping names could pull in extra cards. No two of today's groups overlap.
+
+## Shelves for topics (2026-11-18)
+
+> **In plain words:** a bookshop lists its shelves, not every book. The topic box on the web page now lists 7 broad shelves (How we age, Big ideas, Drugs & treatments, Supplements, Lifestyle, Measuring ageing, Evidence & trials). Metformin and rapamycin are books on the Drugs shelf.
+
+- **Why:** the box mixed levels: "hallmarks" sat next to "metformin". Your call: drugs are one category.
+- **Where the shelves live:** every topic in `data/topics.jsonl` now has an `area`. Moving a topic to another shelf is a one-line data change.
+- **New block `topic_map`:** reads the topic map and finds each card's shelf through its topic id. A card filed under another name uses an alias, e.g. `physical-activity` for `exercise`.
+  - A test checks that every card in the bank has a shelf.
+  - This also fixes two FUTURE items: card names not matching topic ids, and picked groups matching loosely.
+- **`quiz_round`:** a round can be limited to shelves. If a shelf has no cards, it says so and lists the shelves that do.
+- **Terminal:** unchanged. `--topic` still takes one topic or group.

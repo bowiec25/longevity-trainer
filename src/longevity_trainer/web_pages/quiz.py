@@ -9,11 +9,11 @@ import streamlit as st
 
 from longevity_trainer.blocks.card_bank import load_cards
 from longevity_trainer.blocks.quiz_round import QuizScreen, RoundOptions
-from longevity_trainer.blocks.study import groups
+from longevity_trainer.blocks.topic_map import areas_in, load_topic_map
 from quizkit.blocks.web_launch import safe
 
 if "quiz" not in st.session_state:  # a test may put its own (fake judge) here first
-    st.session_state["quiz"] = QuizScreen()
+    st.session_state["quiz"] = QuizScreen(topics=load_topic_map())  # read once
 quiz: QuizScreen = st.session_state["quiz"]
 running = quiz.phase in ("asking", "own_mark", "result")
 
@@ -26,14 +26,14 @@ def _lines(lines: list[str]) -> None:
 # --- Settings (locked while a quiz runs) -------------------------------------------
 with st.sidebar:
     st.header("Quiz")
-    topics = groups(quiz.bank if quiz.bank is not None else load_cards())
-    picked = st.multiselect(  # several topics at once; none = all
+    bank = quiz.bank if quiz.bank is not None else load_cards()
+    picked = st.multiselect(  # shelves (areas), not single topics; none = all
         "Topics",
-        topics,
-        key="topics",  # a list (was "topic", one string)
+        areas_in(bank, quiz.topics if quiz.topics is not None else load_topic_map()),
+        key="areas",  # a list of shelves (was "topics": single topics)
         placeholder="All topics",
         disabled=running,
-        help="Pick one or more; leave empty for all topics.",
+        help="Pick one or more shelves; leave empty for all topics.",
     )
     n = st.number_input(
         "How many", min_value=1, max_value=200, value=10, key="n", disabled=running
@@ -62,7 +62,7 @@ with st.sidebar:
     if not running and st.button("Start quiz", type="primary", key="start"):
         quiz.start(
             RoundOptions(
-                topic=tuple(picked) or None,
+                areas=tuple(picked),
                 n=int(n),
                 practise=practise,
                 judge=judge,

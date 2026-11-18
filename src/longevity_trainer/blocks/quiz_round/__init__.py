@@ -12,6 +12,7 @@ from typing import Literal
 from longevity_trainer.blocks.card_bank import ROOT, LongevityCard, load_cards
 from longevity_trainer.blocks.marking import make_judge as default_make_judge
 from longevity_trainer.blocks.study import Saver, deal, groups, next_due, schedule
+from longevity_trainer.blocks.topic_map import Topic, area_of, areas_in, load_topic_map
 from quizkit.blocks.base import BlockSpec
 from quizkit.blocks.engine import Attempt, QuizResult, QuizSession
 from quizkit.blocks.progress_store import ProgressFileError, ProgressStore
@@ -32,6 +33,7 @@ BLOCK_SPEC = BlockSpec(
         "warn",
         "practise_hint",
         "clock",
+        "topics",
     ],
     outputs=[
         "RoundOptions",
@@ -70,6 +72,7 @@ class RoundOptions:
     """What kind of round: which topic, how many, practise, Claude, saving."""
 
     topic: str | tuple[str, ...] | None = None  # several: cards matching any
+    areas: tuple[str, ...] = ()  # shelves (topic_map.AREAS); empty = all
     n: int = 10
     practise: bool = False
     judge: bool = True
@@ -79,6 +82,8 @@ class RoundOptions:
     def __post_init__(self) -> None:
         if self.n < 1:
             raise ValueError(f"n must be at least 1, not {self.n}")
+        if isinstance(self.areas, str):  # one shelf, not its letters
+            object.__setattr__(self, "areas", (self.areas,))
 
 
 def _progress_default() -> Path:
@@ -140,10 +145,26 @@ def setup(
     warn: Callable[[str], None] = print,
     practise_hint: str = "--practise",
     clock: Callable[[], datetime] | None = None,
+    topics: list[Topic] | None = None,
 ) -> Round:
     """Deal a round (due, then new) and get its judge and saver ready."""
     files = files or RoundFiles()
     bank = load_cards() if bank is None else bank
+    if options.areas:  # shelves first, before anything is dealt or opened
+        if topics is None:
+            try:
+                topics = load_topic_map()
+            except (OSError, ValueError) as err:
+                first = str(err).splitlines()[0]
+                raise SetupProblem([f"can't read the topic map: {first}"]) from err
+        on_shelves = [c for c in bank if area_of(c.topic, topics) in options.areas]
+        if not on_shelves:
+            names = " or ".join(repr(a) for a in options.areas)
+            raise SetupProblem(
+                [f"no cards on the shelf {names}. Shelves:"]
+                + [f"  {area}" for area in areas_in(bank, topics)]
+            )
+        bank = on_shelves
     now = now or _now()
     saving = options.save and not options.practise
     store = None
@@ -173,8 +194,8 @@ def setup(
                 ],
                 nothing_due=True,
             )
-        topics = [options.topic] if isinstance(options.topic, str) else options.topic
-        wanted = [t for t in topics or () if t]  # blanks are ignored, as in study
+        texts = [options.topic] if isinstance(options.topic, str) else options.topic
+        wanted = [t for t in texts or () if t]  # blanks are ignored, as in study
         if wanted:
             names = " or ".join(repr(t) for t in wanted)
             raise SetupProblem(
@@ -271,6 +292,7 @@ class QuizScreen:
     bank: list[LongevityCard] | None = None
     make_judge: Callable[..., Judge] = default_make_judge
     now: Callable[[], datetime] = _now
+    topics: list[Topic] | None = None  # the topic map, for shelves
     phase: Phase = "setup"
     problems: list[str] = field(default_factory=list)
     nothing_due: bool = False
@@ -302,6 +324,7 @@ class QuizScreen:
                 warn=self._warnings.append,
                 practise_hint=WEB_PRACTISE_HINT,
                 clock=self.now,
+                topics=self.topics,
             )
         except SetupProblem as problem:
             self.problems, self.nothing_due = problem.lines, problem.nothing_due
