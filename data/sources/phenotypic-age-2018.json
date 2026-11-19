@@ -1,0 +1,20 @@
+{
+  "id": "phenotypic-age-2018",
+  "title": "A new aging measure captures morbidity and mortality risk across diverse subpopulations from NHANES IV: A cohort study",
+  "authors": "Liu Z, Kuo PL, Horvath S, et al.",
+  "publisher": "PLoS Medicine",
+  "journal": "PLoS Medicine 2018",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2018,
+  "doi": "10.1371/journal.pmed.1002718",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6312200/fullTextXML",
+  "topics": [
+    "blood-markers"
+  ],
+  "licence_note": "CC0 (public domain). A cohort study, not a review: the Phenotypic Age measure from 9 routine blood tests (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-19",
+  "size": 126810,
+  "sha256": "07bdd27a441a2c13a2a18c5b268fe594afe876053b2449ec45304eaa567f7524",
+  "local_path": "data/raw/phenotypic-age-2018.xml"
+}

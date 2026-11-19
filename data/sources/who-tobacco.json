@@ -1,0 +1,17 @@
+{
+  "id": "who-tobacco",
+  "title": "Tobacco (fact sheet)",
+  "publisher": "World Health Organization",
+  "tier": "A",
+  "format": "html",
+  "year": 2026,
+  "url": "https://www.who.int/news-room/fact-sheets/detail/tobacco",
+  "topics": [
+    "social-other"
+  ],
+  "licence_note": "(c) World Health Organization (website terms). Not committed: record + short quotes only. A live page, so it may change: M5 re-checks it.",
+  "retrieved": "2026-11-19",
+  "size": 133646,
+  "sha256": "fe6a489a94ed44b09673752ac0a22a9c16bc79be41f1383adc809a74410ecc1e",
+  "local_path": "data/raw/who-tobacco.html"
+}

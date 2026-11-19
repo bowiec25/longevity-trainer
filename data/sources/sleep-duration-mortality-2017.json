@@ -1,0 +1,20 @@
+{
+  "id": "sleep-duration-mortality-2017",
+  "title": "Relationship of Sleep Duration With All-Cause Mortality and Cardiovascular Events: A Systematic Review and Dose-Response Meta-Analysis of Prospective Cohort Studies",
+  "authors": "Yin J, Jin X, Shan Z, et al.",
+  "publisher": "Journal of the American Heart Association",
+  "journal": "Journal of the American Heart Association 2017",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2017,
+  "doi": "10.1161/JAHA.117.005947",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5634263/fullTextXML",
+  "topics": [
+    "sleep"
+  ],
+  "licence_note": "CC BY-NC 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-19",
+  "size": 189698,
+  "sha256": "7401ff314417e19ab78ad832f4048a5adf5a17d51fdd700d97eeb1bce95c6ddb",
+  "local_path": "data/raw/sleep-duration-mortality-2017.xml"
+}

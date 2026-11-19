@@ -1,0 +1,20 @@
+{
+  "id": "ldl-causes-ascvd-2017",
+  "title": "Low-density lipoproteins cause atherosclerotic cardiovascular disease. 1. Evidence from genetic, epidemiologic, and clinical studies",
+  "authors": "Ference BA, Ginsberg HN, Graham I, et al.",
+  "publisher": "European Heart Journal",
+  "journal": "European Heart Journal 2017",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2017,
+  "doi": "10.1093/eurheartj/ehx144",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5837225/fullTextXML",
+  "topics": [
+    "statins-lipids"
+  ],
+  "licence_note": "CC BY-NC 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-19",
+  "size": 160890,
+  "sha256": "ff532a0affb055e7dfc6264132345c9f9a6e1b7a733db92b8aea96797092d4b9",
+  "local_path": "data/raw/ldl-causes-ascvd-2017.xml"
+}

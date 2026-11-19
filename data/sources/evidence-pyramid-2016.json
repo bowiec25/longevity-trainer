@@ -1,0 +1,20 @@
+{
+  "id": "evidence-pyramid-2016",
+  "title": "New evidence pyramid",
+  "authors": "Murad MH, Asi N, Alsawas M, Alahdab F",
+  "publisher": "BMJ Evidence-Based Medicine",
+  "journal": "BMJ Evidence-Based Medicine 2016",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2016,
+  "doi": "10.1136/ebmed-2016-110401",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4975798/fullTextXML",
+  "topics": [
+    "study-types"
+  ],
+  "licence_note": "CC BY-NC 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-19",
+  "size": 27832,
+  "sha256": "545740520f09eaaa752c01d40694d4ef4a0a080a4b892fd3d825737a02dc2aa2",
+  "local_path": "data/raw/evidence-pyramid-2016.xml"
+}

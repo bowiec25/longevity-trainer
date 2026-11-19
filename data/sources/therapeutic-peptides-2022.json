@@ -1,0 +1,21 @@
+{
+  "id": "therapeutic-peptides-2022",
+  "title": "Therapeutic peptides: current applications and future directions",
+  "authors": "Wang L, Wang N, Zhang W, et al.",
+  "publisher": "Signal Transduction and Targeted Therapy",
+  "journal": "Signal Transduction and Targeted Therapy 2022",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2022,
+  "doi": "10.1038/s41392-022-00904-4",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8844085/fullTextXML",
+  "topics": [
+    "peptide-what",
+    "peptides-each"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-19",
+  "size": 645307,
+  "sha256": "dccc975bebac3444f637c5175e5b7464f95e801198d66a058879eca6d26aa139",
+  "local_path": "data/raw/therapeutic-peptides-2022.xml"
+}
