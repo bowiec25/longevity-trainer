@@ -379,8 +379,8 @@ def test_a_blank_part_raises_naming_the_line(tmp_path, blank):
 # --- coverage_lines ----------------------------------------------------------------
 
 PARTS = ["Cellular senescence", "Telomere attrition", "Dysbiosis"]
-HEADER_TAIL = "parts covered in easy mode (each needs an easy what and how card)"
-NEEDS_BOTH = "(needs: easy what, easy how)"
+HEADER_TAIL = "parts covered (each needs an easy what card and a how card)"
+NEEDS_BOTH = "(needs: easy what, a how card)"
 
 
 def parts_map():
@@ -413,7 +413,7 @@ def test_coverage_with_no_cards_covers_nothing():
     assert len(lines) == 4
     for part in PARTS:
         assert part_line(lines, part) == (
-            f"  {part}: easy 0 what, 0 how; 0 hard {NEEDS_BOTH}"
+            f"  {part}: 0 easy what, 0 how; 0 hard {NEEDS_BOTH}"
         )
 
 
@@ -424,7 +424,43 @@ def test_coverage_easy_name_and_explain_is_ticked():
     ]
     lines = block.coverage_lines(cards, parts_map(), "hallmarks")
     assert part_line(lines, "Cellular senescence") == (
-        "  Cellular senescence: easy 1 what, 1 how; 0 hard ✓"
+        "  Cellular senescence: 1 easy what, 1 how; 0 hard ✓"
+    )
+
+
+def test_coverage_easy_name_and_hard_explain_is_ticked():
+    """A how counts at any level; the hard explain also counts in hard."""
+    cards = [
+        make_card("c-1", "hallmarks: dysbiosis", "name", "easy"),
+        make_card("c-2", "hallmarks: dysbiosis", "explain", "hard"),
+    ]
+    lines = block.coverage_lines(cards, parts_map(), "hallmarks")
+    assert part_line(lines, "Dysbiosis") == (
+        "  Dysbiosis: 1 easy what, 1 how; 1 hard ✓"
+    )
+    assert lines[0] == f"hallmarks: 1 of 3 {HEADER_TAIL}"
+
+
+def test_coverage_easy_name_and_untagged_explain_is_ticked():
+    """An untagged explain counts as the how and also as hard."""
+    cards = [
+        make_card("c-1", "hallmarks: dysbiosis", "name", "easy"),
+        make_card("c-2", "hallmarks: dysbiosis", "explain", None),
+    ]
+    lines = block.coverage_lines(cards, parts_map(), "hallmarks")
+    assert part_line(lines, "Dysbiosis") == (
+        "  Dysbiosis: 1 easy what, 1 how; 1 hard ✓"
+    )
+
+
+def test_coverage_hard_name_and_easy_explain_needs_easy_what():
+    cards = [
+        make_card("c-1", "hallmarks: dysbiosis", "name", "hard"),
+        make_card("c-2", "hallmarks: dysbiosis", "explain", "easy"),
+    ]
+    lines = block.coverage_lines(cards, parts_map(), "hallmarks")
+    assert part_line(lines, "Dysbiosis") == (
+        "  Dysbiosis: 0 easy what, 1 how; 1 hard (needs: easy what)"
     )
 
 
@@ -435,7 +471,7 @@ def test_coverage_easy_term_counts_as_what():
     ]
     lines = block.coverage_lines(cards, parts_map(), "hallmarks")
     assert part_line(lines, "Dysbiosis") == (
-        "  Dysbiosis: easy 2 what, 0 how; 0 hard (needs: easy how)"
+        "  Dysbiosis: 2 easy what, 0 how; 0 hard (needs: a how card)"
     )
 
 
@@ -443,19 +479,19 @@ def test_coverage_only_easy_how_needs_easy_what():
     cards = [make_card("c-1", "hallmarks: dysbiosis", "explain", "easy")]
     lines = block.coverage_lines(cards, parts_map(), "hallmarks")
     assert part_line(lines, "Dysbiosis") == (
-        "  Dysbiosis: easy 0 what, 1 how; 0 hard (needs: easy what)"
+        "  Dysbiosis: 0 easy what, 1 how; 0 hard (needs: easy what)"
     )
 
 
 def test_coverage_only_hard_cards_needs_both_and_counts_hard():
     cards = [
         make_card("c-1", "hallmarks: telomere attrition", "name", "hard"),
-        make_card("c-2", "hallmarks: telomere attrition", "explain", "hard"),
+        make_card("c-2", "hallmarks: telomere attrition", "term", "hard"),
         make_card("c-3", "hallmarks: telomere attrition", "fact", "hard"),
     ]
     lines = block.coverage_lines(cards, parts_map(), "hallmarks")
     assert part_line(lines, "Telomere attrition") == (
-        f"  Telomere attrition: easy 0 what, 0 how; 3 hard {NEEDS_BOTH}"
+        f"  Telomere attrition: 0 easy what, 0 how; 3 hard {NEEDS_BOTH}"
     )
 
 
@@ -466,7 +502,7 @@ def test_coverage_easy_fact_counts_as_what():
     ]
     lines = block.coverage_lines(cards, parts_map(), "hallmarks")
     assert part_line(lines, "Dysbiosis") == (
-        "  Dysbiosis: easy 1 what, 1 how; 0 hard ✓"
+        "  Dysbiosis: 1 easy what, 1 how; 0 hard ✓"
     )
 
 
@@ -485,11 +521,11 @@ def test_coverage_finds_topic_id_like_a_card_group(topic_id):
 def test_coverage_untagged_cards_count_as_hard():
     cards = [
         make_card("c-1", "hallmarks: dysbiosis", "name", None),
-        make_card("c-2", "hallmarks: dysbiosis", "explain", None),
+        make_card("c-2", "hallmarks: dysbiosis", "fact", None),
     ]
     lines = block.coverage_lines(cards, parts_map(), "hallmarks")
     assert part_line(lines, "Dysbiosis") == (
-        f"  Dysbiosis: easy 0 what, 0 how; 2 hard {NEEDS_BOTH}"
+        f"  Dysbiosis: 0 easy what, 0 how; 2 hard {NEEDS_BOTH}"
     )
 
 
@@ -499,7 +535,9 @@ def test_coverage_matches_card_topics_by_slug_and_alias():
         make_card("c-2", "hallmarks-of-aging: cellular-senescence", "explain", "easy"),
     ]
     lines = block.coverage_lines(cards, parts_map(), "hallmarks")
-    assert part_line(lines, "Cellular senescence").endswith("1 what, 1 how; 0 hard ✓")
+    assert part_line(lines, "Cellular senescence").endswith(
+        "1 easy what, 1 how; 0 hard ✓"
+    )
     assert lines[0].startswith("hallmarks: 1 of 3 ")
 
 
@@ -511,7 +549,7 @@ def test_coverage_card_on_the_topic_alone_counts_for_no_part():
     ]
     lines = block.coverage_lines(cards, parts_map(), "hallmarks")
     for part in PARTS:
-        assert "easy 0 what, 0 how; 0 hard" in part_line(lines, part)
+        assert "0 easy what, 0 how; 0 hard" in part_line(lines, part)
 
 
 def test_coverage_lists_parts_in_the_topics_order():
@@ -656,17 +694,17 @@ def syllabus_cards():
 
 def test_syllabus_lines_whole_report():
     assert block.syllabus_lines(syllabus_cards(), syllabus_map()) == [
-        "Syllabus: 2 of 5 sub-topics covered in easy mode",
+        "Syllabus: 2 of 5 sub-topics covered (an easy what card and a how card)",
         "By priority: core 0 of 0, useful 0 of 0, extra 0 of 0, none 2 of 5",
         "01 What ageing is: 1 of 1 covered",
-        "  aging: easy 1 what, 1 how; 1 hard ✓",
+        "  aging: 1 easy what, 1 how; 1 hard ✓",
         "02 Hallmarks and pathways: 0 of 2 covered",
         "  hallmarks: 1 of 2 parts covered (see: coverage hallmarks)",
-        "  dials: easy 1 what, 0 how; 0 hard (needs: easy how)",
+        "  dials: 1 easy what, 0 how; 0 hard (needs: a how card)",
         "11 Blood tests: 0 of 1 covered",
-        "  blood: easy 0 what, 0 how; 0 hard (needs: an easy card)",
+        "  blood: 0 easy what, 0 how; 0 hard (needs: an easy card)",
         "?? no chapter: 1 of 1 covered",
-        "  misc: easy 0 what, 1 how; 0 hard ✓",
+        "  misc: 0 easy what, 1 how; 0 hard ✓",
         f"{LATER}1 sub-topics",
         f"{READ}1 sub-topics",
     ]
@@ -691,34 +729,46 @@ def test_syllabus_easy_term_and_explain_is_ticked():
         make_card("c-1", "t", "term", "easy"),
         make_card("c-2", "t", "explain", "easy"),
     ]
-    assert one("t", cards, **TERM_EXPLAIN) == "  t: easy 1 what, 1 how; 0 hard ✓"
+    assert one("t", cards, **TERM_EXPLAIN) == "  t: 1 easy what, 1 how; 0 hard ✓"
 
 
-def test_syllabus_only_easy_term_needs_easy_how():
+def test_syllabus_only_easy_term_needs_a_how_card():
     cards = [make_card("c-1", "t", "term", "easy")]
     assert one("t", cards, **TERM_EXPLAIN) == (
-        "  t: easy 1 what, 0 how; 0 hard (needs: easy how)"
+        "  t: 1 easy what, 0 how; 0 hard (needs: a how card)"
     )
 
 
 def test_syllabus_only_hard_cards_needs_both_and_counts_hard():
     cards = [
         make_card("c-1", "t", "term", "hard"),
-        make_card("c-2", "t", "explain", "hard"),
+        make_card("c-2", "t", "fact", "hard"),
         make_card("c-3", "t", "name", None),  # untagged counts as hard
     ]
     assert one("t", cards, **TERM_EXPLAIN) == (
-        f"  t: easy 0 what, 0 how; 3 hard {NEEDS_BOTH}"
+        f"  t: 0 easy what, 0 how; 3 hard {NEEDS_BOTH}"
     )
 
 
-def test_syllabus_kinds_explain_needs_only_an_easy_how():
+def test_syllabus_kinds_explain_needs_only_a_how_card():
     kw = {"primer": "1", "kinds": ["explain"]}
     assert one("t", [make_card("c-1", "t", "explain", "easy")], **kw) == (
-        "  t: easy 0 what, 1 how; 0 hard ✓"
+        "  t: 0 easy what, 1 how; 0 hard ✓"
     )
     assert one("t", [make_card("c-1", "t", "name", "easy")], **kw) == (
-        "  t: easy 1 what, 0 how; 0 hard (needs: easy how)"
+        "  t: 1 easy what, 0 how; 0 hard (needs: a how card)"
+    )
+
+
+def test_syllabus_hard_explain_counts_as_the_how():
+    cards = [
+        make_card("c-1", "t", "term", "easy"),
+        make_card("c-2", "t", "explain", "hard"),
+    ]
+    assert one("t", cards, **TERM_EXPLAIN) == "  t: 1 easy what, 1 how; 1 hard ✓"
+    kw = {"primer": "1", "kinds": ["explain"]}
+    assert one("t", [make_card("c-1", "t", "explain", "hard")], **kw) == (
+        "  t: 0 easy what, 1 how; 1 hard ✓"
     )
 
 
@@ -726,7 +776,7 @@ def test_syllabus_kinds_explain_needs_only_an_easy_how():
 def test_syllabus_recall_kinds_need_only_an_easy_what(kinds):
     cards = [make_card("c-1", "t", "fact", "easy")]
     assert one("t", cards, primer="1", kinds=kinds) == (
-        "  t: easy 1 what, 0 how; 0 hard ✓"
+        "  t: 1 easy what, 0 how; 0 hard ✓"
     )
 
 
@@ -734,11 +784,19 @@ def test_syllabus_recall_kinds_need_only_an_easy_what(kinds):
 def test_syllabus_no_what_or_how_kinds_need_any_easy_card(kinds):
     hard = [make_card("c-1", "t", "name", "hard")]
     assert one("t", hard, primer="1", kinds=kinds) == (
-        "  t: easy 0 what, 0 how; 1 hard (needs: an easy card)"
+        "  t: 0 easy what, 0 how; 1 hard (needs: an easy card)"
     )
     easy = [make_card("c-1", "t", "explain", "easy")]
     assert one("t", easy, primer="1", kinds=kinds) == (
-        "  t: easy 0 what, 1 how; 0 hard ✓"
+        "  t: 0 easy what, 1 how; 0 hard ✓"
+    )
+
+
+@pytest.mark.parametrize("kinds", [["grade"], []])
+def test_syllabus_no_kinds_lone_hard_explain_still_needs_an_easy_card(kinds):
+    hard = [make_card("c-1", "t", "explain", "hard")]
+    assert one("t", hard, primer="1", kinds=kinds) == (
+        "  t: 0 easy what, 1 how; 1 hard (needs: an easy card)"
     )
 
 
@@ -751,11 +809,17 @@ def test_syllabus_topic_with_parts_covered_only_when_every_part_is():
     ]
     lines = block.syllabus_lines(half, topics)
     assert topic_line(lines, "h") == "  h: 1 of 2 parts covered (see: coverage h)"
-    assert lines[0] == "Syllabus: 0 of 1 sub-topics covered in easy mode"
+    assert (
+        lines[0]
+        == "Syllabus: 0 of 1 sub-topics covered (an easy what card and a how card)"
+    )
     full = [*half, make_card("c-4", "h: two", "explain", "easy")]
     lines = block.syllabus_lines(full, topics)
     assert topic_line(lines, "h") == "  h: 2 of 2 parts covered (see: coverage h) ✓"
-    assert lines[0] == "Syllabus: 1 of 1 sub-topics covered in easy mode"
+    assert (
+        lines[0]
+        == "Syllabus: 1 of 1 sub-topics covered (an easy what card and a how card)"
+    )
     assert "02 Hallmarks and pathways: 1 of 1 covered" in lines
 
 
@@ -781,7 +845,10 @@ def test_syllabus_topic_with_parts_and_a_non_slug_id_is_counted():
     assert topic_line(lines, "Hall_marks") == (
         "  Hall_marks: 2 of 2 parts covered (see: coverage Hall_marks) ✓"
     )
-    assert lines[0] == "Syllabus: 1 of 1 sub-topics covered in easy mode"
+    assert (
+        lines[0]
+        == "Syllabus: 1 of 1 sub-topics covered (an easy what card and a how card)"
+    )
 
 
 @pytest.mark.parametrize(
@@ -811,7 +878,7 @@ def test_syllabus_no_leading_number_goes_under_no_chapter_last(primer):
     assert lines[2] == "03 Big ideas: 0 of 1 covered"
     assert lines[-4:] == [
         "?? no chapter: 0 of 1 covered",
-        "  x: easy 0 what, 0 how; 0 hard (needs: an easy card)",
+        "  x: 0 easy what, 0 how; 0 hard (needs: an easy card)",
         f"{LATER}0 sub-topics",
         f"{READ}0 sub-topics",
     ]
@@ -834,7 +901,10 @@ def test_syllabus_after_m5_and_read_topics_are_counted_not_listed():
         stopic("d", primer="22", status="after-m5"),
     ]
     lines = block.syllabus_lines([], topics)
-    assert lines[0] == "Syllabus: 0 of 1 sub-topics covered in easy mode"
+    assert (
+        lines[0]
+        == "Syllabus: 0 of 1 sub-topics covered (an easy what card and a how card)"
+    )
     assert lines[-2:] == [f"{LATER}2 sub-topics", f"{READ}1 sub-topics"]
     assert not any(x.startswith(OTHER) for x in lines)
     assert not any(x.startswith(("  b:", "  c:", "  d:", "20 ", "21 ")) for x in lines)
@@ -869,7 +939,7 @@ def test_syllabus_card_filed_through_an_alias_counts_for_its_topic():
         stopic("exercise", "10.2", ["term", "explain"], aliases=["physical-activity"])
     ]
     lines = block.syllabus_lines(cards, topics)
-    assert topic_line(lines, "exercise") == "  exercise: easy 1 what, 1 how; 0 hard ✓"
+    assert topic_line(lines, "exercise") == "  exercise: 1 easy what, 1 how; 0 hard ✓"
 
 
 # --- priority -----------------------------------------------------------------------
@@ -972,11 +1042,11 @@ def test_syllabus_second_line_empty_tiers_are_0_of_0_and_no_none_part():
 def test_todo_lines_whole_report():
     assert block.todo_lines(priority_cards(), priority_map()) == [
         "Core: 3 to fill",
-        "  01 gompertz: needs easy how",
+        "  01 gompertz: needs a how card",
         "  00 evidence-grades: needs an easy card",
         "  02 hallmarks: 1 of 2 parts covered",
         "Useful: 1 to fill",
-        "  01 healthspan: needs easy what, easy how",
+        "  01 healthspan: needs easy what, a how card",
         "Extra: 1 to fill",
         "  ?? x: needs easy what",
         "No priority: 1 to fill",
@@ -998,9 +1068,9 @@ def test_todo_lines_skips_a_tier_with_nothing_to_fill():
     cards = [make_card("c-1", "b", "explain", "easy")]
     assert block.todo_lines(cards, topics) == [
         "Core: 1 to fill",
-        "  01 c: needs easy how",
+        "  01 c: needs a how card",
         "Extra: 1 to fill",
-        "  01 a: needs easy how",
+        "  01 a: needs a how card",
     ]
 
 

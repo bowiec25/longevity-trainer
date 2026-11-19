@@ -2446,7 +2446,7 @@ def test_cli_ask_with_replace_exits_2_without_calling_write_cards(cli, results):
     assert cli.calls == []
 
 
-def test_cli_gap_fill_with_primer_writes_only_easy_cards(cli, env, primer, capsys):
+def test_cli_gap_fill_with_primer_drops_a_hard_fact_card(cli, env, primer, capsys):
     result = what_and_how_sure(env)  # the fake tags the first easy, the rest hard
     easy, hard = result.kept
     assert cli(result, "--ask", "how", "--primer-pages", "2-3") == 0
@@ -2456,6 +2456,80 @@ def test_cli_gap_fill_with_primer_writes_only_easy_cards(cli, env, primer, capsy
     lines = output_lines(capsys)
     assert f"not kept (hard): {hard.question}" in [ln.strip() for ln in lines]
     assert not any(easy.question in ln and "not kept" in ln for ln in lines)
+
+
+def test_cli_gap_fill_keeps_easy_and_hard_explain_drops_hard_fact(
+    cli, env, primer, capsys
+):
+    """A how card counts at any level, so a hard explain is written in a gap fill."""
+    result, _ = env(
+        [
+            draft("what", "What does rapamycin inhibit in the cell?", quote=S_WHAT),
+            draft("how_sure", "How strong is the lifespan evidence?", quote=S_SURE),
+            draft(
+                "how",
+                "How does rapamycin slow cell growth?",
+                quote=S_HOW,
+                kind="explain",
+            ),
+        ]
+    )
+    easy, hard_fact, hard_explain = result.kept  # the fake tags the first easy
+    assert hard_fact.kind == "fact" and hard_explain.kind == "explain"
+    assert "-how-" in hard_explain.id
+    assert cli(result, "--ask", "how", "--primer-pages", "2-3") == 0
+    loaded = load_cards(cli.cards_dir)
+    assert {c.id: c.difficulty for c in loaded} == {
+        easy.id: "easy",
+        hard_explain.id: "hard",
+    }
+    lines = [ln.strip() for ln in output_lines(capsys)]
+    assert f"not kept (hard): {hard_fact.question}" in lines
+    assert not any(
+        ln.startswith("not kept") and hard_explain.question in ln for ln in lines
+    )
+    assert not any(ln.startswith("not kept") and easy.question in ln for ln in lines)
+
+
+def test_cli_gap_fill_without_how_asked_drops_a_hard_explain(cli, env, primer, capsys):
+    """Hard explain cards are kept only when how is asked for."""
+    result, _ = env(
+        [
+            draft("what", "What does rapamycin inhibit in the cell?", quote=S_WHAT),
+            draft(
+                "how",
+                "How does rapamycin slow cell growth?",
+                quote=S_HOW,
+                kind="explain",
+            ),
+        ]
+    )
+    easy, hard_explain = result.kept  # the fake tags the first easy
+    assert cli(result, "--ask", "what", "--primer-pages", "2-3") == 0
+    assert [c.id for c in load_cards(cli.cards_dir)] == [easy.id]
+    lines = [ln.strip() for ln in output_lines(capsys)]
+    assert f"not kept (hard): {hard_explain.question}" in lines
+
+
+def test_cli_gap_fill_drops_a_hard_explain_on_the_catch_ask(cli, env, primer, capsys):
+    """With how asked, a hard explain on another ask (-catch-) is still not kept."""
+    result, _ = env(
+        [
+            draft("what", "What does rapamycin inhibit in the cell?", quote=S_WHAT),
+            draft(
+                "catch",
+                "What side effect can rapamycin cause?",
+                quote=S_CATCH,
+                kind="explain",
+            ),
+        ]
+    )
+    easy, hard_catch = result.kept  # the fake tags the first easy
+    assert "-catch-" in hard_catch.id
+    assert cli(result, "--ask", "how", "--ask", "catch", "--primer-pages", "2-3") == 0
+    assert [c.id for c in load_cards(cli.cards_dir)] == [easy.id]
+    lines = [ln.strip() for ln in output_lines(capsys)]
+    assert f"not kept (hard): {hard_catch.question}" in lines
 
 
 def test_cli_gap_fill_coverage_counts_only_written_cards(cli, env, primer, capsys):
@@ -2470,7 +2544,9 @@ def test_cli_gap_fill_tagging_failure_writes_nothing(cli, env, primer, capsys):
     assert cli(what_and_how_sure(env), "--ask", "how", "--primer-pages", "2-3") == 0
     assert list(cli.cards_dir.iterdir()) == []
     lines = output_lines(capsys)
-    assert "nothing written: a gap fill keeps only easy cards" in lines
+    assert (
+        "nothing written: not tagged, and a gap fill writes only tagged cards" in lines
+    )
     assert any(ln.startswith("not tagged (") for ln in lines)
 
 

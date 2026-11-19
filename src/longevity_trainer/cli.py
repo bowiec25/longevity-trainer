@@ -24,6 +24,7 @@ Marking:
 import argparse
 import json
 import os
+import re
 import sys
 import tempfile
 import textwrap
@@ -391,24 +392,28 @@ def write_cards_command(
             result = result.model_copy(update={"kept": kept})
             easy = sum(c.difficulty == "easy" for c in kept)
             write(f"tagged: {easy} easy, {len(kept) - easy} hard")
-        if only_asks and primer_pages is not None:  # a gap fill keeps easy cards only
+        if only_asks and primer_pages is not None:  # gap fill: easy cards, how cards
             if tags is None:
                 result = result.model_copy(update={"kept": []})
                 gap_fill_empty = True
             else:
-                for card in result.kept:
-                    if card.difficulty != "easy":
+                how = re.compile(rf"{re.escape(slug(topic))}-how-\d+")
+                keep = []
+                for card in result.kept:  # a how card counts at any level (topic_map)
+                    on_how = card.kind == "explain" and how.fullmatch(card.id)
+                    if card.difficulty == "easy" or ("how" in only_asks and on_how):
+                        keep.append(card)
+                    else:
                         write(_wrap(f"not kept (hard): {card.question}"))
-                easy_only = [c for c in result.kept if c.difficulty == "easy"]
-                result = result.model_copy(update={"kept": easy_only})
-                gap_fill_empty = not easy_only
+                result = result.model_copy(update={"kept": keep})
+                gap_fill_empty = not keep
     write(_cost_line(replies))
     ok = r.passed and bool(result.kept)
     new_ids = [c.id for c in result.kept] if ok else []
     coverage = _coverage(slug(topic), topic_ids + new_ids)
     if gap_fill_empty:
         write(coverage)
-        write("nothing written: a gap fill keeps only easy cards")
+        write("nothing written: not tagged, and a gap fill writes only tagged cards")
         return 0 if r.passed else 1
     if not ok:
         write(coverage)
