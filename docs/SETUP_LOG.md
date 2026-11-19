@@ -470,3 +470,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Core (28):** the basics (Gompertz, healthspan, why we age, evidence grades), the hallmarks and four pathways, geroscience, senolytics, reprogramming, kinds of study and biomarkers, GLP-1s, statins, rapamycin, metformin, exercise, sleep, diet, other lifestyle factors, peptides, blood markers and the three clock sub-topics. You moved peptides and the clocks up.
 - **Today:** core 3 of 28, useful 0 of 20, extra 0 of 11.
 - The tiers live in `data/topics.jsonl` (`priority`), so moving one is a one-word change.
+
+## A "how" card counts at any level (2026-11-19)
+
+> **In plain words:** your primer names each hallmark in one line but rarely says how it works, so an easy "how" card was almost never possible. Now a sub-topic counts as covered with an easy "what" (from your primer, in easy mode) plus a "how" card at any level (from the trusted source, in hard mode).
+
+- **Easy mode is unchanged:** still only what your primer says. The "how" cards beyond it are in hard mode.
+- **The report** now says "covered (an easy what card and a how card)", not "covered in easy mode" (the code review caught that a hard how isn't dealt in easy mode).
+- **Gap fills:** `--ask how` keeps hard how cards too; other hard cards print `not kept (hard)`.
+- **Hallmarks:** 10 of 12 covered, 13 new cards. Mitochondrial dysfunction and cell communication still need an easy "what".
+- **Cost:** about $8 of Claude calls for the hallmark fills (two passes).

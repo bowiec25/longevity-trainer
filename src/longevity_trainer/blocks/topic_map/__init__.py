@@ -75,6 +75,7 @@ CHAPTERS = {
 }
 WHAT_KINDS = ("name", "term", "fact")
 PRIORITIES = ("core", "useful", "extra")
+COVERED = "(an easy what card and a how card)"
 KINDS = (*WHAT_KINDS, "explain", "grade")
 
 
@@ -178,8 +179,8 @@ def coverage_lines(
     rows = _part_rows(cards, topics, topic)
     covered = sum(ok for _, ok in rows)
     head = (
-        f"{topic.id}: {covered} of {len(topic.parts)} parts covered in easy mode"
-        " (each needs an easy what and how card)"
+        f"{topic.id}: {covered} of {len(topic.parts)} parts covered"
+        " (each needs an easy what card and a how card)"
     )
     return [head, *(line for line, _ in rows)]
 
@@ -200,20 +201,21 @@ def _part_rows(
 def _count_line(
     name: str, cards: list[LongevityCard], wanted: list[str]
 ) -> tuple[str, list[str]]:
-    """'  <name>: easy w what, h how; x hard' + ' ✓' or the missing easy cards."""
+    """'  <name>: w easy what, h how; x hard' + ' ✓' or what's missing. A how
+    card counts at any level: the primer rarely explains how (user, 2026-11-19)."""
     easy = [c for c in cards if c.difficulty == "easy"]
     what = sum(c.kind in WHAT_KINDS for c in easy)
-    how = sum(c.kind == "explain" for c in easy)
+    how = sum(c.kind == "explain" for c in cards)
     have = {"what": what, "how": how, "any": len(easy)}
-    label = {"what": "easy what", "how": "easy how", "any": "an easy card"}
+    label = {"what": "easy what", "how": "a how card", "any": "an easy card"}
     needs = [label[w] for w in wanted if not have[w]]
     end = f" (needs: {', '.join(needs)})" if needs else " ✓"
     hard = len(cards) - len(easy)
-    return f"  {name}: easy {what} what, {how} how; {hard} hard{end}", needs
+    return f"  {name}: {what} easy what, {how} how; {hard} hard{end}", needs
 
 
 def _wanted(topic: Topic) -> list[str]:
-    """The easy cards a topic's kinds call for: what, how, or else any one."""
+    """What a topic's kinds call for: an easy what, a how card, or else any easy card."""
     wanted = []
     if any(k in WHAT_KINDS for k in topic.kinds):
         wanted.append("what")
@@ -233,8 +235,8 @@ class _Row(NamedTuple):
 
     topic: Topic
     line: str  # its syllabus line
-    ok: bool  # covered in easy mode
-    gap: str  # what's missing, e.g. "needs easy how" or "1 of 12 parts covered"
+    ok: bool  # covered: an easy what card and a how card (any level)
+    gap: str  # what's missing, e.g. "needs a how card" or "1 of 12 parts covered"
 
 
 def _rows(cards: list[LongevityCard], topics: list[Topic]) -> list[_Row]:
@@ -275,7 +277,7 @@ def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]
     if unset:
         tiers.append(f"none {_score(unset)}")
     lines = [
-        f"Syllabus: {_score(rows)} sub-topics covered in easy mode",
+        f"Syllabus: {_score(rows)} sub-topics covered {COVERED}",
         f"By priority: {', '.join(tiers)}",
     ]
     chapters: dict[int | None, list[_Row]] = {}
