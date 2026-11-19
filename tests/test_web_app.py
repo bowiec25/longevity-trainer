@@ -227,6 +227,40 @@ def test_stats_page_with_no_progress_creates_no_file(tmp_path):
     assert not (tmp_path / "progress.db").exists()
 
 
+# --- Syllabus page (topic_map SPEC syllabus_view) ----------------------------------
+
+
+def syllabus_page():
+    at = AppTest.from_file(
+        str(cli.WEB_PAGE.with_name("web_pages") / "syllabus.py"), default_timeout=30
+    )
+    at.run()
+    return at
+
+
+def test_syllabus_page_runs_and_shows_the_title():
+    at = syllabus_page()
+    assert not at.exception
+    assert any("Syllabus" in t.value for t in at.title)
+
+
+def test_syllabus_page_has_an_expander_per_chapter():
+    at = syllabus_page()
+    labels = [shown(e.label) for e in at.expander]
+    assert any(x.startswith("02 Hallmarks and pathways") for x in labels)
+
+
+def test_syllabus_page_lists_the_topics():
+    at = syllabus_page()
+    assert "AMPK" in texts(at)
+
+
+def test_syllabus_page_creates_no_progress_file(tmp_path):
+    """Read-only: conftest points PROGRESS_FILE / JUDGE_CACHE into tmp_path."""
+    syllabus_page()
+    assert list(tmp_path.iterdir()) == []
+
+
 # --- Hard mode (quiz_round SPEC "Web page"; ADR 0010) ------------------------------
 
 NO_EASY = (

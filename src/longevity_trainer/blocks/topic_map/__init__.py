@@ -31,6 +31,7 @@ BLOCK_SPEC = BlockSpec(
         "CHAPTERS",
         "syllabus_lines",
         "todo_lines",
+        "syllabus_view",
     ],
 )
 
@@ -238,6 +239,7 @@ class _Row(NamedTuple):
     ok: bool  # covered: a what card and a how card (any level)
     gap: str  # what's missing, e.g. "needs a how card" or "1 of 12 parts covered"
     has_easy: bool  # at least one card tagged easy (in easy mode)
+    cards: int  # its cards, any part, any level
 
 
 def _rows(cards: list[LongevityCard], topics: list[Topic]) -> list[_Row]:
@@ -260,12 +262,27 @@ def _rows(cards: list[LongevityCard], topics: list[Topic]) -> list[_Row]:
             line, needs = _count_line(topic.id, mine[topic.id], _wanted(topic))
             ok, gap = not needs, f"needs {', '.join(needs)}"
         has_easy = any(c.difficulty == "easy" for c in mine[topic.id])
-        rows.append(_Row(topic, line, ok, gap, has_easy))
+        rows.append(_Row(topic, line, ok, gap, has_easy, len(mine[topic.id])))
     return rows
 
 
 def _score(rows: list[_Row]) -> str:
     return f"{sum(r.ok for r in rows)} of {len(rows)}"
+
+
+def _chapters(rows: list[_Row]) -> list[tuple[int | None, list[_Row]]]:
+    """The rows grouped by chapter: chapters in number order, no chapter last."""
+    chapters: dict[int | None, list[_Row]] = {}
+    for row in rows:
+        chapters.setdefault(_chapter(row.topic), []).append(row)
+    order: list[int | None] = sorted(k for k in chapters if k is not None)
+    if None in chapters:
+        order.append(None)
+    return [(number, chapters[number]) for number in order]
+
+
+def _chapter_name(number: int) -> str:
+    return CHAPTERS.get(number, f"chapter {number}")
 
 
 def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:
@@ -284,19 +301,13 @@ def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]
         f"In easy mode: {in_easy} of {len(rows)} sub-topics have an easy card",
         f"By priority: {', '.join(tiers)}",
     ]
-    chapters: dict[int | None, list[_Row]] = {}
-    for row in rows:
-        chapters.setdefault(_chapter(row.topic), []).append(row)
-    order = sorted(k for k in chapters if k is not None)
-    if None in chapters:
-        order.append(None)
-    for number in order:
+    for number, here in _chapters(rows):
         if number is None:
             head = "?? no chapter"
         else:
-            head = f"{number:02d} {CHAPTERS.get(number, f'chapter {number}')}"
-        lines.append(f"{head}: {_score(chapters[number])} covered")
-        lines.extend(r.line for r in chapters[number])
+            head = f"{number:02d} {_chapter_name(number)}"
+        lines.append(f"{head}: {_score(here)} covered")
+        lines.extend(r.line for r in here)
     status = [t.status for t in topics if t.status != "v1"]
     later, read = status.count("after-m5"), status.count("read")
     lines.append(f"Later (dated facts, wait for M5): {later} sub-topics")
@@ -304,6 +315,55 @@ def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]
     if other := len(status) - later - read:
         lines.append(f"Other status: {other} sub-topics")
     return lines
+
+
+class TopicView(BaseModel):
+    """One learnable sub-topic on the web Syllabus page."""
+
+    id: str
+    name: str  # the topic's text, e.g. "AMPK: the energy-shortage sensor"
+    priority: str  # "core", "useful", "extra" or "" (none)
+    cards: int  # its cards, any part, any level
+    covered: bool  # as in syllabus_lines
+    gap: str  # "" when covered, else as in todo_lines ("needs a how card")
+
+
+class ChapterView(BaseModel):
+    """One primer chapter on the web Syllabus page."""
+
+    number: int | None  # None: no chapter
+    name: str
+    covered: int
+    total: int
+    rows: list[TopicView]
+
+
+def syllabus_view(cards: list[LongevityCard], topics: list[Topic]) -> list[ChapterView]:
+    """The syllabus as data (the web Syllabus page): chapters, each with its topics."""
+    views = []
+    for number, here in _chapters(_rows(cards, topics)):
+        rows = [
+            TopicView(
+                id=r.topic.id,
+                name=r.topic.topic,
+                priority=r.topic.priority,
+                cards=r.cards,
+                covered=r.ok,
+                gap="" if r.ok else r.gap,
+            )
+            for r in here
+        ]
+        name = "no chapter" if number is None else _chapter_name(number)
+        views.append(
+            ChapterView(
+                number=number,
+                name=name,
+                covered=sum(r.ok for r in here),
+                total=len(here),
+                rows=rows,
+            )
+        )
+    return views
 
 
 def todo_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:

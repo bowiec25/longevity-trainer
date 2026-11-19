@@ -78,6 +78,7 @@ def test_block_spec_lists_every_spec_input_and_output():
         "CHAPTERS",
         "syllabus_lines",
         "todo_lines",
+        "syllabus_view",
     }
 
 
@@ -1093,6 +1094,130 @@ def test_todo_lines_with_no_topics_has_nothing_to_fill():
     assert block.todo_lines([], []) == ["Nothing to fill: every sub-topic is covered"]
 
 
+# --- syllabus_view ------------------------------------------------------------------
+
+
+def chapter_tuples(chapters):
+    return [(c.number, c.name, c.covered, c.total) for c in chapters]
+
+
+def row_tuples(rows):
+    return [(r.id, r.name, r.priority, r.cards, r.covered, r.gap) for r in rows]
+
+
+def test_syllabus_view_types_are_importable():
+    from longevity_trainer.blocks.topic_map import ChapterView, TopicView
+
+    view = block.syllabus_view(syllabus_cards(), syllabus_map())
+    assert all(isinstance(c, ChapterView) for c in view)
+    assert all(isinstance(r, TopicView) for c in view for r in c.rows)
+
+
+def test_syllabus_view_chapters_in_order_with_names_and_counts():
+    view = block.syllabus_view(syllabus_cards(), syllabus_map())
+    assert chapter_tuples(view) == [
+        (1, "What ageing is", 1, 1),
+        (2, "Hallmarks and pathways", 0, 2),
+        (11, "Blood tests", 0, 1),
+        (None, "no chapter", 1, 1),
+    ]
+
+
+def test_syllabus_view_chapters_match_syllabus_lines_headers():
+    cards, topics = syllabus_cards(), syllabus_map()
+    lines = block.syllabus_lines(cards, topics)
+    headers = [x for x in lines if re.match(r"(\d\d|\?\?) .*: \d+ of \d+ covered$", x)]
+    built = [
+        f"{'??' if c.number is None else f'{c.number:02d}'} {c.name}: "
+        f"{c.covered} of {c.total} covered"
+        for c in block.syllabus_view(cards, topics)
+    ]
+    assert built == headers
+
+
+def test_syllabus_view_rows_whole():
+    view = block.syllabus_view(syllabus_cards(), syllabus_map())
+    assert [row_tuples(c.rows) for c in view] == [
+        [("aging", "The topic aging", "", 3, True, "")],
+        [
+            ("hallmarks", "The topic hallmarks", "", 2, False, "1 of 2 parts covered"),
+            ("dials", "The topic dials", "", 1, False, "needs a how card"),
+        ],
+        [("blood", "The topic blood", "", 0, False, "needs a card")],
+        [("misc", "The topic misc", "", 1, True, "")],
+    ]
+
+
+def test_syllabus_view_leaves_out_non_v1_topics():
+    view = block.syllabus_view(syllabus_cards(), syllabus_map())
+    ids = [r.id for c in view for r in c.rows]
+    assert "deals" not in ids
+    assert "essay" not in ids
+
+
+def test_syllabus_view_rows_in_file_order_with_priority():
+    view = block.syllabus_view(priority_cards(), priority_map())
+    by_number = {c.number: c for c in view}
+    assert [(r.id, r.priority) for r in by_number[1].rows] == [
+        ("gompertz", "core"),
+        ("healthspan", "useful"),
+    ]
+    assert [(r.id, r.priority) for r in by_number[5].rows] == [("nopri", "")]
+    assert view[-1].number is None
+    assert [r.id for r in view[-1].rows] == ["x"]
+
+
+def test_syllabus_view_uncovered_gap_uses_todo_wording():
+    view = block.syllabus_view(priority_cards(), priority_map())
+    rows = {r.id: r for c in view for r in c.rows}
+    assert rows["healthspan"].gap == "needs a what card, a how card"
+    assert rows["healthspan"].covered is False
+    assert rows["gompertz"].gap == "needs a how card"
+    assert rows["evidence-grades"].gap == "needs a card"
+    assert rows["x"].gap == "needs a what card"
+    assert rows["done"].covered is True
+    assert rows["done"].gap == ""
+
+
+def test_syllabus_view_cards_count_any_part_and_any_level():
+    topics = [stopic("h", primer="2.1", parts=["One", "Two"])]
+    cards = [
+        make_card("c-1", "h: one", "name", "easy"),
+        make_card("c-2", "h: one", "explain", "hard"),
+        make_card("c-3", "h: two", "name", None),
+    ]
+    (chapter,) = block.syllabus_view(cards, topics)
+    assert chapter.rows[0].cards == 3
+
+
+def test_syllabus_view_topic_with_parts_covered_only_when_every_part_is():
+    topics = [stopic("h", primer="2.1", parts=["One", "Two"])]
+    half = [
+        make_card("c-1", "h: one", "name", "easy"),
+        make_card("c-2", "h: one", "explain", "hard"),
+        make_card("c-3", "h: two", "name", "easy"),
+    ]
+    (chapter,) = block.syllabus_view(half, topics)
+    assert (chapter.rows[0].covered, chapter.rows[0].gap) == (
+        False,
+        "1 of 2 parts covered",
+    )
+    assert (chapter.covered, chapter.total) == (0, 1)
+    full = [*half, make_card("c-4", "h: two", "explain", None)]
+    (chapter,) = block.syllabus_view(full, topics)
+    assert (chapter.rows[0].covered, chapter.rows[0].gap) == (True, "")
+    assert (chapter.covered, chapter.total) == (1, 1)
+
+
+def test_syllabus_view_chapter_missing_from_chapters_is_chapter_k():
+    (chapter,) = block.syllabus_view([], [stopic("t", primer="99.1")])
+    assert (chapter.number, chapter.name) == (99, "chapter 99")
+
+
+def test_syllabus_view_with_no_topics_is_empty():
+    assert block.syllabus_view([], []) == []
+
+
 # --- CLI: longevity coverage -------------------------------------------------------
 
 
@@ -1379,3 +1504,13 @@ def test_real_syllabus_report_runs(real_map):
     assert any(x.startswith(LATER) for x in lines)
     assert any(x.startswith(READ) for x in lines)
     assert not any(x.startswith("?? ") for x in lines)
+
+
+def test_real_syllabus_view_matches_syllabus_lines(real_map):
+    cards = load_cards()
+    view = block.syllabus_view(cards, real_map)
+    first = block.syllabus_lines(cards, real_map)[0]
+    covered, total = map(int, re.match(r"Syllabus: (\d+) of (\d+) ", first).groups())
+    assert sum(c.covered for c in view) == covered
+    assert sum(c.total for c in view) == total
+    assert sum(len(c.rows) for c in view) == total
