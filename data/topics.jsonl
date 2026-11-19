@@ -1,4 +1,4 @@
-{"id": "evidence-grades", "topic": "Evidence grades A-E: what each means", "primer": "0.2", "group": "evidence", "kinds": ["term", "explain"], "status": "v1", "area": "Evidence & trials", "priority": "core"}
+{"id": "evidence-grades", "topic": "How sure is the evidence? GRADE's four certainty levels (the primer grades A-E)", "primer": "0.2", "group": "evidence", "kinds": ["term", "explain"], "status": "v1", "area": "Evidence & trials", "priority": "core"}
 {"id": "gompertz", "topic": "The Gompertz curve: death risk doubles about every 8 years", "primer": "1.2", "group": "ageing-basics", "kinds": ["fact", "explain"], "status": "v1", "area": "How we age", "priority": "core"}
 {"id": "healthspan", "topic": "Lifespan vs healthspan, and the gap between them", "primer": "1.3", "group": "ageing-basics", "kinds": ["term", "explain"], "status": "v1", "area": "How we age", "priority": "core"}
 {"id": "why-we-age", "topic": "Why we age: the evolutionary explanation", "primer": "1.4", "group": "ageing-basics", "kinds": ["explain"], "status": "v1", "area": "How we age", "priority": "core"}

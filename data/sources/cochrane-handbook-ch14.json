@@ -1,0 +1,17 @@
+{
+  "id": "cochrane-handbook-ch14",
+  "title": "Cochrane Handbook for Systematic Reviews of Interventions, Chapter 14: Completing 'Summary of findings' tables and grading the certainty of the evidence",
+  "publisher": "Cochrane",
+  "tier": "A",
+  "format": "html",
+  "year": 2024,
+  "url": "https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current/chapter-14",
+  "retrieved": "2026-11-19",
+  "size": 220927,
+  "sha256": "a14f7f5ee922ba0ced933e8c3e02efa85b53347020e0a94c1ae4497d596f1941",
+  "local_path": "data/raw/cochrane-handbook-ch14.html",
+  "topics": [
+    "evidence-grades"
+  ],
+  "licence_note": "(c) Cochrane (website terms). Not committed: record + short quotes only. A living handbook page, so it changes: M5 re-checks it."
+}
