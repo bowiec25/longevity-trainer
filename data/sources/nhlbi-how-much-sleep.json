@@ -1,0 +1,17 @@
+{
+  "id": "nhlbi-how-much-sleep",
+  "title": "How Much Sleep Is Enough?",
+  "publisher": "National Heart, Lung, and Blood Institute (NIH)",
+  "tier": "A",
+  "format": "html",
+  "year": 2026,
+  "url": "https://www.nhlbi.nih.gov/health/sleep/how-much-sleep",
+  "topics": [
+    "sleep"
+  ],
+  "licence_note": "(c) National Heart, Lung, and Blood Institute (NIH) (website terms). Not committed: record + short quotes only. A live page, so it may change: M5 re-checks it.",
+  "retrieved": "2026-11-19",
+  "size": 62798,
+  "sha256": "a27b20b98047a95c1319985fa7c8605cb5a03e58d525672ecbf9d1de4645bad3",
+  "local_path": "data/raw/nhlbi-how-much-sleep.html"
+}

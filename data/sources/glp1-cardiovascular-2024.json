@@ -1,0 +1,20 @@
+{
+  "id": "glp1-cardiovascular-2024",
+  "title": "GLP-1 receptor agonist-based therapies and cardiovascular risk: a review of mechanisms",
+  "authors": "(see DOI)",
+  "publisher": "Journal of Endocrinology",
+  "journal": "Journal of Endocrinology 2024",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2024,
+  "doi": "10.1530/JOE-24-0046",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11466209/fullTextXML",
+  "topics": [
+    "glp1-what"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-19",
+  "size": 298879,
+  "sha256": "687b0889f524ca558b87a21a99506ff4f352b1b708e286d77951f91614c9e09a",
+  "local_path": "data/raw/glp1-cardiovascular-2024.xml"
+}

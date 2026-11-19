@@ -1,0 +1,20 @@
+{
+  "id": "cr-fasting-2022",
+  "title": "The ups and downs of caloric restriction and fasting: from molecular effects to clinical application",
+  "authors": "Hofer SJ, Carmona-Gutierrez D, Mueller MI, Madeo F",
+  "publisher": "EMBO Molecular Medicine",
+  "journal": "EMBO Molecular Medicine 2022",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2022,
+  "doi": "10.15252/emmm.202114418",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8749464/fullTextXML",
+  "topics": [
+    "diet-cr-fasting"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-19",
+  "size": 352622,
+  "sha256": "7201f9920884586d4775548f8381174a0f00976354645f135422399bdcd83cf6",
+  "local_path": "data/raw/cr-fasting-2022.xml"
+}

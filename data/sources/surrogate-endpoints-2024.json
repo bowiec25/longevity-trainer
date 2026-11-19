@@ -1,0 +1,20 @@
+{
+  "id": "surrogate-endpoints-2024",
+  "title": "Reporting of surrogate endpoints in randomised controlled trial reports (CONSORT-Surrogate): extension checklist with explanation and elaboration",
+  "authors": "Manyara AM, Davies P, Stewart D, et al.",
+  "publisher": "BMJ",
+  "journal": "BMJ 2024",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2024,
+  "doi": "10.1136/bmj-2023-078524",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11231881/fullTextXML",
+  "topics": [
+    "biomarkers-surrogates"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-19",
+  "size": 230058,
+  "sha256": "ebad73bb816cc1de943eeb7722524c19665b414802bf188685fad707c65414de",
+  "local_path": "data/raw/surrogate-endpoints-2024.xml"
+}

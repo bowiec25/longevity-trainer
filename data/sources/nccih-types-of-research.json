@@ -1,0 +1,17 @@
+{
+  "id": "nccih-types-of-research",
+  "title": "Types of research (Know the Science)",
+  "publisher": "National Center for Complementary and Integrative Health (NIH)",
+  "tier": "A",
+  "format": "html",
+  "year": 2026,
+  "url": "https://www.nccih.nih.gov/health/know-science/how-to-make-sense-of-a-scientific-journal-article/methods/types-of-research",
+  "topics": [
+    "study-types"
+  ],
+  "licence_note": "(c) National Center for Complementary and Integrative Health (NIH) (website terms). Not committed: record + short quotes only. A live page, so it may change: M5 re-checks it.",
+  "retrieved": "2026-11-19",
+  "size": 488647,
+  "sha256": "14d9bdd9688ece451db0d5dd1b3b443bd7d845ca4cf6a54ff736a55b42f223b8",
+  "local_path": "data/raw/nccih-types-of-research.html"
+}

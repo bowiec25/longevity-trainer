@@ -1,0 +1,17 @@
+{
+  "id": "who-alcohol",
+  "title": "Alcohol (fact sheet)",
+  "publisher": "World Health Organization",
+  "tier": "A",
+  "format": "html",
+  "year": 2026,
+  "url": "https://www.who.int/news-room/fact-sheets/detail/alcohol",
+  "topics": [
+    "social-other"
+  ],
+  "licence_note": "(c) World Health Organization (website terms). Not committed: record + short quotes only. A live page, so it may change: M5 re-checks it.",
+  "retrieved": "2026-11-19",
+  "size": 123483,
+  "sha256": "9de176d82859c57d85fb9a904a317979102567bf04a83bd8568a3191e4222e75",
+  "local_path": "data/raw/who-alcohol.html"
+}
