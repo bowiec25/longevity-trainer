@@ -64,7 +64,7 @@ BLOCK_SPEC = BlockSpec(
     ],
 )
 
-PROMPT_VERSION = "7"
+PROMPT_VERSION = "8"
 SOURCES_DIR = ROOT / "data" / "sources"
 TOPICS_FILE = ROOT / "data" / "topics.jsonl"
 MAX_SOURCE_CHARS = 200_000
@@ -92,7 +92,8 @@ Your task: write cards on ONE topic, using ONLY the source text you are given.
   - avoid open lists ("which outcomes", "what limitations", "key messages"): the question must have one clear answer, and if the quote lists several equally right items, either ask for one of them and accept each, or ask a narrower question.
 - Cover the questions per topic except the trend one: what is it, how does \
 it work, how sure are we, what's the catch, what does it connect to. Mark each \
-card's "asks" as what, how, how_sure, catch or connect.
+card's "asks" as what, how, how_sure, catch or connect. A card whose asks is \
+how is kind explain.
 - A connect card links this topic to ONE other topic from the list you are given \
 (what it acts on, which hallmark or pathway it belongs to, what measures it, which \
 trial tested it). Ask in the source's own words, and never say "topic" in the \
