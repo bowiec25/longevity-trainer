@@ -24,7 +24,6 @@ Marking:
 import argparse
 import json
 import os
-import re
 import sys
 import tempfile
 import textwrap
@@ -340,7 +339,6 @@ def write_cards_command(
             return 1
         primer_text = "\n\n".join(f"[primer page {k}]\n{primer[k - 1]}" for k in chosen)
     ask, replies = _counting_ask()
-    gap_fill_empty = False
     try:
         result = write_cards(
             topic,
@@ -392,29 +390,10 @@ def write_cards_command(
             result = result.model_copy(update={"kept": kept})
             easy = sum(c.difficulty == "easy" for c in kept)
             write(f"tagged: {easy} easy, {len(kept) - easy} hard")
-        if only_asks and primer_pages is not None:  # gap fill: easy cards, how cards
-            if tags is None:
-                result = result.model_copy(update={"kept": []})
-                gap_fill_empty = True
-            else:
-                how = re.compile(rf"{re.escape(slug(topic))}-how-\d+")
-                keep = []
-                for card in result.kept:  # a how card counts at any level (topic_map)
-                    on_how = card.kind == "explain" and how.fullmatch(card.id)
-                    if card.difficulty == "easy" or ("how" in only_asks and on_how):
-                        keep.append(card)
-                    else:
-                        write(_wrap(f"not kept (hard): {card.question}"))
-                result = result.model_copy(update={"kept": keep})
-                gap_fill_empty = not keep
     write(_cost_line(replies))
     ok = r.passed and bool(result.kept)
     new_ids = [c.id for c in result.kept] if ok else []
     coverage = _coverage(slug(topic), topic_ids + new_ids)
-    if gap_fill_empty:
-        write(coverage)
-        write("nothing written: not tagged, and a gap fill writes only tagged cards")
-        return 0 if r.passed else 1
     if not ok:
         write(coverage)
         write("nothing written")
@@ -604,7 +583,7 @@ def coverage_command(
     todo: bool = False,
 ) -> int:
     """No topic: the whole syllabus. A topic: each of its parts. --todo: what to
-    fill next, core first. Easy cards, gaps."""
+    fill next, core first. What and how cards, gaps."""
     if todo and topic_id is not None:
         write("--todo lists every sub-topic: give no topic with it")
         return 1
@@ -719,7 +698,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     tagger.add_argument("--primer", type=Path, default=None, help="the primer PDF")
     cover = sub.add_parser(
-        "coverage", help="the whole syllabus (or one topic's parts): easy cards, gaps"
+        "coverage",
+        help="the whole syllabus (or one topic's parts): what / how cards, gaps",
     )
     cover.add_argument(
         "topic_id", nargs="?", default=None, help='e.g. "hallmarks"; none = all'

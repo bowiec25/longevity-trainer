@@ -480,3 +480,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Gap fills:** `--ask how` keeps hard how cards too; other hard cards print `not kept (hard)`.
 - **Hallmarks:** 10 of 12 covered, 13 new cards. Mitochondrial dysfunction and cell communication still need an easy "what".
 - **Cost:** about $8 of Claude calls for the hallmark fills (two passes).
+
+## Covered means learnable; pathways and GRADE (2026-11-19)
+
+> **In plain words:** a card only counted for easy mode if your primer stated it, and your primer is brief on many core facts. So gap fills kept throwing away good cards ("what are GRADE's four levels?", "what does AMPK stand for?"). Now a sub-topic is covered when it has a "what" and a "how" card at any level; easy mode itself still deals only your primer's facts.
+
+- **The report** adds a second line, "In easy mode: k of 59 sub-topics have an easy card", so you can still see how much easy mode has.
+- **Gap fills** keep every card that passes the checks; niche cards are kept out by the writer's level rule, and I show you the new cards to cut before each PR.
+- **Writer prompt v8:** a "how" card must be an explain card, so it is counted.
+- **Evidence grades:** your primer's A-E scale has no outside source, so (your choice) we quiz the standard GRADE scale from the Cochrane Handbook, chapter 14 (an official methods handbook, tier A).
+- **Pathways:** first cards for mTOR, insulin/IGF-1 and sirtuins (sirtuins covered).
