@@ -1,0 +1,20 @@
+{
+  "id": "ghk-cu-2018",
+  "title": "Regenerative and Protective Actions of the GHK-Cu Peptide in the Light of the New Gene Data",
+  "authors": "Pickart L, Margolina A",
+  "publisher": "International Journal of Molecular Sciences",
+  "journal": "International Journal of Molecular Sciences 2018",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2018,
+  "doi": "10.3390/ijms19071987",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6073405/fullTextXML",
+  "retrieved": "2026-11-19",
+  "size": 127900,
+  "sha256": "575b616f386872de080cac02ea145aeee638787e72e1afac45c852910fd43e35",
+  "local_path": "data/raw/ghk-cu-2018.xml",
+  "topics": [
+    "peptides-each"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B, with a caveat: written by the group that developed the peptide, so cards keep to what is claimed and what kind of evidence there is (mostly animal and cell studies). Record + short quotes only."
+}

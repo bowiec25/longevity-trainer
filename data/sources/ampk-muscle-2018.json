@@ -1,0 +1,20 @@
+{
+  "id": "ampk-muscle-2018",
+  "title": "AMPK in skeletal muscle function and metabolism",
+  "authors": "Kjøbsted R, Hingst JR, Fentz J, et al.",
+  "publisher": "FASEB Journal",
+  "journal": "FASEB Journal 2018",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2018,
+  "doi": "10.1096/fj.201700442R",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5945561/fullTextXML",
+  "retrieved": "2026-11-19",
+  "size": 957089,
+  "sha256": "befd603689f4deab8cd193bbfd3e4871b77eceea13f163a37573138c434ede62",
+  "local_path": "data/raw/ampk-muscle-2018.xml",
+  "topics": [
+    "ampk"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

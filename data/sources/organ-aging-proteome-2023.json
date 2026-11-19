@@ -1,0 +1,20 @@
+{
+  "id": "organ-aging-proteome-2023",
+  "title": "Organ aging signatures in the plasma proteome track health and disease",
+  "authors": "Oh HS, Rutledge J, Nachun D, et al.",
+  "publisher": "Nature",
+  "journal": "Nature 2023",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2023,
+  "doi": "10.1038/s41586-023-06802-1",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10700136/fullTextXML",
+  "retrieved": "2026-11-19",
+  "size": 212171,
+  "sha256": "63e65d6838772cb9cca4c3c61c32f26f7cfa321a2159e950e613e4d1b0a6aaa3",
+  "local_path": "data/raw/organ-aging-proteome-2023.xml",
+  "topics": [
+    "protein-clocks"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B: a landmark study (organ ages from blood proteins), not a review. Record + short quotes only."
+}

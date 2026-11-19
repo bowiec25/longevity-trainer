@@ -1,0 +1,20 @@
+{
+  "id": "gompertz-senescence-2019",
+  "title": "Senescent cell turnover slows with age providing an explanation for the Gompertz law",
+  "authors": "Karin O, Agrawal A, Porat Z, Krizhanovsky V, Alon U",
+  "publisher": "Nature Communications",
+  "journal": "Nature Communications 2019",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2019,
+  "doi": "10.1038/s41467-019-13192-4",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6889273/fullTextXML",
+  "retrieved": "2026-11-19",
+  "size": 115999,
+  "sha256": "a33bc0fbb13fcf365f0c0271350f6183de66c00404bec34df3568f3ec2c710f9",
+  "local_path": "data/raw/gompertz-senescence-2019.xml",
+  "topics": [
+    "gompertz"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}
