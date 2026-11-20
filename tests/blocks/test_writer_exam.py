@@ -5,12 +5,16 @@ calls the wrapped `check` it receives) and a fake `check`.
 """
 
 import json
+from fractions import Fraction
 from pathlib import Path
 
 import pytest
 
 import longevity_trainer.blocks.writer_exam as block
 from longevity_trainer.blocks.card_bank import ROOT, LongevityCard
+from longevity_trainer.blocks.card_checker import (
+    PROMPT_VERSION as CHECKER_PROMPT_VERSION,
+)
 from longevity_trainer.blocks.card_checker import CardVerdict
 from longevity_trainer.blocks.card_writer import (
     PROMPT_VERSION as WRITER_PROMPT_VERSION,
@@ -112,8 +116,9 @@ class Fake:
     or a list of rule numbers (checked, the checker fails it naming them).
     """
 
-    def __init__(self, plans: dict):
+    def __init__(self, plans: dict, checker_errors: dict | None = None):
         self.plans = plans
+        self.checker_errors = checker_errors or {}  # topic -> the report's count
         self.calls: list[dict] = []
         self.checked: list[str] = []  # card ids the inner check saw
         self._rules: dict[str, list[int]] = {}
@@ -157,16 +162,16 @@ class Fake:
             dropped_repeat=count["repeat"],
             dropped_checker=count["checker"],
             dropped_ask=count["ask"],
-            checker_errors=0,
+            checker_errors=self.checker_errors.get(topic, 0),
             asks_kept=["what"] if kept else [],
             model=kwargs.get("model", "sonnet"),
         )
         return WriterResult(kept=kept, drops=drops, report=report)
 
 
-def run(plans: dict, jobs=None, primer=None, model="sonnet"):
+def run(plans: dict, jobs=None, primer=None, model="sonnet", checker_errors=None):
     """(report, printed lines, fake) for one job per topic in plans."""
-    fake = Fake(plans)
+    fake = Fake(plans, checker_errors)
     if jobs is None:
         jobs = [make_job(topic) for topic in plans]
     lines: list[str] = []
@@ -185,7 +190,8 @@ def run(plans: dict, jobs=None, primer=None, model="sonnet"):
 
 
 def test_constants():
-    assert block.MIN_KEPT_SHARE == pytest.approx(0.4)
+    assert block.MIN_KEPT_SHARE == Fraction(2, 5)
+    assert isinstance(block.MIN_KEPT_SHARE, Fraction)
     assert block.MAX_EMPTY_JOBS == 1
     assert block.JOBS_FILE == ROOT / "tests" / "data" / "writer_exam.jsonl"
 
@@ -229,6 +235,23 @@ def test_load_jobs_reads_a_good_file_skipping_blank_lines(tmp_path):
     assert jobs[0].primer_pages is None and jobs[0].asks is None
 
 
+def test_load_jobs_reads_json_arrays_for_page_ranges(tmp_path):
+    path = write_lines(
+        tmp_path, [json.dumps(job_line("a", primer_pages=[34, 35], pages=[1, 9]))]
+    )
+    (job,) = block.load_jobs(path)
+    assert list(job.primer_pages) == [34, 35]
+    assert list(job.pages) == [1, 9]
+
+
+def test_exam_job_built_in_python_accepts_lists():
+    """Strictness is about reading the file; Python lists still build a job."""
+    job = block.ExamJob(
+        id="py", topic="py", source="pearl-2025", why="w", primer_pages=[2, 3]
+    )
+    assert list(job.primer_pages) == [2, 3]
+
+
 def test_exam_job_is_frozen():
     job = make_job()
     with pytest.raises(Exception):  # noqa: B017 - pydantic's frozen error
@@ -250,9 +273,15 @@ BAD_JOB_LINES = {
     "n 21": json.dumps(job_line("x2", n=21)),
     "bad asks value": json.dumps(job_line("x2", asks=["why"])),
     "primer_pages backwards": json.dumps(job_line("x2", primer_pages=[5, 3])),
+    "pages backwards": json.dumps(job_line("x2", pages=[5, 3])),
+    "pages from 0": json.dumps(job_line("x2", pages=[0, 3])),
     "repeated id": json.dumps(job_line("x1")),
     "empty why": json.dumps(job_line("x2", why="")),
     "id with a space": json.dumps(job_line("x 2")),
+    "n as a string": json.dumps(job_line("x2", n="4")),
+    "holdout as a string": json.dumps(job_line("x2", holdout="yes")),
+    "primer_pages with a string": json.dumps(job_line("x2", primer_pages=["34", 35])),
+    "pages with a string": json.dumps(job_line("x2", pages=[1, "2"])),
 }
 
 
@@ -285,6 +314,20 @@ def test_real_jobs_file_loads_with_enough_jobs():
     for job in jobs:
         assert (ROOT / "data" / "sources" / f"{job.source}.json").is_file(), job.id
         assert job.why.strip()
+
+
+def test_only_id_topic_source_why_are_required(tmp_path):
+    line = {"id": "short", "topic": "short", "source": "pearl-2025", "why": "w"}
+    path = write_lines(tmp_path, [json.dumps(line)])
+    (job,) = block.load_jobs(path)
+    assert (job.n, job.holdout) == (4, False)
+    assert job.pages is None and job.primer_pages is None and job.asks is None
+
+
+def test_load_jobs_does_not_check_sources(tmp_path):
+    path = write_lines(tmp_path, [json.dumps(job_line("a", source="no-such-source"))])
+    (job,) = block.load_jobs(path)
+    assert job.source == "no-such-source"
 
 
 def test_load_jobs_defaults_to_jobs_file():
@@ -412,6 +455,16 @@ def test_report_records_model_and_writer_prompt_version():
     report, _, _ = run({"a": ["kept"]}, model="haiku")
     assert report.model == "haiku"
     assert report.prompt_version == WRITER_PROMPT_VERSION
+    assert report.checker_prompt_version == CHECKER_PROMPT_VERSION
+
+
+def test_checker_errors_come_from_the_writer_report_and_are_totalled():
+    report, _, _ = run(
+        {"a": ["kept"] * 4, "b": ["kept"] * 4, "c": ["kept"] * 4},
+        checker_errors={"a": 2, "c": 1},
+    )
+    assert [j.checker_errors for j in report.jobs] == [2, 0, 1]
+    assert report.checker_errors == 3
 
 
 def test_scores_and_report_are_frozen():
@@ -430,6 +483,22 @@ def test_bar_kept_share(kept, passed):
     report, _, _ = run({"a": ["kept"] * kept + ["repeat"] * (10 - kept)})
     assert (report.kept, report.drafted) == (kept, 10)
     assert report.passed is passed
+
+
+@pytest.mark.parametrize(
+    ("kept", "drafted", "passed"), [(2, 5, True), (39, 100, False), (40, 100, True)]
+)
+def test_bar_is_an_exact_two_fifths(kept, drafted, passed):
+    report, _, _ = run({"a": ["kept"] * kept + ["repeat"] * (drafted - kept)})
+    assert (report.kept, report.drafted) == (kept, drafted)
+    assert report.passed is passed
+
+
+def test_one_checker_error_fails():
+    report, _, _ = run({"a": ["kept"] * 9 + ["repeat"]}, checker_errors={"a": 1})
+    assert (report.errors, report.empty_jobs, report.dropped["quote"]) == (0, 0, 0)
+    assert report.checker_errors == 1
+    assert report.passed is False
 
 
 def test_one_empty_job_passes():
@@ -500,11 +569,68 @@ def test_write_raising_scores_an_error_and_later_jobs_run(err):
     a, b = report.jobs
     assert a.error == str(err).splitlines()[0]
     assert "\n" not in a.error
-    assert a.kept == 0
+    assert (a.drafted, a.kept) == (0, 0)
     assert (report.errors, report.empty_jobs) == (1, 1)
     assert [c["topic"] for c in fake.calls] == ["a", "b"]
     assert (b.kept, b.error) == (4, "")
     assert report.passed is False
+
+
+def test_error_skips_a_leading_newline():
+    report, _, _ = run({"a": ValueError("\nsource missing"), "b": ["kept"]})
+    assert report.jobs[0].error == "source missing"
+
+
+def test_error_with_an_empty_message_is_the_type_name():
+    report, _, _ = run({"a": ValueError(""), "b": ["kept"]})
+    assert report.jobs[0].error == "ValueError"
+    assert report.errors == 1
+
+
+class NoReport:
+    """Something write might return that has no usable report."""
+
+
+class BadReport:
+    report = "not a report"
+
+
+@pytest.mark.parametrize(
+    "returned",
+    [None, NoReport(), BadReport()],
+    ids=["none", "no-report-attr", "report-not-a-report"],
+)
+def test_write_returning_no_usable_report_is_an_error(returned):
+    fake = Fake({"b": ["kept"] * 4})
+    topics: list[str] = []
+
+    def write(topic, source, **kwargs):
+        topics.append(topic)
+        if topic == "a":
+            return returned
+        return fake.write(topic, source, **kwargs)
+
+    report = block.run_writer_exam(
+        [make_job("a"), make_job("b")],
+        write=write,
+        check=fake.check,
+        show=lambda _line: None,
+    )
+    a, b = report.jobs
+    assert a.error and "\n" not in a.error
+    assert (a.drafted, a.kept) == (0, 0)
+    assert (report.errors, report.empty_jobs) == (1, 1)
+    assert topics == ["a", "b"]
+    assert (b.kept, b.error) == (4, "")
+
+
+def test_primer_job_whose_pages_are_all_blank_is_an_error():
+    jobs = [make_job("a", primer_pages=[2, 3]), make_job("b")]
+    primer = ["one", "", "  \n ", "four"]
+    report, _, fake = run({"a": ["kept"], "b": ["kept"] * 4}, jobs=jobs, primer=primer)
+    assert report.jobs[0].error
+    assert [c["topic"] for c in fake.calls] == ["b"]
+    assert (report.errors, report.empty_jobs) == (1, 1)
 
 
 def test_primer_job_without_a_primer_is_an_error_without_calling_write():
@@ -542,6 +668,15 @@ def test_one_line_per_job_in_the_spec_format():
         ),
         "b: error: boom",
     ]
+
+
+def test_job_line_ends_with_checker_errors_only_when_some():
+    _, lines, _ = run({"a": ["kept"], "b": ["kept"]}, checker_errors={"b": 2})
+    assert "checker errors" not in lines[0]
+    assert lines[1] == (
+        "b: kept 1/1; dropped quote 0, checker 0 (niche 0), repeat 0, shape 0, "
+        "ask 0, link 0; checker errors 2"
+    )
 
 
 def test_zero_counts_are_still_printed():
@@ -634,7 +769,7 @@ def test_cli_dry_run_lists_jobs_and_calls_nothing(cli_env, monkeypatch, capsys):
         raise AssertionError("dry run called Claude")
 
     monkeypatch.setattr(cli, "ask_claude", no_claude)
-    main(["writer-exam", "--dry-run"])
+    assert main(["writer-exam", "--dry-run"]) == 0
     out = capsys.readouterr().out
     assert seen == []
     for job_id in ["m1", "m2", "m3"]:
@@ -654,8 +789,9 @@ def test_cli_prints_the_totals_and_cost_lines(cli_env, capsys):
     main(["writer-exam"])
     out = capsys.readouterr().out
     totals = (
-        f"sonnet (writer prompt v{WRITER_PROMPT_VERSION}): kept 4/10 (40%); niche 0; "
-        "empty jobs 0; quotes not found 0; errors 0 -> PASSED"
+        f"sonnet (writer prompt v{WRITER_PROMPT_VERSION}, "
+        f"checker prompt v{CHECKER_PROMPT_VERSION}): kept 4/10 (40%); niche 0; "
+        "empty jobs 0; quotes not found 0; checker errors 0; errors 0 -> PASSED"
     )
     assert totals in out
     lines = out.strip().splitlines()
@@ -718,3 +854,49 @@ def test_cli_bad_jobs_file_runs_nothing(cli_env, monkeypatch):
         code = None
     assert seen == []
     assert code != 0
+
+
+def test_cli_totals_percent_is_a_whole_number(cli_env, capsys):
+    main, _, state = cli_env
+    report, _, _ = run({"a": ["kept"] + ["repeat"] * 2})
+    state["report"] = report
+    main(["writer-exam"])
+    out = capsys.readouterr().out
+    assert "kept 1/3 (33%)" in out
+    assert "33." not in out
+
+
+def test_cli_totals_percent_is_rounded_down(cli_env, capsys):
+    """21 of 53 is 39.6%: prints 39%, never 40% (which would look like the bar)."""
+    main, _, state = cli_env
+    report, _, _ = run({"a": ["kept"] * 21 + ["repeat"] * 32})
+    state["report"] = report
+    main(["writer-exam"])
+    out = capsys.readouterr().out
+    assert "kept 21/53 (39%)" in out
+    assert "(40%)" not in out
+
+
+def test_cli_totals_show_checker_errors(cli_env, capsys):
+    main, _, state = cli_env
+    report, _, _ = run({"a": ["kept"] * 4 + ["repeat"] * 6}, checker_errors={"a": 3})
+    state["report"] = report
+    assert main(["writer-exam"]) == 1
+    out = capsys.readouterr().out
+    assert "; checker errors 3; errors 0 -> NOT PASSED" in out
+
+
+def test_cli_bad_jobs_file_prints_one_line_and_exits_1(cli_env, monkeypatch, capsys):
+    from longevity_trainer import cli
+
+    main, seen, _ = cli_env
+
+    def bad(*_a, **_k):
+        raise ValueError("writer_exam.jsonl line 3: bad")
+
+    monkeypatch.setattr(cli, "load_jobs", bad)
+    assert main(["writer-exam"]) == 1
+    assert seen == []
+    captured = capsys.readouterr()
+    printed = [ln for ln in (captured.out + captured.err).splitlines() if ln.strip()]
+    assert len(printed) == 1

@@ -3,8 +3,8 @@
 See SPEC.md in this folder (ADR 0003).
 """
 
-import json
 from collections.abc import Callable
+from fractions import Fraction
 from pathlib import Path
 
 from pydantic import (
@@ -18,6 +18,9 @@ from pydantic import (
 )
 
 from longevity_trainer.blocks.card_bank import ROOT, LongevityCard
+from longevity_trainer.blocks.card_checker import (
+    PROMPT_VERSION as CHECKER_PROMPT_VERSION,
+)
 from longevity_trainer.blocks.card_checker import CardVerdict, check_card
 from longevity_trainer.blocks.card_writer import ASKS, PROMPT_VERSION, write_cards
 from quizkit.blocks.base import BlockSpec
@@ -46,8 +49,7 @@ BLOCK_SPEC = BlockSpec(
 )
 
 JOBS_FILE = ROOT / "tests" / "data" / "writer_exam.jsonl"
-SOURCES_DIR = ROOT / "data" / "sources"
-MIN_KEPT_SHARE = 0.4  # of all drafts (user, 2026-11-20)
+MIN_KEPT_SHARE = Fraction(2, 5)  # of all drafts (user, 2026-11-20)
 MAX_EMPTY_JOBS = 1
 GATES = ("shape", "ask", "link", "quote", "repeat", "checker")
 
@@ -101,6 +103,7 @@ class JobScore(BaseModel):
     kept: int = 0
     dropped: dict[str, int] = Field(default_factory=lambda: dict.fromkeys(GATES, 0))
     niche: int = 0
+    checker_errors: int = 0
     error: str = ""
 
 
@@ -114,10 +117,12 @@ class WriterExamReport(BaseModel):
     kept: int
     dropped: dict[str, int]
     niche: int
+    checker_errors: int
     empty_jobs: int
     errors: int
     model: str = ""
     prompt_version: str = PROMPT_VERSION
+    checker_prompt_version: str = CHECKER_PROMPT_VERSION
 
     @computed_field  # in model_dump(), so a saved report keeps its verdict
     @property
@@ -125,6 +130,7 @@ class WriterExamReport(BaseModel):
         return (
             len(self.jobs) > 0
             and self.errors == 0
+            and self.checker_errors == 0
             and self.drafted > 0
             and self.kept >= self.drafted * MIN_KEPT_SHARE
             and self.empty_jobs <= MAX_EMPTY_JOBS
@@ -140,8 +146,8 @@ def load_jobs(path: Path = JOBS_FILE) -> list[ExamJob]:
         if not line.strip():
             continue
         try:
-            job = ExamJob.model_validate(json.loads(line))
-        except (json.JSONDecodeError, ValidationError) as err:
+            job = ExamJob.model_validate_json(line, strict=True)  # no type coercion
+        except ValidationError as err:
             first = str(err).splitlines()[0]
             raise ValueError(f"{Path(path).name} line {number}: {first}") from err
         if job.id in seen:
@@ -162,9 +168,10 @@ def _primer_text(job: ExamJob, primer: list[str] | None) -> str:
     first, last = job.primer_pages
     if last > len(primer):
         raise ValueError(f"the primer has {len(primer)} pages, not {last}")
-    return "\n\n".join(
-        f"[primer page {k}]\n{primer[k - 1]}" for k in range(first, last + 1)
-    )
+    chosen = range(first, last + 1)
+    if not any(primer[k - 1].strip() for k in chosen):
+        raise ValueError(f"primer pages {first}-{last} have no text")
+    return "\n\n".join(f"[primer page {k}]\n{primer[k - 1]}" for k in chosen)
 
 
 def _score_job(
@@ -197,26 +204,27 @@ def _score_job(
             taken_ids=set(),
             taken_questions=set(),
         )
+        r = result.report  # inside the try: an odd result fails only this job
+        return JobScore(
+            id=job.id,
+            holdout=job.holdout,
+            drafted=r.drafted,
+            kept=r.kept,
+            dropped={
+                "shape": r.dropped_shape,
+                "ask": r.dropped_ask,
+                "link": r.dropped_link,
+                "quote": r.dropped_quote,
+                "repeat": r.dropped_repeat,
+                "checker": r.dropped_checker,
+            },
+            niche=niche,
+            checker_errors=r.checker_errors,
+        )
     except Exception as err:  # noqa: BLE001 (one odd failure mustn't lose a paid run)
-        reason = (str(err).splitlines() or [type(err).__name__])[0]
+        lines = [line.strip() for line in str(err).splitlines() if line.strip()]
+        reason = lines[0] if lines else type(err).__name__
         return JobScore(id=job.id, holdout=job.holdout, error=reason)
-    r = result.report
-    dropped = {
-        "shape": r.dropped_shape,
-        "ask": r.dropped_ask,
-        "link": r.dropped_link,
-        "quote": r.dropped_quote,
-        "repeat": r.dropped_repeat,
-        "checker": r.dropped_checker,
-    }
-    return JobScore(
-        id=job.id,
-        holdout=job.holdout,
-        drafted=r.drafted,
-        kept=r.kept,
-        dropped=dropped,
-        niche=niche,
-    )
 
 
 def _line(score: JobScore) -> str:
@@ -227,6 +235,7 @@ def _line(score: JobScore) -> str:
         f"{score.id}: kept {score.kept}/{score.drafted}; dropped quote {d['quote']}, "
         f"checker {d['checker']} (niche {score.niche}), repeat {d['repeat']}, "
         f"shape {d['shape']}, ask {d['ask']}, link {d['link']}"
+        + (f"; checker errors {score.checker_errors}" if score.checker_errors else "")
     )
 
 
@@ -250,6 +259,7 @@ def run_writer_exam(
         kept=sum(s.kept for s in scores),
         dropped={g: sum(s.dropped[g] for s in scores) for g in GATES},
         niche=sum(s.niche for s in scores),
+        checker_errors=sum(s.checker_errors for s in scores),
         empty_jobs=sum(1 for s in scores if s.kept == 0),
         errors=sum(1 for s in scores if s.error),
         model=model,

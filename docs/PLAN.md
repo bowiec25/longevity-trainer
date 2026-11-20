@@ -64,7 +64,7 @@
   - [ ] 2. Fill chapter by chapter, in primer order (01-04 first): a trusted source per sub-topic (listed in each PR, the user can veto), then `write-cards --primer-pages` until the chapter shows covered. One PR per chapter
 - [ ] **Exams for every agent** (user, 2026-11-20, after reading Anthropic's "Writing tools for agents": give each agent an exam, read why it fails, let Claude adjust its prompt, re-run the exam to prove it; "double lines of defence")
   - [x] 1. Checker exam gains the user's niche cuts: 24 cut cards (should fail) and 8 kept (should pass), split between the main exam and the held-out set. The old checker let 7 of them through on the main exam ("the mechanism is the point"); prompt v4 names what is too niche even when the quote backs it. The bar now allows a few fringe misses (a sixth; user: "im fine with a few fringe cases"). Sonnet did no better, so Haiku stays
-  - [ ] 2. Writer exam: the writer on fixed topics; score cards kept, niche cards, cost, empty runs
+  - [x] 2. Writer exam: new block `writer_exam` + `longevity writer-exam` (8 fixed jobs, 2 held out; dry runs, saves nothing). Scores drafts kept, why the rest died (niche counted separately), empty jobs, checker outages, cost; bar: 2 in 5 kept, at most 1 empty job, no invented quotes. Baseline (writer v9, checker v4): main 13/24 kept (54%, PASSED, 4 niche), held out 2/7 (28%, NOT PASSED, 2 niche); $1.10 for both
   - [ ] 3. Writer fixes, each proven on the writer exam: why drafts failed and a clear "nothing written"; only the topic's section of a paper
   - [ ] 4. The loop written into CLAUDE.md (exam, read failures, Claude proposes, exam decides); primer check gets a small lasting exam; marker's wrong marks join its exam
 - [ ] **M5 Freshness**

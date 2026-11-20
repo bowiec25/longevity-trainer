@@ -513,11 +513,13 @@ def writer_exam(model: str, holdout: bool, limit: int | None, dry_run: bool) -> 
         primer=primer,
         model=model,
     )
-    share = f"{report.kept / report.drafted:.0%}" if report.drafted else "-"
+    share = f"{100 * report.kept // report.drafted}%" if report.drafted else "-"
     print(
-        f"\n{report.model} (writer prompt v{report.prompt_version}): "
+        f"\n{report.model} (writer prompt v{report.prompt_version}, "
+        f"checker prompt v{report.checker_prompt_version}): "
         f"kept {report.kept}/{report.drafted} ({share}); niche {report.niche}; "
         f"empty jobs {report.empty_jobs}; quotes not found {report.dropped['quote']}; "
+        f"checker errors {report.checker_errors}; "
         f"errors {report.errors} -> {'PASSED' if report.passed else 'NOT PASSED'}"
     )
     print(_cost_line(replies))
