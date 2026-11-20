@@ -507,3 +507,17 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **What's not:** textbook molecular steps, lab or scanner methods, regulatory details. Naming what something acts on (rapamycin acts on mTOR) still counts: you marked that question good earlier.
 - **Fewer, better:** the number of cards asked for is now a ceiling, not a target.
 - **Checked:** the card checker's labelled exam was re-run with the new standard.
+
+## An exam for each agent, starting with the checker (2026-11-20)
+
+> **In plain words:** like a teacher marking with an answer key. Your cut cards should fail and your kept cards should pass; we give the checker those cards and count how often it agrees. When it gets one wrong, its one-line reason shows why, we fix its instructions, and it sits the exam again, plus cards it has never seen.
+
+- **Why:** Anthropic's "Writing tools for agents" says to test agents on tasks with known answers, read why they fail, and let Claude improve them. Our checker had an exam, but not for "too niche", so 70 niche cards had got past it.
+- **What the exam found:** the old checker missed 7 of your niche cuts. Its reasons said "the mechanism is the point of the card", so it passed textbook detail (CD38, BCL2, the GH receptor in the liver).
+- **The fix (prompt v4):** its trivia guidance now names what is too niche even when the quote backs it (molecular steps, lab methods, one dish experiment, definitions, acronyms), while "rapamycin acts on mTOR" stays fine.
+- **The bar:** a few fringe misses are fine (at most a sixth of the bad cards; you: "im fine with a few fringe cases").
+- **Kept honest:** the held-out cards are never used to tune. 3 cards moved out of the held-out set because v4's wording had been written after seeing them, and 3 unseen cuts replaced them. 2 unfair cases were dropped: they matched their quotes and were wrong only against other papers, which the checker never sees.
+- **Score, before vs after (Haiku):** your niche cards caught on the main exam 26 of 33 → 30 and 31 of 35; on the never-seen cards 10 of 14 → 11 and 12 of 13. Good cards wrongly rejected: 3-4 of 18 and 2 of 8, within the bar. Both runs pass both sets.
+- **Model:** Sonnet did no better (2 misses, 6 good cards rejected), so the cheaper Haiku stays.
+- **A real catch:** the checker spotted that the GLP-1 card said "once-weekly", which its quote never says; fixed.
+

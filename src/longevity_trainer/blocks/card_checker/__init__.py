@@ -6,6 +6,7 @@ See SPEC.md in this folder (ADR 0003).
 import json
 import time
 from collections.abc import Callable
+from fractions import Fraction
 from pathlib import Path
 from typing import Literal
 
@@ -38,19 +39,22 @@ BLOCK_SPEC = BlockSpec(
         "run_exam",
         "ExamReport",
         "MAX_FALSE_FLAG_SHARE",
+        "MAX_MISS_SHARE",
         "MAX_RULES_NAMED",
     ],
 )
 
-PROMPT_VERSION = "3"
+PROMPT_VERSION = "4"
 LEARNING_GOALS = ROOT / "docs" / "LEARNING_GOALS.md"
 EXAM_FILE = ROOT / "tests" / "data" / "card_eval.jsonl"
 HOLDOUT_FILE = ROOT / "tests" / "data" / "card_eval_holdout.jsonl"  # never tuned on
 CHECKED_RULES = (2, 3, 4, 5, 6)  # rule 1 is per topic, rule 7 is for trend cards
 # A wrongly rejected good card costs one redraft; a bad card let through teaches a
-# mistake. So the bar allows a few false flags but no bad card through (user, 2026-11-12).
+# mistake. So the bar allows a few false flags but no bad card through (user, 2026-11-12),
+# later a few fringe misses too (user, 2026-11-20: "im fine with a few fringe cases").
 # Revisit when tuning (docs/FUTURE.md): 1/3 matches what Haiku does today.
 MAX_FALSE_FLAG_SHARE = 1 / 3  # of the good cards
+MAX_MISS_SHARE = Fraction(1, 6)  # of the bad cards; exact, so 2 of 12 sits on the bar
 MAX_RULES_NAMED = (
     3  # a verdict naming more rules than this is a shotgun, not a diagnosis
 )
@@ -101,7 +105,17 @@ answer must say in whom (mice, healthy people, patients). A card about how a dru
 works in cells, or what it is used for, needs no population.
 - Rule 4: what a trial tested, what it found, what it meant for the field, and its \
 main limitation are worth knowing. Trivia is the detail: sample sizes, p-values, \
-registry numbers, exact dates, subgroup statistics nobody would quote.
+registry numbers, exact dates, subgroup statistics nobody would quote. Beyond \
+trials, ask whether someone who follows the longevity field (drugs, trials, tests, \
+supplements, lifestyle) would need this fact. Worth knowing: what a thing is and \
+what it is for, its main target and what changes in the body in plain words \
+(rapamycin acts on mTOR, metformin is linked to AMPK), whether it works in humans, \
+how strong the evidence is, its risks, how to read a test. Too niche, even when the \
+quote backs it and the mechanism is the topic: the molecular steps between a thing \
+and its main target or effect (the enzyme in the chain, the receptor on which cell \
+type, the protein family involved), lab or sensor methods, one experiment in a dish or in \
+mice that only a specialist would cite, an official body's definition wording, \
+spelling out an acronym, and answers so obvious or vague that they teach nothing.
 - Rule 6: a card may name a well-known trial or term (PEARL, mTOR) as long as the \
 question makes sense to someone who hasn't read this particular paper; "the trial", \
 "this group", "the authors" or "Figure 2" do not.
@@ -243,8 +257,8 @@ class ExamReport(BaseModel):
         return (
             self.total > 0
             and self.errors == 0
-            and self.caught == self.bad_cards
-            and self.right_rule >= self.bad_cards - 2
+            and self.bad_cards - self.caught <= self.bad_cards * MAX_MISS_SHARE
+            and self.right_rule >= self.caught - 2
             and self.false_flags <= (self.total - self.bad_cards) * MAX_FALSE_FLAG_SHARE
         )
 
