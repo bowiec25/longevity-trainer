@@ -1,0 +1,20 @@
+{
+  "id": "info-theory-ageing-2023",
+  "title": "Loss of epigenetic information as a cause of mammalian aging (perspective)",
+  "authors": "Schaffer ED, Beerman I, de Cabo R, et al.",
+  "publisher": "Frontiers in Aging",
+  "journal": "Frontiers in Aging 2023",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2023,
+  "doi": "10.3389/fragi.2023.1199596",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10354253/fullTextXML",
+  "topics": [
+    "damage-vs-information"
+  ],
+  "licence_note": "CC BY 4.0. A short perspective, not a broad review (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 33813,
+  "sha256": "3bf6d652253850e5b4ee76053be674d1e7ae6621486fa1ea57ca0ea9acfb5577",
+  "local_path": "data/raw/info-theory-ageing-2023.xml"
+}

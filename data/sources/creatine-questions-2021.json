@@ -1,0 +1,20 @@
+{
+  "id": "creatine-questions-2021",
+  "title": "Common questions and misconceptions about creatine supplementation: what does the scientific evidence really show?",
+  "authors": "Antonio J, Candow DG, Forbes SC, et al.",
+  "publisher": "Journal of the International Society of Sports Nutrition",
+  "journal": "Journal of the International Society of Sports Nutrition 2021",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2021,
+  "doi": "10.1186/s12970-021-00412-w",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7871530/fullTextXML",
+  "topics": [
+    "creatine"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 275353,
+  "sha256": "080ebc19a15fc127a2c47ac14aa3ef29146d477c4841bd001164d43ef021728c",
+  "local_path": "data/raw/creatine-questions-2021.xml"
+}

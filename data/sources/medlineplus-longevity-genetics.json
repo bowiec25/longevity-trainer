@@ -1,0 +1,17 @@
+{
+  "id": "medlineplus-longevity-genetics",
+  "title": "Is longevity determined by genetics?",
+  "publisher": "National Library of Medicine (NIH), MedlinePlus Genetics",
+  "tier": "A",
+  "format": "html",
+  "year": 2026,
+  "url": "https://medlineplus.gov/genetics/understanding/traits/longevity/",
+  "topics": [
+    "genetics"
+  ],
+  "licence_note": "US government work (public domain). Not committed: record + short quotes only. A live page, so it may change: M5 re-checks it.",
+  "retrieved": "2026-11-20",
+  "size": 31850,
+  "sha256": "172e58a88efb6720b387aa0f47d73793c47fc1ed7072d8150d3b0655155f4d69",
+  "local_path": "data/raw/medlineplus-longevity-genetics.html"
+}

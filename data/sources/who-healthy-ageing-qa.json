@@ -1,0 +1,17 @@
+{
+  "id": "who-healthy-ageing-qa",
+  "title": "Healthy ageing and functional ability (Q&A)",
+  "publisher": "World Health Organization",
+  "tier": "A",
+  "format": "html",
+  "year": 2026,
+  "url": "https://www.who.int/news-room/questions-and-answers/item/healthy-ageing-and-functional-ability",
+  "topics": [
+    "intrinsic-capacity"
+  ],
+  "licence_note": "(c) World Health Organization (website terms). Not committed: record + short quotes only. A live page, so it may change: M5 re-checks it.",
+  "retrieved": "2026-11-20",
+  "size": 142521,
+  "sha256": "48cc7f8eeaf1d1519354e2a21c22a19771d4f5d95ff582f8ce1093d94938923e",
+  "local_path": "data/raw/who-healthy-ageing-qa.html"
+}
