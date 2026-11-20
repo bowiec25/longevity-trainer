@@ -142,7 +142,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>81</b><span>quiz cards (hallmarks, rapamycin, metformin, NAD+, senolytics, clocks, exercise), every quote checked</span></div>
-    <div class="tile"><b>1880</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>1883</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>8</b><span>decision records (ADRs)</span></div>
@@ -262,7 +262,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 1880 tests guard</h2>
+    <h2>4. What the 1883 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
@@ -276,7 +276,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">blocks/test_topic_map.py</td><td class="n">166</td><td class="bar"><span style="width:17%"></span></td><td>longevity block, tests written <b>before</b> the code: the topic map loads and rejects bad lines; each card finds its shelf (by topic id or alias); every card in the real bank has a shelf; each hallmark's easy what / how cards counted, and every hallmark card names one of the 12; the whole-syllabus report, chapter by chapter, and every real sub-topic has a chapter; priority tiers and the to-fill list, core first</td></tr>
         <tr><td class="mono">blocks/test_quiz_round.py</td><td class="n">138</td><td class="bar"><span style="width:17%"></span></td><td>longevity block, by the test-writer: one brain for the terminal and the web page: what's said after each answer, setting up a round (nothing due, unknown topic, bad progress file, easy cards only), and the click-by-click quiz (double or late clicks ignored, each answer saved once, never on stop)</td></tr>
         <tr><td class="mono">blocks/test_study.py + test_cli_progress.py</td><td class="n">70</td><td class="bar"><span style="width:12%"></span></td><td>longevity block, by the test-writer: due cards first, then new, never early reviews; a missed card comes back first; boxes move right; a busy file warns once and keeps trying; stats per topic group; tests never touch your real progress file</td></tr>
-        <tr><td class="mono">blocks/test_card_writer.py</td><td class="n">251</td><td class="bar"><span style="width:30%"></span></td><td>longevity block, tests written <b>before</b> the code: the writer's prompt carries your whole standard; each gate (shape, quote in the source, a connect card links to a real other topic, repeats, checker) drops the right drafts; ids never clash with the bank; the bar; the write-cards command (dry run, --add / --replace, --pages, a broken bank stops it, coverage and cost lines)</td></tr>
+        <tr><td class="mono">blocks/test_card_writer.py</td><td class="n">254</td><td class="bar"><span style="width:30%"></span></td><td>longevity block, tests written <b>before</b> the code: the writer's prompt carries your whole standard; each gate (shape, quote in the source, a connect card links to a real other topic, repeats, checker) drops the right drafts; ids never clash with the bank; the bar; the write-cards command (dry run, --add / --replace, --pages, a broken bank stops it, coverage and cost lines)</td></tr>
         <tr><td class="mono">blocks/test_card_checker.py</td><td class="n">74</td><td class="bar"><span style="width:14%"></span></td><td>longevity block, by the test-writer: the checker's prompt carries your rules word for word; bad replies rejected; exam scoring and the bar; the exam command (dry run, limit, held-out)</td></tr>
         <tr><td class="mono">blocks/test_marking.py</td><td class="n">51</td><td class="bar"><span style="width:10%"></span></td><td>longevity block, by the test-writer: names vs explanations get the right marking rules, length limits, cache, "asking Claude" only on real calls, offline switch-off after 2 failures</td></tr>
         <tr><td class="mono">blocks/test_receipts.py</td><td class="n">114</td><td class="bar"><span style="width:22%"></span></td><td>quizkit block, tests by the test-writer: quote keys (IL-1α ≠ IL-1β, 1.5 ≠ 15), pinned sources, safe paths, every bad source → one line, never a crash</td></tr>
@@ -288,7 +288,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">1880</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">1883</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -328,6 +328,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
+    <li><span class="when">2026-11-20</span><span class="what">Cards must be useful to know in the longevity world</span><span>You kept cutting drafts as "way too niche". Now the writer's first rule (and your question standard, which the checker reads) is: would someone who follows the longevity field find this useful? Prefer what it is, does it work in humans, risks, how to judge a claim; not molecular steps, lab methods or label changes. Core is 28 of 28. <a href="snapshots/useful-to-know.html">snapshot</a></span></li>
     <li><span class="when">2026-11-20</span><span class="what">A "What's in each topic" page</span><span>Next to Quiz and Stats: click a quiz topic (e.g. How we age) to see a one-line summary and the sub-topics in it. Content, not completion counts (you rejected a first version with counts). Core is now 26 of 28. <a href="snapshots/topics-page.html">snapshot</a></span></li>
     <li><span class="when">2026-11-19</span><span class="what">Covered = learnable; pathways and GRADE</span><span>The easy-only filter threw away core cards whenever your primer is brief (e.g. GRADE's four levels, what AMPK stands for). Now a sub-topic is covered by a "what" and a "how" card at any level, and the report adds "In easy mode: k of 59". Easy mode itself is unchanged. Evidence grades now quiz GRADE, from the Cochrane Handbook. <a href="snapshots/covered-learnable.html">snapshot</a></span></li>
     <li><span class="when">2026-11-19</span><span class="what">A "how" card counts at any level; hallmarks 10 of 12</span><span>Your primer gives each hallmark one line, so an easy "how" was rarely possible. Now a sub-topic is covered by an easy "what" (your primer's fact, in easy mode) plus a "how" card at any level (hard mode). A how gap fill keeps hard how cards. Hallmarks: 10 of 12 covered; mitochondria and cell communication still need an easy "what". <a href="snapshots/how-any-level.html">snapshot</a></span></li>

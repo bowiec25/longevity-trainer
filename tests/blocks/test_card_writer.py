@@ -881,9 +881,9 @@ def test_cli_prints_a_line_per_draft_and_the_report(cli, results, capsys):
 # ---- Added after the SPEC review (PROMPT_VERSION 3, page markers, CLI bank) -------
 
 
-def test_prompt_version_is_8():
-    """v8: how cards are explain cards (SPEC 2026-11-19)."""
-    assert block.PROMPT_VERSION == "8"
+def test_prompt_version_is_9():
+    """v9: useful in the longevity world (SPEC 2026-11-20)."""
+    assert block.PROMPT_VERSION == "9"
 
 
 def test_checker_rejected_question_does_not_block_a_later_same_question(env):
@@ -2444,6 +2444,43 @@ def test_only_connect_with_no_topic_to_link_raises_before_claude(env, topics):
 def test_system_prompt_level_is_a_well_read_non_specialist(env):
     _, calls = env()
     assert "well-read non-specialist" in calls[0]["system"].lower()
+
+
+# -- v9: useful in the longevity world -------------------------------------------
+
+
+def _card_rules(system: str) -> str:
+    """The system prompt with the word-for-word learning goals cut out (lowercased),
+    so phrases the goals also use ("No trivia") are found in the card rules."""
+    goals = (ROOT / "docs" / "LEARNING_GOALS.md").read_text(encoding="utf-8")
+    assert goals.strip() in system, "learning goals not in the system prompt"
+    return system.replace(goals.strip(), "").lower()
+
+
+def test_system_prompt_has_useful_in_the_longevity_world_rule(env):
+    _, calls = env()
+    rules = _card_rules(calls[0]["system"])
+    assert "useful to know" in rules
+    assert "longevity" in rules
+
+
+def test_useful_rule_comes_before_the_other_card_rules(env):
+    """The useful-in-the-longevity-world test is the first card rule."""
+    _, calls = env()
+    rules = _card_rules(calls[0]["system"])
+    useful = rules.find("useful to know")
+    assert useful != -1
+    for later in ("no trivia", "well-read non-specialist"):
+        assert later in rules, f"{later!r} missing from the card rules"
+        assert useful < rules.find(later), f"useful rule is not before {later!r}"
+
+
+def test_useful_rule_names_the_three_cut_examples(env):
+    _, calls = env()
+    rules = _card_rules(calls[0]["system"])
+    assert "dxa" in rules
+    assert "vitamin d" in rules
+    assert "fda" in rules
 
 
 # -- CLI gap fill --------------------------------------------------------------------

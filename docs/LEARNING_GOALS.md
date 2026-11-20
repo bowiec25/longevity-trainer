@@ -19,7 +19,7 @@ For every drug, supplement, intervention or mechanism, I should be able to answe
 | 5 | **Is it growing in popularity?** | The trend (rising, flat, falling) and what's driving it. A **dated** fact: the card carries an "as of" date and is re-checked by the M5 freshness job |
 | 6 | **What does it connect to?** | Its link to another topic: what it acts on, which hallmark or pathway it belongs to, what measures it, which trial tested it. An expert sees the field as a map, not a list (user, 2026-11-13) |
 
-Not every topic needs all six (a hallmark has no "side effects" or trend), but questions 2 and 3 matter most: **mechanism and conviction**. Names come first, as vocabulary.
+Not every topic needs all six (a hallmark has no "side effects" or trend), but questions 2 and 3 matter most: **mechanism and conviction**. Mechanism means what it acts on and what changes, in plain words (rapamycin acts on mTOR), not the molecular steps (user, 2026-11-20). Names come first, as vocabulary.
 
 ### Worked example: rapamycin
 | # | What I should know |
@@ -41,7 +41,7 @@ A good question:
 1. **Names are welcome, but never alone.** "Which hallmark is the shortening of chromosome ends?" is good vocabulary (user, 2026-11-12). Each topic must *also* have how/why questions; a topic tested only by names is incomplete.
 2. **Always covers conviction for interventions.** Every drug or supplement gets at least one "how sure are we?" question, and the answer names the species or population (mice ≠ healthy people ≠ high-risk patients).
 3. **Has one clear right answer that a trusted source states**, and is still true in about 2 years (ADR 0005).
-4. **Is worth knowing in a conversation about the field.** No trivia: no dates of celebrity decisions, no "which month", no exact figures nobody would quote. **For a trial, know that it exists, what it tested and what it meant for the field**, not its details (sample size, p-values, registry numbers) (user, 2026-11-12).
+4. **Is worth knowing in a conversation about the field.** No trivia: no dates of celebrity decisions, no "which month", no exact figures nobody would quote. **For a trial, know that it exists, what it tested and what it meant for the field**, not its details (sample size, p-values, registry numbers) (user, 2026-11-12). **Useful to know in the longevity world** (user, 2026-11-20: "it needs to be useful to know in longevity space"): what a thing is and what it's for, whether it works in humans and how strong the evidence is, its risks, how to judge a claim. Not textbook mechanisms (molecules, enzymes, receptors) unless the mechanism is the point, not lab or scanner methods, not regulatory or labelling details.
 5. **Doesn't oversell.** It never uses grade-A language for grade-C/D evidence ("reverses ageing").
 6. **Stands alone.** It makes sense without having read the source.
 

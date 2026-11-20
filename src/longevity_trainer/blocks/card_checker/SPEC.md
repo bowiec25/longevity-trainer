@@ -38,7 +38,7 @@ From the command line: `uv run longevity check-cards-exam --model haiku` (exit c
 | `RULES_TEXT` | `str` | Section 2 of `docs/LEARNING_GOALS.md` ("What makes a question good"): from the line starting `## 2.` (included) up to the next `## ` heading, read from `ROOT / "docs"` at import, word for word. It is in every prompt, so changing the standard changes the checker (no copy to drift) |
 | `MAX_FALSE_FLAG_SHARE` | `float` | Most of the good cards the checker may wrongly fail and still pass: 1/3 |
 | `MAX_RULES_NAMED` | `int` | A verdict naming more rules than this (3) never counts as the right rule |
-| `PROMPT_VERSION` | `str` | Bumped when the prompt wording changes; printed in the exam report |
+| `PROMPT_VERSION` | `str` | Bumped when the prompt wording changes, including the quoted section 2 of `docs/LEARNING_GOALS.md` (v3, 2026-11-20: rule 4 gained "useful to know in the longevity world"); printed in the exam report |
 | `ExamCase` | pydantic model | One exam line: `id`, `expected` (`"pass"`/`"fail"`), `rules` (accepted rule numbers for a fail; empty for a pass), `why`, `origin`, `card` |
 | `load_exam` | `list[ExamCase]` | The exam lines, validated (a bad line names its line number) |
 | `run_exam` | `ExamReport` | Checks every case once and prints one line per case: `✓`/`✗`, the id, expected vs got, and the reason for every miss |
