@@ -1,0 +1,20 @@
+{
+  "id": "drug-repurposing-ageing-2022",
+  "title": "Geroscience-guided repurposing of FDA-approved drugs to target aging: A proposed process and prioritization",
+  "authors": "Kulkarni AS, Aleksic S, Berger DM, et al.",
+  "publisher": "Aging Cell",
+  "journal": "Aging Cell 2022",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2022,
+  "doi": "10.1111/acel.13596",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC9009114/fullTextXML",
+  "topics": [
+    "off-label-newer"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 431170,
+  "sha256": "23dcff4d454f39d881ad2fe0e8ecee2f5381fd9b99f2ddc36f451a5455dd48b5",
+  "local_path": "data/raw/drug-repurposing-ageing-2022.xml"
+}

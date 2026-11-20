@@ -1,0 +1,20 @@
+{
+  "id": "testosterone-traverse-2026",
+  "title": "Cardiovascular safety of testosterone therapy: insights from TRAVERSE and beyond",
+  "authors": "Zitzmann M, Rastrelli G, Murray RD, et al.",
+  "publisher": "Andrology",
+  "journal": "Andrology 2026",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2026,
+  "doi": "10.1111/andr.70062",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12670475/fullTextXML",
+  "topics": [
+    "trt"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 104906,
+  "sha256": "a1544ed5072b2fef90f2daa65cb1d0c08587de0057e61ceb40b13fbe19383513",
+  "local_path": "data/raw/testosterone-traverse-2026.xml"
+}

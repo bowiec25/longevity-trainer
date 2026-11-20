@@ -1,0 +1,20 @@
+{
+  "id": "vitamin-d-consensus-2024",
+  "title": "Consensus Statement on Vitamin D Status Assessment and Supplementation",
+  "authors": "Giustina A, Bilezikian JP, Adler RA, et al.",
+  "publisher": "Endocrine Reviews",
+  "journal": "Endocrine Reviews 2024",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2024,
+  "doi": "10.1210/endrev/bnae009",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11405507/fullTextXML",
+  "topics": [
+    "vitamin-d"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 431131,
+  "sha256": "359dfc8c21ea4fbdb629cb2557f3e1ac0bf6d42f31108b30a9ed3447169452f2",
+  "local_path": "data/raw/vitamin-d-consensus-2024.xml"
+}

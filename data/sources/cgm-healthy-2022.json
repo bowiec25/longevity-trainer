@@ -1,0 +1,20 @@
+{
+  "id": "cgm-healthy-2022",
+  "title": "Continuous Glucose Monitoring in Healthy Adults: applications in health care, wellness and sports",
+  "authors": "Holzer R, Bloch W, Brinkmann C",
+  "publisher": "Sensors",
+  "journal": "Sensors 2022",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2022,
+  "doi": "10.3390/s22052030",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8915088/fullTextXML",
+  "topics": [
+    "cgm"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 140005,
+  "sha256": "86f998e083e47fc6f7627370d16dc756ae88bbc07d7557fcbb786e4578fd90db",
+  "local_path": "data/raw/cgm-healthy-2022.xml"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "omega3-vitd-k2-2026",
+  "title": "Beyond Bone Health: the Heart-Brain-Bone axis (omega-3, D3, K2)",
+  "authors": "Fang SC, Huang MK, Shen HE, et al.",
+  "publisher": "Nutrients",
+  "journal": "Nutrients 2026",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2026,
+  "doi": "10.3390/nu18162711",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13516505/fullTextXML",
+  "topics": [
+    "omega3"
+  ],
+  "licence_note": "CC BY 4.0. Very new review (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 280565,
+  "sha256": "1338244c9834b6efb73eaa1c6371dad2e281cbe44a1a081878e67eb6c0533584",
+  "local_path": "data/raw/omega3-vitd-k2-2026.xml"
+}

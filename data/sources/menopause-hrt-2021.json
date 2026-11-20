@@ -1,0 +1,20 @@
+{
+  "id": "menopause-hrt-2021",
+  "title": "Risks, Benefits, and Treatment Modalities of Menopausal Hormone Therapy: Current Concepts",
+  "authors": "Mehta J, Kling JM, Manson JE",
+  "publisher": "Frontiers in Endocrinology",
+  "journal": "Frontiers in Endocrinology 2021",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2021,
+  "doi": "10.3389/fendo.2021.564781",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8034540/fullTextXML",
+  "topics": [
+    "hrt"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 204486,
+  "sha256": "41213d38c449090a9c22a0aaa5fdb5f6239c095918ef957f1aa104d67cb1a04c",
+  "local_path": "data/raw/menopause-hrt-2021.xml"
+}

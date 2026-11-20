@@ -1,0 +1,20 @@
+{
+  "id": "dxa-beyond-bmd-2024",
+  "title": "DXA beyond bone mineral density and the REMS technique",
+  "authors": "Messina C, Fusco S, Gazzotti S, et al.",
+  "publisher": "La Radiologia Medica",
+  "journal": "La Radiologia Medica 2024",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2024,
+  "doi": "10.1007/s11547-024-01843-6",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11322484/fullTextXML",
+  "topics": [
+    "dexa"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 146673,
+  "sha256": "e1221879ed6a7cf2bdb81aa61c385bea644d3a75226532a3b1d4b13e9d1f41df",
+  "local_path": "data/raw/dxa-beyond-bmd-2024.xml"
+}

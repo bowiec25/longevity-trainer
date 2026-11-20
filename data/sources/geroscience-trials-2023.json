@@ -1,0 +1,20 @@
+{
+  "id": "geroscience-trials-2023",
+  "title": "Challenges in developing Geroscience trials",
+  "authors": "Moqri M, Herzog C, Poganik JR, et al.",
+  "publisher": "Nature Communications",
+  "journal": "Nature Communications 2023",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2023,
+  "doi": "10.1038/s41467-023-40393-9",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10439920/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 172511,
+  "sha256": "912d12940e7e5d3f8d12f4e32188b0d891784c73a14c0f973f3e4127fa66b26d",
+  "local_path": "data/raw/geroscience-trials-2023.xml",
+  "topics": [
+    "geroscience"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

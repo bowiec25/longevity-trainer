@@ -1,0 +1,20 @@
+{
+  "id": "cac-ccta-2024",
+  "title": "Use of coronary artery calcium score and coronary CT angiography to guide cardiovascular prevention and treatment",
+  "authors": "Lima MR, Lopes PM, Ferreira AM",
+  "publisher": "Therapeutic Advances in Cardiovascular Disease",
+  "journal": "Therapeutic Advances in Cardiovascular Disease 2024",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2024,
+  "doi": "10.1177/17539447241249650",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11075618/fullTextXML",
+  "topics": [
+    "heart-scans"
+  ],
+  "licence_note": "CC BY-NC 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 147894,
+  "sha256": "735f61c249f422891222d31b69671bceaa1eb8b58b24fc374b5f81b6ec685559",
+  "local_path": "data/raw/cac-ccta-2024.xml"
+}
