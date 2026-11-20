@@ -1,0 +1,17 @@
+{
+  "id": "nci-screening-overview",
+  "title": "Cancer Screening Overview (PDQ), patient version",
+  "publisher": "National Cancer Institute (NIH)",
+  "tier": "A",
+  "format": "html",
+  "year": 2026,
+  "url": "https://www.cancer.gov/about-cancer/screening/patient-screening-overview-pdq",
+  "topics": [
+    "more-markers"
+  ],
+  "licence_note": "US government work (public domain). Not committed: record + short quotes only. A live page, so it may change: M5 re-checks it.",
+  "retrieved": "2026-11-20",
+  "size": 101978,
+  "sha256": "225bc098f45e3c5131fc23a5571f16dfd6ac4dd008b1b12d42a5a7ef6ca699b2",
+  "local_path": "data/raw/nci-screening-overview.html"
+}
