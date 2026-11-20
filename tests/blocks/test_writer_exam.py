@@ -661,7 +661,8 @@ def test_one_line_per_job_in_the_spec_format():
         "b": ValueError("boom\nsecond line"),
     }
     _, lines, _ = run(plans)
-    assert lines == [
+    job_lines = [ln for ln in lines if not ln.startswith("  ✗ ")]
+    assert job_lines == [
         (
             "a: kept 2/9; dropped quote 1, checker 2 (niche 1), repeat 1, shape 1, "
             "ask 1, link 1"
@@ -900,3 +901,152 @@ def test_cli_bad_jobs_file_prints_one_line_and_exits_1(cli_env, monkeypatch, cap
     captured = capsys.readouterr()
     printed = [ln for ln in (captured.out + captured.err).splitlines() if ln.strip()]
     assert len(printed) == 1
+
+
+# -- Drops: why each dropped draft died (SPEC 2026-11-20) ---------------------------
+
+
+def drops_writer(drops_by_topic: dict, kept_by_topic: dict | None = None):
+    """A fake write returning the given Drops (and kept cards) per topic."""
+    kept_by_topic = kept_by_topic or {}
+
+    def write(topic, source, **kwargs):
+        drops = drops_by_topic.get(topic, [])
+        if isinstance(drops, BaseException):
+            raise drops
+        kept = [
+            make_card(f"{topic}-what-{i + 1}", f"Kept question {i} on {topic}?")
+            for i in range(kept_by_topic.get(topic, 0))
+        ]
+        count = {g: sum(d.gate == g for d in drops) for g in GATES}
+        report = WriterReport(
+            drafted=len(kept) + len(drops),
+            kept=len(kept),
+            dropped_shape=count["shape"],
+            dropped_link=count["link"],
+            dropped_quote=count["quote"],
+            dropped_repeat=count["repeat"],
+            dropped_checker=count["checker"],
+            dropped_ask=count["ask"],
+            checker_errors=0,
+            asks_kept=["what"] if kept else [],
+            model=kwargs.get("model", "sonnet"),
+        )
+        return WriterResult(kept=kept, drops=drops, report=report)
+
+    return write
+
+
+def run_drops(drops_by_topic: dict, kept_by_topic: dict | None = None):
+    lines: list[str] = []
+    jobs = [make_job(t) for t in drops_by_topic]
+    report = block.run_writer_exam(
+        jobs,
+        write=drops_writer(drops_by_topic, kept_by_topic),
+        check=Fake({}).check,
+        show=lines.append,
+    )
+    return report, lines
+
+
+def test_job_score_drops_lists_each_dropped_draft_in_order():
+    drops = [
+        Drop(question="Q one?", gate="quote", reason="quote not found"),
+        Drop(question="Q two?", gate="checker", reason="breaks rule 4"),
+        Drop(question="Q three?", gate="repeat", reason="same as Q one"),
+    ]
+    report, _ = run_drops({"a": drops}, {"a": 2})
+    assert list(report.jobs[0].drops) == drops
+
+
+def test_job_with_no_drops_has_empty_drops():
+    report, _ = run_drops({"a": []}, {"a": 3})
+    assert list(report.jobs[0].drops) == []
+
+
+def test_error_job_has_no_drops():
+    report, _ = run_drops({"a": ValueError("boom"), "b": []}, {"b": 1})
+    assert report.jobs[0].error == "boom"
+    assert list(report.jobs[0].drops) == []
+
+
+def test_primer_error_job_has_no_drops():
+    report, _, _ = run({"a": ["kept"]}, jobs=[make_job("a", primer_pages=[1, 2])])
+    assert report.jobs[0].error
+    assert list(report.jobs[0].drops) == []
+
+
+def test_drops_are_in_model_dump():
+    drops = [Drop(question="Q?", gate="shape", reason="bad shape")]
+    report, _ = run_drops({"a": drops}, {"a": 1})
+    assert report.model_dump()["jobs"][0]["drops"] == [
+        {"gate": "shape", "question": "Q?", "reason": "bad shape"}
+    ]
+
+
+def test_reason_with_brackets_prints_whole_on_its_drop_line():
+    reason = "rules [3]: the quote (2020) says x"
+    drops = [Drop(question="Q?", gate="checker", reason=reason)]
+    _, lines = run_drops({"a": drops}, {"a": 1})
+    assert lines[1] == f"  ✗ checker: Q? ({reason})"
+
+
+def test_line_breaks_in_a_drop_become_spaces_so_it_prints_on_one_line():
+    drops = [
+        Drop(
+            question="Why does\nrapamycin work?",
+            gate="checker",
+            reason="breaks rule 4:\nthe answer\nis niche",
+        )
+    ]
+    _, lines = run_drops({"a": drops}, {"a": 1})
+    assert all("\n" not in ln for ln in lines)
+    assert lines[1] == (
+        "  ✗ checker: Why does rapamycin work? (breaks rule 4: the answer is niche)"
+    )
+
+
+def test_job_line_is_followed_by_one_indented_line_per_drop():
+    drops = [
+        Drop(question="Q one?", gate="quote", reason="quote not found"),
+        Drop(question="Q two?", gate="checker", reason="breaks rule 4"),
+    ]
+    _, lines = run_drops({"a": drops, "b": ValueError("boom")}, {"a": 1})
+    assert lines == [
+        (
+            "a: kept 1/3; dropped quote 1, checker 1 (niche 0), repeat 0, shape 0, "
+            "ask 0, link 0"
+        ),
+        "  ✗ quote: Q one? (quote not found)",
+        "  ✗ checker: Q two? (breaks rule 4)",
+        "b: error: boom",
+    ]
+
+
+def test_drop_lines_come_right_after_their_own_job():
+    a_drops = [Drop(question="A?", gate="shape", reason="r1")]
+    b_drops = [Drop(question="B?", gate="link", reason="r2")]
+    _, lines = run_drops({"a": a_drops, "b": b_drops}, {"a": 1, "b": 1})
+    assert [ln.split(":")[0] for ln in lines] == ["a", "  ✗ shape", "b", "  ✗ link"]
+
+
+def test_drop_line_cuts_question_to_100_and_reason_to_200():
+    question = "Q" * 150
+    reason = "R" * 300
+    _, lines = run_drops({"a": [Drop(question=question, gate="ask", reason=reason)]})
+    line = lines[1]
+    assert line.startswith("  ✗ ask: ")
+    shown_q = line[len("  ✗ ask: ") :].split(" (", 1)[0]
+    shown_r = line.split(" (", 1)[1].removesuffix(")")
+    assert len(shown_q) == 100 and shown_q.endswith("…")
+    assert shown_q[:-1] == "Q" * 99
+    assert len(shown_r) == 200 and shown_r.endswith("…")
+    assert shown_r[:-1] == "R" * 199
+
+
+def test_drop_line_at_the_limits_is_not_cut():
+    question = "Q" * 100
+    reason = "R" * 200
+    _, lines = run_drops({"a": [Drop(question=question, gate="repeat", reason=reason)]})
+    assert lines[1] == f"  ✗ repeat: {question} ({reason})"
+    assert "…" not in lines[1]

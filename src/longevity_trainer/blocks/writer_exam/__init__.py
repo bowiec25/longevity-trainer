@@ -22,7 +22,7 @@ from longevity_trainer.blocks.card_checker import (
     PROMPT_VERSION as CHECKER_PROMPT_VERSION,
 )
 from longevity_trainer.blocks.card_checker import CardVerdict, check_card
-from longevity_trainer.blocks.card_writer import ASKS, PROMPT_VERSION, write_cards
+from longevity_trainer.blocks.card_writer import ASKS, PROMPT_VERSION, Drop, write_cards
 from quizkit.blocks.base import BlockSpec
 
 BLOCK_SPEC = BlockSpec(
@@ -104,6 +104,7 @@ class JobScore(BaseModel):
     dropped: dict[str, int] = Field(default_factory=lambda: dict.fromkeys(GATES, 0))
     niche: int = 0
     checker_errors: int = 0
+    drops: list[Drop] = Field(default_factory=list)
     error: str = ""
 
 
@@ -220,11 +221,25 @@ def _score_job(
             },
             niche=niche,
             checker_errors=r.checker_errors,
+            drops=list(result.drops),
         )
     except Exception as err:  # noqa: BLE001 (one odd failure mustn't lose a paid run)
         lines = [line.strip() for line in str(err).splitlines() if line.strip()]
         reason = lines[0] if lines else type(err).__name__
         return JobScore(id=job.id, holdout=job.holdout, error=reason)
+
+
+def _cut(text: str, limit: int) -> str:
+    text = " ".join(text.split())  # one drop, one line
+    return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def _drop_lines(score: JobScore) -> list[str]:
+    """One indented line per dropped draft: what we read to see why the writer fails."""
+    return [
+        f"  ✗ {d.gate}: {_cut(d.question, 100)} ({_cut(d.reason, 200)})"
+        for d in score.drops
+    ]
 
 
 def _line(score: JobScore) -> str:
@@ -252,6 +267,8 @@ def run_writer_exam(
     for job in jobs:
         score = _score_job(job, write, check, primer, model)
         show(_line(score))
+        for line in _drop_lines(score):
+            show(line)
         scores.append(score)
     return WriterExamReport(
         jobs=scores,

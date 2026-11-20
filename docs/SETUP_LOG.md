@@ -531,3 +531,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **What it tells us:** the writer still writes some niche drafts (6 of 31 died as niche), and on unseen topics it keeps fewer. That's the target for step 3.
 - **Reviews caught:** a checker outage would have been scored as a bad writer (now counted separately and blocking); a wrongly typed job line was silently converted (now rejected); a blank primer page would have been paid for.
 
+## The first writer fix made through its exam (2026-11-20)
+
+> **In plain words:** the loop from the article, done once for real. The exam now prints why each draft died; a separate Claude read those reasons and proposed a change to the writer's instructions; the exam decided whether to keep it.
+
+- **What the exam showed:** of 12 dead drafts on the main jobs, about 7 had a word the quote doesn't say (a study's site, "adults", "so far", a hedge) and about 4 were one study's details (its sample, which idea it was framed as supporting).
+- **What Claude proposed (writer v10):** check every word against the quote and take out anything it doesn't state; when a population is needed, find a quote that names it or skip the card; and no single-study details. It also found 5 places where the writer's instructions pushed it into mistakes the checker then punishes (e.g. "name the population" without saying it must come from the quote).
+- **The score:** main jobs 13 and 12 of 24 kept before, 13 and 13 after (no change); held-out jobs 2 of 7 before, 5 of 8 after, with no niche drafts. Kept: no worse where we tuned, better where we didn't. Modest evidence (8 held-out drafts), so it is watched in the next fills.
+- **Dropped idea:** pasting only the topic's section of a paper. The exam showed almost no off-topic or invented-quote drafts (1 in 72), so there was nothing for it to fix.
+- **Also:** `write-cards` no longer just says "nothing written": it says how many drafts died at which gate and what to try.
+

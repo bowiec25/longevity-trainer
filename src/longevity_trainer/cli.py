@@ -399,7 +399,26 @@ def write_cards_command(
     coverage = _coverage(slug(topic), topic_ids + new_ids)
     if not ok:
         write(coverage)
-        write("nothing written")
+        gates = {
+            "shape": r.dropped_shape,
+            "ask": r.dropped_ask,
+            "link": r.dropped_link,
+            "quote": r.dropped_quote,
+            "repeat": r.dropped_repeat,
+            "checker": r.dropped_checker,
+        }
+        dropped = ", ".join(f"{gate} {n}" for gate, n in gates.items() if n)
+        reached_quote = r.drafted - r.dropped_ask - r.dropped_shape
+        if r.drafted == 0:
+            why = "no drafts came back: try another source or --pages"
+        elif reached_quote > 0 and r.dropped_quote > reached_quote * 0.2:
+            why = "too many quotes not found (the bar allows 1 in 5): narrower --pages may help"
+        else:
+            why = "the ✗ lines above say why: another source may help"
+        write(
+            f"nothing written: kept {len(result.kept)} of {r.drafted} drafts"
+            f"{f' (dropped {dropped})' if dropped else ''}; {why}"
+        )
         return 1
     if dry_run:
         write(coverage)

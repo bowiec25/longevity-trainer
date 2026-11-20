@@ -64,7 +64,7 @@ BLOCK_SPEC = BlockSpec(
     ],
 )
 
-PROMPT_VERSION = "9"
+PROMPT_VERSION = "10"
 SOURCES_DIR = ROOT / "data" / "sources"
 TOPICS_FILE = ROOT / "data" / "topics.jsonl"
 MAX_SOURCE_CHARS = 200_000
@@ -90,6 +90,7 @@ Your task: write cards on ONE topic, using ONLY the source text you are given.
   - keep each answer to ONE short claim, taken from the quote; never add facts from elsewhere in the source or from your own knowledge;
   - the question must not assert anything the quote doesn't say (if the quote doesn't name the drug, the trial or the population, pick a quote that does, or leave it out of the question);
   - a plain-English paraphrase of the quote in the answer is fine;
+  - before keeping a card, check every word of the question and answer against the quote: a place or institution, a population or age group, a time word ("so far", "still", "now"), a comparison, a hedge ("not proven", "lower than claimed") or a combined use that the quote doesn't itself state must come out. When rules below ask you to name the thing or the population, find a quote that states it; never fill the gap yourself, and if no quote states it, skip the card;
   - avoid open lists ("which outcomes", "what limitations", "key messages"): the question must have one clear answer, and if the quote lists several equally right items, either ask for one of them and accept each, or ask a narrower question.
 - Cover the questions per topic except the trend one: what is it, how does \
 it work, how sure are we, what's the catch, what does it connect to. Mark each \
@@ -105,8 +106,11 @@ Write at least one connect card whenever the source states a link to a listed to
 - A how_sure answer names the species or population (mice, healthy people, \
 patients) and doesn't oversell.
 - No trivia: no sample sizes, p-values, registry numbers or exact dates.
-- Write for a well-read non-specialist: the main ideas they should know. No equation symbols or constants, no single experiment \
-in flies, worms or yeast (unless the topic is that experiment), and no \
+- Write for a well-read non-specialist: the main ideas they should know. No equation symbols or constants, no details of a single \
+study (its sample, where it was run, which idea its authors framed it as \
+supporting, a side comparison, or one experiment in cells, flies, worms, yeast \
+or mice) unless the topic is that study (ask what the evidence as a whole \
+shows), and no \
 researcher's name unless the name is the answer.
 - Each question must stand alone: never "the trial", "the authors", "this study" \
 or "Figure 2"; name the thing.

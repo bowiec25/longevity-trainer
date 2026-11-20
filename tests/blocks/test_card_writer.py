@@ -881,9 +881,15 @@ def test_cli_prints_a_line_per_draft_and_the_report(cli, results, capsys):
 # ---- Added after the SPEC review (PROMPT_VERSION 3, page markers, CLI bank) -------
 
 
-def test_prompt_version_is_9():
-    """v9: useful in the longevity world (SPEC 2026-11-20)."""
-    assert block.PROMPT_VERSION == "9"
+def test_prompt_version_is_10():
+    """v10: every word from the quote, no single-study details (SPEC 2026-11-20)."""
+    assert block.PROMPT_VERSION == "10"
+
+
+def test_system_prompt_has_the_v10_rules():
+    text = " ".join(block.SYSTEM.split())
+    assert "check every word of the question and answer against the quote" in text
+    assert "no details of a single study" in text
 
 
 def test_checker_rejected_question_does_not_block_a_later_same_question(env):
@@ -2546,3 +2552,75 @@ def test_cli_primer_pages_without_ask_still_writes_hard_cards(cli, env, primer, 
     loaded = load_cards(cli.cards_dir)
     assert [c.difficulty for c in loaded] == ["easy", "hard"]
     assert not any(ln.startswith("not kept (hard)") for ln in output_lines(capsys))
+
+
+# ---- Added for the "nothing written" line (SPEC 2026-11-20) -----------------------
+
+WHY_NO_DRAFTS = "; no drafts came back: try another source or --pages"
+WHY_QUOTES = (
+    "; too many quotes not found (the bar allows 1 in 5): narrower --pages may help"
+)
+WHY_OTHER = "; the ✗ lines above say why: another source may help"
+
+
+def nothing_written_lines(capsys) -> list[str]:
+    return [ln for ln in output_lines(capsys) if ln.startswith("nothing written")]
+
+
+def test_cli_missed_bar_says_why_nothing_was_written(cli, results, capsys):
+    """7 kept of 10, 3 quotes missing: only the quote gate, and the quote why."""
+    assert cli(results["fail"]) == 1
+    lines = output_lines(capsys)
+    expected = "nothing written: kept 7 of 10 drafts (dropped quote 3)" + WHY_QUOTES
+    assert expected in lines
+    # the last word of the run on why nothing was saved (only coverage/cost follow)
+    after = lines[lines.index(expected) + 1 :]
+    assert not any(ln.startswith("nothing written") for ln in after)
+
+
+def test_cli_nothing_written_lists_gates_in_fixed_order(cli, env, capsys):
+    """Quote 3 then checker 3 (the fixed gate order, not sorted); zero gates left out."""
+    fake = "Rapamycin doubled the lifespan of every human volunteer tested."
+    extra = [
+        draft("what", f"What else is true of rapamycin, number {i}?", quote=S_WHAT)
+        for i in range(3)
+    ]
+    missing = [
+        draft("how", f"How does it work in people, number {i}?", quote=fake)
+        for i in range(3)
+    ]
+    result, _ = env(
+        [*good_drafts(), *extra, *missing],
+        n=10,
+        check=fake_check({"What else": 3}),
+    )
+    r = result.report
+    assert (r.drafted, r.kept, r.dropped_quote, r.dropped_checker) == (10, 4, 3, 3)
+    assert not r.passed
+    assert cli(result) == 1
+    (line,) = nothing_written_lines(capsys)
+    assert line == (
+        "nothing written: kept 4 of 10 drafts (dropped quote 3, checker 3)" + WHY_QUOTES
+    )
+
+
+def test_cli_nothing_kept_says_why_nothing_was_written(cli, results, capsys):
+    """Quotes all found, every draft dropped by the checker: the generic why."""
+    assert cli(results["empty"]) == 1
+    (line,) = nothing_written_lines(capsys)
+    assert line == "nothing written: kept 0 of 4 drafts (dropped checker 4)" + WHY_OTHER
+
+
+def test_cli_no_drafts_says_none_came_back(cli, env, capsys):
+    """D = 0: the why says no drafts came back."""
+    result, _ = env([])
+    assert result.report.drafted == 0
+    assert cli(result) == 1
+    (line,) = nothing_written_lines(capsys)
+    assert line.startswith("nothing written: kept 0 of 0 drafts")
+    assert line.endswith(WHY_NO_DRAFTS)
+
+
+def test_cli_passing_run_has_no_nothing_written_line(cli, results, capsys):
+    assert cli(results["pass"]) == 0
+    assert nothing_written_lines(capsys) == []
