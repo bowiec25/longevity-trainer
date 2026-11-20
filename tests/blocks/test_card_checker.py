@@ -465,14 +465,14 @@ def test_report_records_time_and_prompt_version():
 
 def test_load_exam_reads_the_real_exam():
     cases = block.load_exam(EXAM_FILE)
-    assert len(cases) == 53
+    assert len(cases) == 60
     assert all(isinstance(c, block.ExamCase) for c in cases)
     assert all(isinstance(c.card, LongevityCard) for c in cases)
     assert {c.expected for c in cases} == {"pass", "fail"}
 
 
 def test_load_exam_defaults_to_the_real_exam():
-    assert len(block.load_exam()) == 53
+    assert len(block.load_exam()) == 60
 
 
 def good_line(case_id="x1", **changes) -> dict:

@@ -550,3 +550,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Exams grow from real mistakes:** a card you cut or a mark you dispute becomes a labelled case.
 - **Still to do:** the easy/hard tagger (`primer_check`) gets its exam when you next spot-check its tags, because it needs your labels.
 
+## First core refill with writer v10 (2026-11-20)
+
+> **In plain words:** the improved writer filled the core gaps, you cut the niche cards, and the cuts became exam questions for the checker. That is the loop working: real mistakes turn into the next test.
+
+- **Ran:** 9 fills (Gompertz, AMPK, rapamycin, 6 hallmark parts, each from its own section of the hallmarks review), about $3.70. 2 runs wrote nothing (rapamycin, proteostasis): the stricter writer gave up rather than write a weak card, and the new "nothing written" line said why.
+- **Kept 3 of 10:** AMPK senses the cell's energy; species with lower mutation rates live longer; environmental exposures change DNA methylation.
+- **Cut 7 as niche** (history trivia, jargon, molecular detail, a technical term). The checker passed all 7, so they join its main exam as "should fail" cases (60 cases now). Its score on them is unknown until it is next tuned.
+- **Coverage:** core 24 of 28; hallmarks 6 → 8 of 12 parts. Still open: Gompertz how, AMPK how, rapamycin how, 4 hallmark parts.
+- **What it tells us:** the checker's weak spot is hallmark mechanism detail. That is the next thing to tune, through its exam.
+
