@@ -1,8 +1,8 @@
 # Card eval set (M3 Step 2)
 
-> **In plain words:** an exam for the card checker, written before the checker exists. Each line in `card_eval.jsonl` is a card with the right verdict already filled in: **pass** (a good card) or **fail** (it breaks a rule in `docs/LEARNING_GOALS.md` §2). The checker passes the exam only if it catches every bad card and wrongly flags no more than a third of the good ones.
+> **In plain words:** an exam for the card checker, written before the checker exists. Each line in `card_eval.jsonl` is a card with the right verdict already filled in: **pass** (a good card) or **fail** (it breaks a rule in `docs/LEARNING_GOALS.md` §2). The checker passes the exam if it misses at most a sixth of the bad cards and wrongly flags no more than a third of the good ones.
 
-## What's in it (29 cards)
+## What's in it (53 cards; 29 until 2026-11-20, see the third change)
 | | Count | Where they come from |
 |---|---|---|
 | **Good** (`pass`) | 12 | 6 of your 👍 examples from LEARNING_GOALS §3, now with real receipts (#1, #2, #4, #5, #6, #7); 3 planted good ones (incl. what PEARL meant for the field); 3 reviewed hallmark cards from M1 (a name card stands in for #10) |
@@ -21,10 +21,10 @@ A bad card may break more than one rule; `rules` lists every rule a correct chec
 
 Every quote is real: `tests/test_card_eval_data.py` checks each one is found, word for word, on its page of the pinned source.
 
-## The bar (set before the checker was built; the false-flag limit raised after, see below)
-- **Every bad card caught** (17/17), naming one of its listed `rules` for at least 15 of them.
-- **At most a third of the good cards wrongly flagged** (4 of 12 here; 2 of 6 on the held-out cards). Was 1, then 3; changed by the user on 2026-11-12 after Haiku caught every bad card in all 14 runs, including the never-tuned-on held-out cards, while rejecting about 30% of good ones. A wrongly rejected card only costs the writer a redraft. To be revisited when tuning.
-- **The held-out cards** (`card_eval_holdout.jsonl`, 12 cards written by an agent that never saw the checker's prompt or this exam) must meet the same bar. This exam was used to tune prompt v2, so only the held-out score says how the checker does on new cards.
+## The bar (set before the checker was built; changed since, see below and the SPEC history)
+- **At most a sixth of the bad cards missed** (5 of 35 here, 2 of 13 held out; was every bad card until 2026-11-20, user: "im fine with a few fringe cases"), and every caught card but 2 names one of its listed `rules`. A caught card with the wrong rule is still rejected, so that slack only affects the diagnosis, not what gets through.
+- **At most a third of the good cards wrongly flagged** (6 of 18 here; 2 of 8 on the held-out cards). Was 1, then 3; changed by the user on 2026-11-12 after Haiku caught every bad card in all 14 runs, including the never-tuned-on held-out cards, while rejecting about 30% of good ones. A wrongly rejected card only costs the writer a redraft. To be revisited when tuning.
+- **The held-out cards** (`card_eval_holdout.jsonl`, 21 cards: 12 written by an agent that never saw the checker's prompt or this exam, plus 9 user cuts from 2026-11-20 never used to tune; they come from the same wide review that shaped prompt v4's niche wording, so the held-out score may flatter the checker a little) must meet the same bar. This exam was used to tune prompt v2, so only the held-out score says how the checker does on new cards.
 - Run twice; both runs must meet the bar. Haiku and Sonnet are compared; the cheaper one wins if both meet it.
 
 ## Line format
@@ -36,5 +36,7 @@ Every quote is real: `tests/test_card_eval_data.py` checks each one is found, wo
 **First change (2026-11-12):** the checker's first run (Haiku, prompt v1) rightly failed 4 "good" cards: an answer adding "including placebo", one adding "weak" and "works", a question claiming the SASP that its quote doesn't mention, and the M1 IL-6 card, which has other right answers. Three were reworded and IL-6 became a bad card. Its 4 other false flags were the prompt being too literal, fixed in prompt v2, not here.
 
 **Second change (2026-11-12):** with prompt v2, both models still failed some good cards. An independent adjudicator (who didn't see my view) ruled the checker right on 3 (PEARL's result named no population; the senescence description fit several hallmarks; the clock quote says 5hC, not methylation), reworded here, and wrong on 3 (`ev-rapa-why`, `ev-pearl-women`, `ev-pearl-catch`), which stay exactly as they are: they test that the checker isn't too strict.
+
+**Third change (2026-11-20): the user's niche cuts.** A wide review of the bank cut 70 cards the checker had let through, most of them niche (spelled-out acronyms, molecular steps, one-off lab experiments, definitions). 18 of them join this exam as `fail` (17 rule 4, one rule 6) and 6 cards the user kept join as `pass`; 7 more cut cards and 2 kept ones join the held-out set (they were never used to tune a prompt). Origins say `user cut 2026-11-20 (wide review)` or `user kept 2026-11-20`. The bar changed: a sixth of the bad cards may be missed (see The bar). After the first v4 run, 3 held-out cards moved here because v4's wording was written after seeing them (a BCL2-family card, a mouse bone experiment) or a main card shared their quote (apoB); 3 cut cards nobody had run took their place in the held-out set. Two cut cards were dropped from the exam after the first run: "about 25% of lifespan is genetic" and "low IGF-1 correlates with less cognitive decline" match their quotes and are wrong only against other sources, which the checker never sees (it judges the card and its quote alone).
 
 Add cases in a PR. A card the checker gets wrong in real use becomes a new line here (with the right verdict), so the exam grows from real mistakes.

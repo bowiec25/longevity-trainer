@@ -61,6 +61,7 @@ def test_block_spec_lists_spec_inputs_and_outputs():
         "run_exam",
         "ExamReport",
         "MAX_FALSE_FLAG_SHARE",
+        "MAX_MISS_SHARE",
         "MAX_RULES_NAMED",
     }
 
@@ -343,6 +344,31 @@ def test_one_bad_card_missed_fails():
     assert report.passed is False
 
 
+def misses(n: int) -> dict:
+    return {f"b{i}": "ok" for i in range(n)}
+
+
+@pytest.mark.parametrize("n_missed, passed", [(2, True), (3, False)])
+def test_misses_up_to_a_sixth_of_bad_cards_pass(n_missed, passed):
+    """12 bad cards: 2 missed (<= 12/6) passes, 3 missed doesn't."""
+    report, _, _ = score(exam(n_bad=12), misses(n_missed))
+    assert report.caught == 12 - n_missed
+    assert report.passed is passed
+
+
+@pytest.mark.parametrize("n_wrong, passed", [(2, True), (3, False)])
+def test_right_rule_counted_against_cards_caught(n_wrong, passed):
+    """12 bad, 2 missed, 10 caught: right_rule >= caught - 2, not bad_cards - 2."""
+    answers = {**misses(2), **{f"b{i}": 5 for i in range(2, 2 + n_wrong)}}
+    report, _, _ = score(exam(n_bad=12), answers)
+    assert (report.caught, report.right_rule) == (10, 10 - n_wrong)
+    assert report.passed is passed
+
+
+def test_max_miss_share_is_one_sixth():
+    assert block.MAX_MISS_SHARE == pytest.approx(1 / 6)
+
+
 def test_caught_with_unlisted_rule_is_caught_not_right_rule():
     report, _, _ = score(exam(), {"b0": 5})
     assert report.caught == 5
@@ -439,14 +465,14 @@ def test_report_records_time_and_prompt_version():
 
 def test_load_exam_reads_the_real_exam():
     cases = block.load_exam(EXAM_FILE)
-    assert len(cases) == 29
+    assert len(cases) == 53
     assert all(isinstance(c, block.ExamCase) for c in cases)
     assert all(isinstance(c.card, LongevityCard) for c in cases)
     assert {c.expected for c in cases} == {"pass", "fail"}
 
 
 def test_load_exam_defaults_to_the_real_exam():
-    assert len(block.load_exam()) == 29
+    assert len(block.load_exam()) == 53
 
 
 def good_line(case_id="x1", **changes) -> dict:
