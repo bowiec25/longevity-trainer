@@ -498,3 +498,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **What it isn't:** a first version showed how much of each chapter was covered; you wanted the content, not completion, so that was replaced before merging (`longevity coverage` still has the counts).
 - **The summaries** are one sentence per topic in our own words (`AREA_SUMMARIES`), never the primer's text.
 - **Read-only:** it never touches your progress file; a broken topic file shows one line, not a crash.
+
+## Cards must be useful to know in the longevity world (2026-11-20)
+
+> **In plain words:** you kept cutting cards as "way too niche" (how DXA handles pixels, vitamin D's antimicrobial effects, an FDA label change) and said the questions forget they need to be useful in the longevity world. Now that is the writer's first rule, and it is in your question standard, so the checker rejects cards that fail it too.
+
+- **What's useful:** what a thing is and what it's for, whether it works in humans and how strong the evidence is, its risks, how to judge a claim.
+- **What's not:** textbook molecular steps, lab or scanner methods, regulatory details. Naming what something acts on (rapamycin acts on mTOR) still counts: you marked that question good earlier.
+- **Fewer, better:** the number of cards asked for is now a ceiling, not a target.
+- **Checked:** the card checker's labelled exam was re-run with the new standard.

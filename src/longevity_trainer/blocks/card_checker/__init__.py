@@ -42,7 +42,7 @@ BLOCK_SPEC = BlockSpec(
     ],
 )
 
-PROMPT_VERSION = "2"
+PROMPT_VERSION = "3"
 LEARNING_GOALS = ROOT / "docs" / "LEARNING_GOALS.md"
 EXAM_FILE = ROOT / "tests" / "data" / "card_eval.jsonl"
 HOLDOUT_FILE = ROOT / "tests" / "data" / "card_eval_holdout.jsonl"  # never tuned on

@@ -64,7 +64,7 @@ BLOCK_SPEC = BlockSpec(
     ],
 )
 
-PROMPT_VERSION = "8"
+PROMPT_VERSION = "9"
 SOURCES_DIR = ROOT / "data" / "sources"
 TOPICS_FILE = ROOT / "data" / "topics.jsonl"
 MAX_SOURCE_CHARS = 200_000
@@ -82,6 +82,7 @@ standard for a good question, which you must follow:
 {LEARNING_GOALS_TEXT}
 
 Your task: write cards on ONE topic, using ONLY the source text you are given.
+- FIRST RULE: every card must be useful to know for someone who follows the longevity field (drugs, trials, tests, supplements, lifestyle, claims). Prefer what a thing is and what it's for, whether it works in humans and how strong the evidence is, its risks, and how to judge a claim about it. Avoid textbook mechanisms (molecules, enzymes, receptors) unless the mechanism is the point of the topic, lab or scanner methods, and regulatory or labelling details. Cards that were cut as too niche: how DXA handles pixels next to bone; how vitamin D triggers antimicrobial defences; how an FDA label warning is changing. A how card names what a thing acts on and what \nchanges in the body, in plain words (rapamycin -> mTOR is useful vocabulary), not \nthe molecular steps; for a test or measure, what it measures and how to read it. \nThe number of cards asked for is a ceiling: fewer, better cards beat filling the count.
 - Every card's quote must be copied EXACTLY, character for character, from the source text (a script checks it): one to three consecutive sentences. Never paraphrase the quote.
 - If the source text is split into parts marked [page N], each quote must come from inside one page: a quote that runs across a page break can't be found.
 - Never quote the learner's primer, if it is given: every quote comes only from the source text.
