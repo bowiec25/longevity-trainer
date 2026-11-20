@@ -31,7 +31,7 @@ BLOCK_SPEC = BlockSpec(
         "CHAPTERS",
         "syllabus_lines",
         "todo_lines",
-        "syllabus_view",
+        "topic_guide",
     ],
 )
 
@@ -239,7 +239,6 @@ class _Row(NamedTuple):
     ok: bool  # covered: a what card and a how card (any level)
     gap: str  # what's missing, e.g. "needs a how card" or "1 of 12 parts covered"
     has_easy: bool  # at least one card tagged easy (in easy mode)
-    cards: int  # its cards, any part, any level
 
 
 def _rows(cards: list[LongevityCard], topics: list[Topic]) -> list[_Row]:
@@ -262,27 +261,12 @@ def _rows(cards: list[LongevityCard], topics: list[Topic]) -> list[_Row]:
             line, needs = _count_line(topic.id, mine[topic.id], _wanted(topic))
             ok, gap = not needs, f"needs {', '.join(needs)}"
         has_easy = any(c.difficulty == "easy" for c in mine[topic.id])
-        rows.append(_Row(topic, line, ok, gap, has_easy, len(mine[topic.id])))
+        rows.append(_Row(topic, line, ok, gap, has_easy))
     return rows
 
 
 def _score(rows: list[_Row]) -> str:
     return f"{sum(r.ok for r in rows)} of {len(rows)}"
-
-
-def _chapters(rows: list[_Row]) -> list[tuple[int | None, list[_Row]]]:
-    """The rows grouped by chapter: chapters in number order, no chapter last."""
-    chapters: dict[int | None, list[_Row]] = {}
-    for row in rows:
-        chapters.setdefault(_chapter(row.topic), []).append(row)
-    order: list[int | None] = sorted(k for k in chapters if k is not None)
-    if None in chapters:
-        order.append(None)
-    return [(number, chapters[number]) for number in order]
-
-
-def _chapter_name(number: int) -> str:
-    return CHAPTERS.get(number, f"chapter {number}")
 
 
 def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:
@@ -301,13 +285,19 @@ def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]
         f"In easy mode: {in_easy} of {len(rows)} sub-topics have an easy card",
         f"By priority: {', '.join(tiers)}",
     ]
-    for number, here in _chapters(rows):
+    chapters: dict[int | None, list[_Row]] = {}
+    for row in rows:
+        chapters.setdefault(_chapter(row.topic), []).append(row)
+    order = sorted(k for k in chapters if k is not None)
+    if None in chapters:
+        order.append(None)
+    for number in order:
         if number is None:
             head = "?? no chapter"
         else:
-            head = f"{number:02d} {_chapter_name(number)}"
-        lines.append(f"{head}: {_score(here)} covered")
-        lines.extend(r.line for r in here)
+            head = f"{number:02d} {CHAPTERS.get(number, f'chapter {number}')}"
+        lines.append(f"{head}: {_score(chapters[number])} covered")
+        lines.extend(r.line for r in chapters[number])
     status = [t.status for t in topics if t.status != "v1"]
     later, read = status.count("after-m5"), status.count("read")
     lines.append(f"Later (dated facts, wait for M5): {later} sub-topics")
@@ -317,53 +307,52 @@ def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]
     return lines
 
 
-class TopicView(BaseModel):
-    """One learnable sub-topic on the web Syllabus page."""
+AREA_SUMMARIES = {  # one plain sentence per quiz topic (area), our own words
+    "How we age": "Why and how bodies age: the death-risk curve, healthspan vs lifespan,"
+    " why evolution lets us age, the 12 hallmarks and the nutrient-sensing pathways"
+    " (mTOR, AMPK, insulin/IGF-1, sirtuins).",
+    "Big ideas": "The big theories and research bets: geroscience, damage vs lost"
+    " information, reprogramming, senescent cells, young blood and the mouse"
+    " drug-testing programme.",
+    "Evidence & trials": "How to judge a claim (evidence grades, kinds of study,"
+    " surrogate endpoints) and the landmark ageing trials (TAME, PEARL, dogs).",
+    "Drugs & treatments": "Medicines and treatments discussed for longevity: GLP-1s,"
+    " statins, rapamycin, metformin, peptides, hormones and clinic procedures.",
+    "Supplements": "Popular supplements and what the evidence really shows: NAD+"
+    " boosters, resveratrol, creatine, urolithin A, omega-3, vitamin D, taurine.",
+    "Lifestyle": "The habits with the strongest evidence: exercise, sleep, diet and"
+    " fasting, and smoking, alcohol and social ties.",
+    "Measuring ageing": "How ageing and health risk are measured: blood markers,"
+    " ageing clocks, scans, wearables, glucose monitors and genes.",
+    "Industry": "The longevity business: companies, funding and the drug pipeline"
+    " (dated facts, quizzed once they can be kept fresh).",
+}
 
-    id: str
-    name: str  # the topic's text, e.g. "AMPK: the energy-shortage sensor"
-    priority: str  # "core", "useful", "extra" or "" (none)
-    cards: int  # its cards, any part, any level
-    covered: bool  # as in syllabus_lines
-    gap: str  # "" when covered, else as in todo_lines ("needs a how card")
+
+class AreaGuide(BaseModel):
+    """One quiz topic (area) on the web page: a summary and what's in it."""
+
+    area: str
+    summary: str  # from AREA_SUMMARIES; "" if the area has none
+    topics: list[str]  # the topic text of each v1 topic in it, file order
 
 
-class ChapterView(BaseModel):
-    """One primer chapter on the web Syllabus page."""
-
-    number: int | None  # None: no chapter
-    name: str
-    covered: int
-    total: int
-    rows: list[TopicView]
-
-
-def syllabus_view(cards: list[LongevityCard], topics: list[Topic]) -> list[ChapterView]:
-    """The syllabus as data (the web Syllabus page): chapters, each with its topics."""
-    views = []
-    for number, here in _chapters(_rows(cards, topics)):
-        rows = [
-            TopicView(
-                id=r.topic.id,
-                name=r.topic.topic,
-                priority=r.topic.priority,
-                cards=r.cards,
-                covered=r.ok,
-                gap="" if r.ok else r.gap,
-            )
-            for r in here
-        ]
-        name = "no chapter" if number is None else _chapter_name(number)
-        views.append(
-            ChapterView(
-                number=number,
-                name=name,
-                covered=sum(r.ok for r in here),
-                total=len(here),
-                rows=rows,
-            )
-        )
-    return views
+def topic_guide(topics: list[Topic]) -> list[AreaGuide]:
+    """What's in each quiz topic (area): AREAS order (as in the quiz's topic box),
+    then any other area in the order it first appears."""
+    guide: dict[str, list[str]] = {}
+    for topic in topics:
+        if topic.status == "v1":
+            guide.setdefault(topic.area, []).append(topic.topic)
+    rank = {area: n for n, area in enumerate(AREAS)}
+    order = sorted(
+        guide, key=lambda a: rank.get(a, len(AREAS))
+    )  # stable: others keep file order
+    guide = {area: guide[area] for area in order}
+    return [
+        AreaGuide(area=area, summary=AREA_SUMMARIES.get(area, ""), topics=names)
+        for area, names in guide.items()
+    ]
 
 
 def todo_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:

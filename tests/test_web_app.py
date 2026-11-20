@@ -11,6 +11,7 @@ import re
 from streamlit.testing.v1 import AppTest
 
 from longevity_trainer import cli
+from longevity_trainer.blocks import topic_map
 from longevity_trainer.blocks.card_bank import ROOT, LongevityCard, load_cards
 from longevity_trainer.blocks.quiz_round import QuizScreen, RoundFiles
 from quizkit.blocks.progress_store import ProgressStore
@@ -227,37 +228,41 @@ def test_stats_page_with_no_progress_creates_no_file(tmp_path):
     assert not (tmp_path / "progress.db").exists()
 
 
-# --- Syllabus page (topic_map SPEC syllabus_view) ----------------------------------
+# --- Topics page (topic_map SPEC topic_guide) --------------------------------------
 
 
-def syllabus_page():
+def topics_page():
     at = AppTest.from_file(
-        str(cli.WEB_PAGE.with_name("web_pages") / "syllabus.py"), default_timeout=30
+        str(cli.WEB_PAGE.with_name("web_pages") / "topics.py"), default_timeout=30
     )
     at.run()
     return at
 
 
-def test_syllabus_page_runs_and_shows_the_title():
-    at = syllabus_page()
-    assert not at.exception
-    assert any("Syllabus" in t.value for t in at.title)
+def test_topics_page_runs_without_exception():
+    assert not topics_page().exception
 
 
-def test_syllabus_page_has_an_expander_per_chapter():
-    at = syllabus_page()
-    labels = [shown(e.label) for e in at.expander]
-    assert any(x.startswith("02 Hallmarks and pathways") for x in labels)
+def test_topics_page_title_says_whats_in_each_topic():
+    at = topics_page()
+    assert any("What's in each topic" in shown(t.value) for t in at.title)
 
 
-def test_syllabus_page_lists_the_topics():
-    at = syllabus_page()
-    assert "AMPK" in texts(at)
+def test_topics_page_has_an_expander_per_area_in_guide_order():
+    at = topics_page()
+    expected = [g.area for g in topic_map.topic_guide(topic_map.load_topic_map())]
+    assert [shown(e.label) for e in at.expander] == expected
 
 
-def test_syllabus_page_creates_no_progress_file(tmp_path):
+def test_topics_page_shows_the_sub_topics_and_area_summary():
+    text = texts(topics_page())
+    assert "The 12 hallmarks of ageing" in text
+    assert topic_map.AREA_SUMMARIES["How we age"] in text
+
+
+def test_topics_page_creates_no_progress_file(tmp_path):
     """Read-only: conftest points PROGRESS_FILE / JUDGE_CACHE into tmp_path."""
-    syllabus_page()
+    topics_page()
     assert list(tmp_path.iterdir()) == []
 
 

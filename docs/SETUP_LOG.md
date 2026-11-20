@@ -491,10 +491,10 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Evidence grades:** your primer's A-E scale has no outside source, so (your choice) we quiz the standard GRADE scale from the Cochrane Handbook, chapter 14 (an official methods handbook, tier A).
 - **Pathways:** first cards for mTOR, insulin/IGF-1 and sirtuins (sirtuins covered).
 
-## A Syllabus page in the web app (2026-11-19)
+## A "What's in each topic" page in the web app (2026-11-20)
 
-> **In plain words:** a third page, next to Quiz and Stats, shows the whole syllabus at a glance: one line per chapter of your primer (e.g. "02 Hallmarks and pathways: 4 of 5"); click it to see each sub-topic, its priority, how many cards it has and what it still needs.
+> **In plain words:** a third page, next to Quiz and Stats, shows what is in each topic you can pick in the quiz: click "How we age" to see a one-line summary and its sub-topics (the Gompertz curve, the 12 hallmarks, mTOR, AMPK...).
 
-- **Same numbers as `longevity coverage`:** the page draws `syllabus_view`, the coverage report as data, so the two always agree.
-- **Read-only:** it never touches your progress file; if a card or topic file is broken it shows one line, not a crash.
-- **Reviews:** the code review asked for one source of numbers (the caption now adds up the page's own data instead of re-reading report text), escaping like the other pages, and using the running quiz's cards.
+- **What it isn't:** a first version showed how much of each chapter was covered; you wanted the content, not completion, so that was replaced before merging (`longevity coverage` still has the counts).
+- **The summaries** are one sentence per topic in our own words (`AREA_SUMMARIES`), never the primer's text.
+- **Read-only:** it never touches your progress file; a broken topic file shows one line, not a crash.

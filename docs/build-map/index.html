@@ -142,7 +142,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 <section aria-label="Summary">
   <div class="tiles">
     <div class="tile hi"><b>81</b><span>quiz cards (hallmarks, rapamycin, metformin, NAD+, senolytics, clocks, exercise), every quote checked</span></div>
-    <div class="tile"><b>1881</b><span>automatic tests, all passing</span></div>
+    <div class="tile"><b>1880</b><span>automatic tests, all passing</span></div>
     <div class="tile"><b>7</b><span>plumbing files reused from HSK</span></div>
     <div class="tile"><b>✅</b><span>first CI run on GitHub</span></div>
     <div class="tile"><b>8</b><span>decision records (ADRs)</span></div>
@@ -262,7 +262,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
 
 <section>
   <div>
-    <h2>4. What the 1881 tests guard</h2>
+    <h2>4. What the 1880 tests guard</h2>
   </div>
   <div class="card table-wrap">
     <table>
@@ -270,10 +270,10 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
       <tbody>
         <tr><td class="mono">test_cli.py</td><td class="n">14</td><td class="bar"><span style="width:2%"></span></td><td>the quiz: right answers score, typos forgiven, Claude's mark shown (fake Claude), own mark y/n when Claude can't check, q quits and keeps the score, receipt shown</td></tr>
         <tr><td class="mono">blocks/test_source_text.py</td><td class="n">65</td><td class="bar"><span style="width:12%"></span></td><td>quizkit block, by the test-writer: text from web pages and journal XML; hidden parts, reference lists and author notes left out; all 4 real sources read</td></tr>
-        <tr><td class="mono">test_web_app.py</td><td class="n">26</td><td class="bar"><span style="width:4%"></span></td><td>the web page, played by Streamlit's AppTest (no browser): right/wrong answers, the receipt, Yes/No marking, stop, nothing due, Save off, Practise, Hard mode, the stats page, and the page stays local</td></tr>
+        <tr><td class="mono">test_web_app.py</td><td class="n">27</td><td class="bar"><span style="width:4%"></span></td><td>the web pages (Quiz, Stats, Topics), played by Streamlit's AppTest (no browser): right/wrong answers, the receipt, Yes/No marking, stop, nothing due, Save off, Practise, Hard mode, the stats page, and the page stays local</td></tr>
         <tr><td class="mono">blocks/test_web_launch.py</td><td class="n">52</td><td class="bar"><span style="width:10%"></span></td><td>quizkit block, by the test-writer: the launcher starts Streamlit on this computer only, opens the browser once, never leaves a copy holding the port after Ctrl-C (fake process, real Streamlit never started); text shown as written</td></tr>
         <tr><td class="mono">blocks/test_primer_check.py</td><td class="n">70</td><td class="bar"><span style="width:12%"></span></td><td>longevity agent block, tests written <b>before</b> the code (fake Claude, fake primer): easy only with a primer quote code finds (30+ letters); each hard reason; <code>tag-levels</code> writes only the tag, never the primer's text</td></tr>
-        <tr><td class="mono">blocks/test_topic_map.py</td><td class="n">168</td><td class="bar"><span style="width:17%"></span></td><td>longevity block, tests written <b>before</b> the code: the topic map loads and rejects bad lines; each card finds its shelf (by topic id or alias); every card in the real bank has a shelf; each hallmark's easy what / how cards counted, and every hallmark card names one of the 12; the whole-syllabus report, chapter by chapter, and every real sub-topic has a chapter; priority tiers and the to-fill list, core first</td></tr>
+        <tr><td class="mono">blocks/test_topic_map.py</td><td class="n">166</td><td class="bar"><span style="width:17%"></span></td><td>longevity block, tests written <b>before</b> the code: the topic map loads and rejects bad lines; each card finds its shelf (by topic id or alias); every card in the real bank has a shelf; each hallmark's easy what / how cards counted, and every hallmark card names one of the 12; the whole-syllabus report, chapter by chapter, and every real sub-topic has a chapter; priority tiers and the to-fill list, core first</td></tr>
         <tr><td class="mono">blocks/test_quiz_round.py</td><td class="n">138</td><td class="bar"><span style="width:17%"></span></td><td>longevity block, by the test-writer: one brain for the terminal and the web page: what's said after each answer, setting up a round (nothing due, unknown topic, bad progress file, easy cards only), and the click-by-click quiz (double or late clicks ignored, each answer saved once, never on stop)</td></tr>
         <tr><td class="mono">blocks/test_study.py + test_cli_progress.py</td><td class="n">70</td><td class="bar"><span style="width:12%"></span></td><td>longevity block, by the test-writer: due cards first, then new, never early reviews; a missed card comes back first; boxes move right; a busy file warns once and keeps trying; stats per topic group; tests never touch your real progress file</td></tr>
         <tr><td class="mono">blocks/test_card_writer.py</td><td class="n">251</td><td class="bar"><span style="width:30%"></span></td><td>longevity block, tests written <b>before</b> the code: the writer's prompt carries your whole standard; each gate (shape, quote in the source, a connect card links to a real other topic, repeats, checker) drops the right drafts; ids never clash with the bank; the bar; the write-cards command (dry run, --add / --replace, --pages, a broken bank stops it, coverage and cost lines)</td></tr>
@@ -288,7 +288,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
         <tr><td class="mono">test_pr_body.py</td><td class="n">22</td><td class="bar"><span style="width:5%"></span></td><td>the "Still the right thing?" PR check (copied from HSK, unchanged)</td></tr>
         <tr><td class="mono">test_smoke.py</td><td class="n">2</td><td class="bar"><span style="width:1%"></span></td><td>the package imports and the command runs</td></tr>
       </tbody>
-      <tfoot><tr><td>Total</td><td class="n">1881</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
+      <tfoot><tr><td>Total</td><td class="n">1880</td><td></td><td>run locally and by CI on every push and PR</td></tr></tfoot>
     </table>
   </div>
 </section>
@@ -328,7 +328,7 @@ details { font-size: 13.5px; } details summary { cursor: pointer; color: var(--i
     <p class="lede">One line per step, newest first. Click <b>snapshot</b> to see the map as it was after that step.</p>
   </div>
   <ol class="timeline card" reversed>
-    <li><span class="when">2026-11-19</span><span class="what">A Syllabus page in the web app</span><span>Next to Quiz and Stats: one folding line per primer chapter ("02 Hallmarks and pathways: 4 of 5"); inside, each sub-topic with its priority, card count and what it still needs. Read-only, the same numbers as <code>longevity coverage</code>. Core is now 26 of 28. <a href="snapshots/syllabus-page.html">snapshot</a></span></li>
+    <li><span class="when">2026-11-20</span><span class="what">A "What's in each topic" page</span><span>Next to Quiz and Stats: click a quiz topic (e.g. How we age) to see a one-line summary and the sub-topics in it. Content, not completion counts (you rejected a first version with counts). Core is now 26 of 28. <a href="snapshots/topics-page.html">snapshot</a></span></li>
     <li><span class="when">2026-11-19</span><span class="what">Covered = learnable; pathways and GRADE</span><span>The easy-only filter threw away core cards whenever your primer is brief (e.g. GRADE's four levels, what AMPK stands for). Now a sub-topic is covered by a "what" and a "how" card at any level, and the report adds "In easy mode: k of 59". Easy mode itself is unchanged. Evidence grades now quiz GRADE, from the Cochrane Handbook. <a href="snapshots/covered-learnable.html">snapshot</a></span></li>
     <li><span class="when">2026-11-19</span><span class="what">A "how" card counts at any level; hallmarks 10 of 12</span><span>Your primer gives each hallmark one line, so an easy "how" was rarely possible. Now a sub-topic is covered by an easy "what" (your primer's fact, in easy mode) plus a "how" card at any level (hard mode). A how gap fill keeps hard how cards. Hallmarks: 10 of 12 covered; mitochondria and cell communication still need an easy "what". <a href="snapshots/how-any-level.html">snapshot</a></span></li>
     <li><span class="when">2026-11-18</span><span class="what">Priorities: core first</span><span>Your ask: prioritise what matters for learning longevity. Every sub-topic is now core (28), useful (20) or extra (11); you moved peptides and the clocks up. <code>longevity coverage --todo</code> lists what to fill next, core first. Today: core 3 of 28. <a href="snapshots/priorities.html">snapshot</a></span></li>
