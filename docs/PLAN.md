@@ -67,6 +67,7 @@
   - [x] 2. Writer exam: new block `writer_exam` + `longevity writer-exam` (8 fixed jobs, 2 held out; dry runs, saves nothing). Scores drafts kept, why the rest died (niche counted separately), empty jobs, checker outages, cost; bar: 2 in 5 kept, at most 1 empty job, no invented quotes. Baseline (writer v9, checker v4): main 13/24 kept (54%, PASSED, 4 niche), held out 2/7 (28%, NOT PASSED, 2 niche); $1.10 for both
   - [x] 3. Writer fixes, each proven on the writer exam: the exam prints why each draft died; `write-cards` says why when it writes nothing; writer prompt v10 (proposed by a separate Claude from the exam's failures: every word from the quote, no single-study details). Main jobs 13,12 → 13,13 of 24 kept; held-out 2/7 → 5/8 (niche 2 → 0). "Only the paper's section" dropped: the exam showed almost no off-topic or invented-quote drafts (1 in 72)
   - [x] 4. The loop written down: ADR 0011 (every agent has an exam; prompt changes go through it) and a working rule in CLAUDE.md, so it doesn't depend on memory. Cut cards and disputed marks become exam cases. Primer check's exam waits for your next spot-check of its easy/hard tags (it needs your labels)
+- [x] 2i. Core refill with writer v10 (2026-11-20): 3 of 10 kept, 7 niche cuts → checker exam (60 cases). Core 24/28, hallmarks 8/12. Next: tune the checker on hallmark mechanism detail, then refill the rest
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
 
