@@ -1,0 +1,20 @@
+{
+  "id": "wearables-accuracy-2024",
+  "title": "Keeping Pace with Wearables: A Living Umbrella Review of Systematic Reviews Evaluating the Accuracy of Consumer Wearable Technologies in Health Measurement",
+  "authors": "Doherty C, Baldwin M, Keogh A, et al.",
+  "publisher": "Sports Medicine",
+  "journal": "Sports Medicine 2024",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2024,
+  "doi": "10.1007/s40279-024-02077-2",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11560992/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 174177,
+  "sha256": "ee3f901ed2e4721d9049140f96b7d79ebb38bffe5b01b258416d20a11eb9fc21",
+  "local_path": "data/raw/wearables-accuracy-2024.xml",
+  "topics": [
+    "wearable-metrics"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

@@ -1,0 +1,20 @@
+{
+  "id": "gh-ageing-2025",
+  "title": "Growth hormone and aging: a clinical review",
+  "authors": "Fernández-Garza LE, Guillen-Silva F, Sotelo-Ibarra MA, et al.",
+  "publisher": "Frontiers in Aging",
+  "journal": "Frontiers in Aging 2025",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2025,
+  "doi": "10.3389/fragi.2025.1549453",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12009952/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 182790,
+  "sha256": "e7fe5ba723ccac789e9077da07103dc21d76c1f7268a6b86d59f1882c61e4379",
+  "local_path": "data/raw/gh-ageing-2025.xml",
+  "topics": [
+    "gh-dhea"
+  ],
+  "licence_note": "CC BY. Caveat: authors from a company; DHEA covered lightly (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

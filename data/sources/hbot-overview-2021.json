@@ -1,0 +1,20 @@
+{
+  "id": "hbot-overview-2021",
+  "title": "A General Overview on the Hyperbaric Oxygen Therapy: Applications, Mechanisms and Translational Opportunities",
+  "authors": "Ortega MA, Fraile-Martinez O, García-Montero C, et al.",
+  "publisher": "Medicina",
+  "journal": "Medicina 2021",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2021,
+  "doi": "10.3390/medicina57090864",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8465921/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 304883,
+  "sha256": "4106d0d00ea79853b5c29ae24edd74a661cbff0846391b5badfcc8159f1eedcf",
+  "local_path": "data/raw/hbot-overview-2021.xml",
+  "topics": [
+    "hbot"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

@@ -198,7 +198,7 @@ def test_picking_a_shelf_deals_only_its_cards(tmp_path):
     """The box lists shelves (areas): rapamycin and metformin are both on Drugs."""
     at = page(
         tmp_path,
-        cards=("hm-telomeres-name", "metformin-what-1", "rapamycin-catch-3"),
+        cards=("hm-telomeres-name", "metformin-what-1", "rapamycin-what-3"),
     )
     assert at.multiselect(key="areas").options == ["How we age", "Drugs & treatments"]
     at.multiselect(key="areas").select("Drugs & treatments").run()

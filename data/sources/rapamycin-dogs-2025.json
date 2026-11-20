@@ -1,0 +1,20 @@
+{
+  "id": "rapamycin-dogs-2025",
+  "title": "Rapamycin as a potential intervention to promote longevity and extend healthspan in companion dogs",
+  "authors": "Ryave J, Coleman AE",
+  "publisher": "Journal of Veterinary Science",
+  "journal": "Journal of Veterinary Science 2025",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2025,
+  "doi": "10.4142/jvs.25219",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12520851/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 187022,
+  "sha256": "867e04325be32143aeac1e93f1fc623d233f889c036ddc44493ddcd3f85e2c5e",
+  "local_path": "data/raw/rapamycin-dogs-2025.xml",
+  "topics": [
+    "triad-dogs"
+  ],
+  "licence_note": "CC BY-NC 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}
