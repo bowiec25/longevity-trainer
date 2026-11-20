@@ -69,6 +69,7 @@
   - [x] 4. The loop written down: ADR 0011 (every agent has an exam; prompt changes go through it) and a working rule in CLAUDE.md, so it doesn't depend on memory. Cut cards and disputed marks become exam cases. Primer check's exam waits for your next spot-check of its easy/hard tags (it needs your labels)
 - [x] 2i. Core refill with writer v10 (2026-11-20): 3 of 10 kept, 7 niche cuts → checker exam (60 cases). Core 24/28, hallmarks 8/12. Next: tune the checker on hallmark mechanism detail, then refill the rest
 - [x] 2j. Tuning paused (user: keep the exams, stop polishing). Last core fill: 5 kept, 2 cut → checker exam (62). Core done except Gompertz how and hallmarks proteostasis (no good source yet). **Ready for the user's full review**
+- [x] 2k. **Every sub-topic covered: 59 of 59** (core 28, useful 20, extra 11); 212 cards. Ready for the user's full review
 - [ ] **M5 Freshness**
 - [ ] **M6 Smarts + web**
 

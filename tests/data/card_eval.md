@@ -2,7 +2,7 @@
 
 > **In plain words:** an exam for the card checker, written before the checker exists. Each line in `card_eval.jsonl` is a card with the right verdict already filled in: **pass** (a good card) or **fail** (it breaks a rule in `docs/LEARNING_GOALS.md` §2). The checker passes the exam if it misses at most a sixth of the bad cards and wrongly flags no more than a third of the good ones.
 
-## What's in it (62 cards; 29 until 2026-11-20, see the third change)
+## What's in it (64 cards; 29 until 2026-11-20, see the third change)
 | | Count | Where they come from |
 |---|---|---|
 | **Good** (`pass`) | 12 | 6 of your 👍 examples from LEARNING_GOALS §3, now with real receipts (#1, #2, #4, #5, #6, #7); 3 planted good ones (incl. what PEARL meant for the field); 3 reviewed hallmark cards from M1 (a name card stands in for #10) |
@@ -39,6 +39,6 @@ Every quote is real: `tests/test_card_eval_data.py` checks each one is found, wo
 
 **Third change (2026-11-20): the user's niche cuts.** A wide review of the bank cut 70 cards the checker had let through, most of them niche (spelled-out acronyms, molecular steps, one-off lab experiments, definitions). 18 of them join this exam as `fail` (17 rule 4, one rule 6) and 6 cards the user kept join as `pass`; 7 more cut cards and 2 kept ones join the held-out set (they were never used to tune a prompt). Origins say `user cut 2026-11-20 (wide review)` or `user kept 2026-11-20`. The bar changed: a sixth of the bad cards may be missed (see The bar). After the first v4 run, 3 held-out cards moved here because v4's wording was written after seeing them (a BCL2-family card, a mouse bone experiment) or a main card shared their quote (apoB); 3 cut cards nobody had run took their place in the held-out set. Two cut cards were dropped from the exam after the first run: "about 25% of lifespan is genetic" and "low IGF-1 correlates with less cognitive decline" match their quotes and are wrong only against other sources, which the checker never sees (it judges the card and its quote alone).
 
-**Fourth change (2026-11-20): 7 more niche cuts.** The first core refill with writer v10 produced 7 hallmark and Gompertz cards that the checker passed and the user cut as niche (history trivia, jargon, molecular detail, a technical term). They join the main exam as `fail` (rule 4), per ADR 0011, for the next time the checker is tuned. Not re-run yet: the checker's score on them is unknown until then. Two more cuts from the next refill joined the same way (62 cases).
+**Fourth change (2026-11-20): 7 more niche cuts.** The first core refill with writer v10 produced 7 hallmark and Gompertz cards that the checker passed and the user cut as niche (history trivia, jargon, molecular detail, a technical term). They join the main exam as `fail` (rule 4), per ADR 0011, for the next time the checker is tuned. Not re-run yet: the checker's score on them is unknown until then. Two more cuts from the next refill joined the same way (62 cases). Then one more cut, and one card the user kept that the checker failed as too basic: a hallmark's basics (what it is, how it works) should pass (64 cases).
 
 Add cases in a PR. A card the checker gets wrong in real use becomes a new line here (with the right verdict), so the exam grows from real mistakes.

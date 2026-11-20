@@ -568,3 +568,15 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Last core fill:** 7 drafts, 5 kept (AMPK how, rapamycin how, CANTOS for inflammation, fibrosis for intercellular communication, reprogramming for stem cells), 2 cut into the checker exam (62 cases). About $3.
 - **Core:** every sub-topic covered except the Gompertz how card and the proteostasis part of the hallmarks (the writer came up empty twice for each). Left open on purpose, for a better source later.
 
+## Every sub-topic covered (2026-11-20)
+
+> **In plain words:** the syllabus is complete: all 59 sub-topics in your primer have at least a "what" card and a "how" card.
+
+- **Ran:** 22 writer runs over the 16 open sub-topics, each from its own source and primer section (about $8). 19 runs wrote cards; 3 came up empty twice.
+- **Hand-written, 3 cards:** the last gaps were written by Claude from a quote in the pinned source. The quote check still applies to them.
+  - proteostasis: the basics, as the user asked ("the really key thing is what it is basically / maybe how it works");
+  - off-label drugs: why SGLT2 inhibitors topped a 2022 review. The checker objected that the human evidence's population isn't named; kept, open to the user's cut;
+  - plasma exchange: how it works.
+- **Cut 1** (jargon) → checker exam. **Kept 1 the checker failed** (proteostasis basics) → checker exam as "should pass" (64 cases).
+- **Bank:** 212 cards, 212 quotes found. Easy mode covers 38 of 59 sub-topics.
+
