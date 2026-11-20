@@ -560,3 +560,11 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Coverage:** core 24 of 28; hallmarks 6 → 8 of 12 parts. Still open: Gompertz how, AMPK how, rapamycin how, 4 hallmark parts.
 - **What it tells us:** the checker's weak spot is hallmark mechanism detail. That is the next thing to tune, through its exam.
 
+## Tuning paused; core refill finished (2026-11-20)
+
+> **In plain words:** the safety setup is complete, so we stopped polishing it. Like a smoke alarm: once it's installed and tested, you don't keep re-testing it every day.
+
+- **Tuning paused (user, 2026-11-20: "lets stop tuning but keep them in the infra").** A try at checker v5 showed why: the checker's score moved by 4 cards between two identical runs (32 and 36 of 42 caught), so each tuning round needs several runs to show anything. The exams, ADR 0011 and the CLAUDE.md loop stay; cut cards keep going into the exam file, one line each, for the next time a pattern is worth fixing.
+- **Last core fill:** 7 drafts, 5 kept (AMPK how, rapamycin how, CANTOS for inflammation, fibrosis for intercellular communication, reprogramming for stem cells), 2 cut into the checker exam (62 cases). About $3.
+- **Core:** every sub-topic covered except the Gompertz how card and the proteostasis part of the hallmarks (the writer came up empty twice for each). Left open on purpose, for a better source later.
+
