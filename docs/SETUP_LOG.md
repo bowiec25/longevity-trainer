@@ -521,3 +521,13 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Model:** Sonnet did no better (2 misses, 6 good cards rejected), so the cheaper Haiku stays.
 - **A real catch:** the checker spotted that the GLP-1 card said "once-weekly", which its quote never says; fixed.
 
+## An exam for the card writer (2026-11-20)
+
+> **In plain words:** the checker's exam tests the marker; this one tests the writer. Eight fixed writing jobs (a topic and its paper), each a dry run that saves nothing. We count how many drafts survive, why the others died, and how many jobs end with nothing, so a change to the writer is kept only if the score improves.
+
+- **The jobs:** 6 that went badly before (taurine, CGM, senolytics, protein clocks, rapamycin) plus omega-3 as a control, and 2 held out (AMPK, growth hormone) that are never used to tune the writer.
+- **The bar:** at least 2 in 5 drafts kept, at most 1 job with nothing, no invented quotes, and no checker outages (an outage isn't the writer's fault, so the run is repeated).
+- **First score (writer v9, checker v4):** main jobs 13 of 24 drafts kept (54%), PASSED; 4 died as too niche. Held-out jobs 2 of 7 (28%), NOT PASSED; 2 too niche. Both runs cost $1.10 together, much less than feared, because the exam doesn't send the card bank.
+- **What it tells us:** the writer still writes some niche drafts (6 of 31 died as niche), and on unseen topics it keeps fewer. That's the target for step 3.
+- **Reviews caught:** a checker outage would have been scored as a bad writer (now counted separately and blocking); a wrongly typed job line was silently converted (now rejected); a blank primer page would have been paid for.
+
