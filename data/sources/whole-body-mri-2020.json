@@ -1,0 +1,20 @@
+{
+  "id": "whole-body-mri-2020",
+  "title": "The effects of incidental findings from whole-body MRI on the frequency of biopsies and detected malignancies or benign conditions in a general population cohort study",
+  "authors": "Richter A, Sierocinski E, Singer S, et al.",
+  "publisher": "European Journal of Epidemiology",
+  "journal": "European Journal of Epidemiology 2020",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2020,
+  "doi": "10.1007/s10654-020-00679-4",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7524843/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 104183,
+  "sha256": "f0e3690f9bec00476cc0d4786b0c929c265aeab26f2f9c758af931bd501bb514",
+  "local_path": "data/raw/whole-body-mri-2020.xml",
+  "topics": [
+    "full-body-mri"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

@@ -1,0 +1,20 @@
+{
+  "id": "taurine-humans-2025",
+  "title": "Experimental Evidence Against Taurine Deficiency as a Driver of Aging in Humans",
+  "authors": "Marcangeli V, Cefis M, Hammad R, et al.",
+  "publisher": "Aging Cell",
+  "journal": "Aging Cell 2025",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2025,
+  "doi": "10.1111/acel.70191",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12507425/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 86937,
+  "sha256": "ecc3153145cf6e5ec69fcaf512a0e443a222ae0b35aad34eb567f78d198e2377",
+  "local_path": "data/raw/taurine-humans-2025.xml",
+  "topics": [
+    "taurine"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

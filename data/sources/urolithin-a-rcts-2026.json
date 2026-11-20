@@ -1,0 +1,20 @@
+{
+  "id": "urolithin-a-rcts-2026",
+  "title": "Effects of Urolithin A supplementation on muscle health outcomes in humans from randomized controlled trials",
+  "authors": "Dao T, Nguyen TT, Gariani K, et al.",
+  "publisher": "Frontiers in Nutrition",
+  "journal": "Frontiers in Nutrition 2026",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2026,
+  "doi": "10.3389/fnut.2026.1834344",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13440176/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 95169,
+  "sha256": "671a464abd7c8b833fffaaa679de55f8f66f834b0ef5076a11f4e64efcd3f373",
+  "local_path": "data/raw/urolithin-a-rcts-2026.xml",
+  "topics": [
+    "urolithin-a"
+  ],
+  "licence_note": "CC BY 4.0. Caveat: senior author has a past link to the maker (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

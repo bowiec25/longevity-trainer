@@ -1,0 +1,20 @@
+{
+  "id": "resveratrol-trials-2024",
+  "title": "Resveratrol for the Management of Human Health: How Far Have We Come? A Systematic Review of Resveratrol Clinical Trials",
+  "authors": "Brown K, Theofanous D, Britton RG, et al.",
+  "publisher": "International Journal of Molecular Sciences",
+  "journal": "International Journal of Molecular Sciences 2024",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2024,
+  "doi": "10.3390/ijms25020747",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10815776/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 509973,
+  "sha256": "c45dbf28afe2f6a825ea399c282f4dfa555cfb6c3edb3b69d1008d6372c19d33",
+  "local_path": "data/raw/resveratrol-trials-2024.xml",
+  "topics": [
+    "resveratrol"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

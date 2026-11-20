@@ -1,0 +1,20 @@
+{
+  "id": "plasma-exchange-trial-2025",
+  "title": "Multi-Omics Analysis Reveals Biomarkers That Contribute to Biological Age Rejuvenation in Response to Single-Blinded Randomized Placebo-Controlled Therapeutic Plasma Exchange",
+  "authors": "Fuentealba M, Kiprov D, Schneider K, et al.",
+  "publisher": "Aging Cell",
+  "journal": "Aging Cell 2025",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2025,
+  "doi": "10.1111/acel.70103",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12341816/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 220520,
+  "sha256": "6839dfeb88a94e3bc775da6a4c3d5a52c557abd8f95c405834584f6cc1055151",
+  "local_path": "data/raw/plasma-exchange-trial-2025.xml",
+  "topics": [
+    "plasma-exchange"
+  ],
+  "licence_note": "CC BY 4.0. Caveat: a primary trial, a co-author co-founded a company selling the treatment (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

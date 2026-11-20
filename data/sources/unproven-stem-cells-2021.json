@@ -1,0 +1,20 @@
+{
+  "id": "unproven-stem-cells-2021",
+  "title": "Unproven stem cell interventions: A global public health problem requiring global deliberation",
+  "authors": "Master Z, Matthews KR, Abou-el-Enein M",
+  "publisher": "Stem Cell Reports",
+  "journal": "Stem Cell Reports 2021",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2021,
+  "doi": "10.1016/j.stemcr.2021.05.004",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8190665/fullTextXML",
+  "retrieved": "2026-11-20",
+  "size": 118308,
+  "sha256": "0aed53062a5b8aeed3dc113763badfd06dddf475ee98d73ac61e08b14d2ab27e",
+  "local_path": "data/raw/unproven-stem-cells-2021.xml",
+  "topics": [
+    "stem-cells-exosomes"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed."
+}

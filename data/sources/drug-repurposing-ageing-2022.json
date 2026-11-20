@@ -10,7 +10,8 @@
   "doi": "10.1111/acel.13596",
   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC9009114/fullTextXML",
   "topics": [
-    "off-label-newer"
+    "off-label-newer",
+    "pipeline-bets"
   ],
   "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
   "retrieved": "2026-11-20",
