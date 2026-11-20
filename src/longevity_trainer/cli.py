@@ -10,6 +10,8 @@ topic, new / in each box / due now, the last 7 days' score and the most missed.
 `check-marking-eval` scores Claude's marking on answers you labelled (real Claude).
 `check-cards-exam` scores the card checker on the labelled exam (real Claude;
 --holdout for the never-tuned-on cards, --limit, --dry-run).
+`writer-exam` scores the card writer on fixed writing jobs (real Claude; dry runs,
+nothing saved; --holdout, --limit, --dry-run).
 `write-cards` drafts cards on a topic from a pinned source, gates them (quote found,
 no repeats, card checker) and saves the survivors to data/cards/<topic>.jsonl.
 
@@ -80,6 +82,7 @@ from longevity_trainer.blocks.topic_map import (
     syllabus_lines,
     todo_lines,
 )
+from longevity_trainer.blocks.writer_exam import load_jobs, run_writer_exam
 from quizkit.blocks.engine import Attempt, QuizSession
 from quizkit.blocks.judge import PROMPT_VERSION as JUDGE_PROMPT_VERSION
 from quizkit.blocks.progress_store import ProgressFileError, ProgressStore
@@ -483,6 +486,44 @@ def cards_exam(model: str, holdout: bool, limit: int | None, dry_run: bool) -> i
     return 0 if report.passed else 1
 
 
+def writer_exam(model: str, holdout: bool, limit: int | None, dry_run: bool) -> int:
+    """Score the card writer on its exam jobs; exit code 0 = the bar is met."""
+    try:
+        jobs = [job for job in load_jobs() if job.holdout == holdout]
+    except (OSError, ValueError) as err:
+        print(str(err).splitlines()[0])
+        return 1
+    if limit is not None:
+        jobs = jobs[:limit]
+    if dry_run:
+        for job in jobs:
+            print(f"{job.id}: {job.topic} from {job.source} ({job.why})")
+        print(f"{len(jobs)} jobs; no Claude calls (dry run)")
+        return 0
+    primer = None
+    if any(job.primer_pages for job in jobs):
+        primer, problem = _read_primer()
+        if primer is None:
+            print(f"can't read the primer ({problem}): its jobs will be errors")
+    ask, replies = _counting_ask()
+    report = run_writer_exam(
+        jobs,
+        write=lambda *a, **k: write_cards(*a, ask=ask, **k),
+        check=lambda card: check_card(card, ask=ask),
+        primer=primer,
+        model=model,
+    )
+    share = f"{report.kept / report.drafted:.0%}" if report.drafted else "-"
+    print(
+        f"\n{report.model} (writer prompt v{report.prompt_version}): "
+        f"kept {report.kept}/{report.drafted} ({share}); niche {report.niche}; "
+        f"empty jobs {report.empty_jobs}; quotes not found {report.dropped['quote']}; "
+        f"errors {report.errors} -> {'PASSED' if report.passed else 'NOT PASSED'}"
+    )
+    print(_cost_line(replies))
+    return 0 if report.passed else 1
+
+
 def _read_primer(path: Path | None = None) -> tuple[list[str] | None, str]:
     """(the primer's pages, "") or (None, why it can't be read): missing, a PDF
     pypdf can't read, or no text on any page (a scan: every card would be hard)."""
@@ -648,6 +689,18 @@ def main(argv: list[str] | None = None) -> int:
     exam.add_argument(
         "--dry-run", action="store_true", help="list the cards; don't call Claude"
     )
+    wexam = sub.add_parser(
+        "writer-exam",
+        help="score the card writer on fixed writing jobs (real Claude, saves nothing)",
+    )
+    wexam.add_argument("--model", default="sonnet", help="the writer's Claude model")
+    wexam.add_argument(
+        "--holdout", action="store_true", help="the held-out jobs (never tuned on)"
+    )
+    wexam.add_argument("--limit", type=_positive, default=None, help="first N only")
+    wexam.add_argument(
+        "--dry-run", action="store_true", help="list the jobs; don't call Claude"
+    )
     mark_eval = sub.add_parser(
         "check-marking-eval",
         help="score Claude's marking on the answers you labelled (real Claude)",
@@ -721,6 +774,8 @@ def main(argv: list[str] | None = None) -> int:
         return check_all_receipts()
     if args.command == "check-marking-eval":
         return marking_eval(args.limit, args.dry_run)
+    if args.command == "writer-exam":
+        return writer_exam(args.model, args.holdout, args.limit, args.dry_run)
     if args.command == "check-cards-exam":
         return cards_exam(args.model, args.holdout, args.limit, args.dry_run)
     if args.command == "coverage":
