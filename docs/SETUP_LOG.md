@@ -541,3 +541,12 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Dropped idea:** pasting only the topic's section of a paper. The exam showed almost no off-topic or invented-quote drafts (1 in 72), so there was nothing for it to fix.
 - **Also:** `write-cards` no longer just says "nothing written": it says how many drafts died at which gate and what to try.
 
+## The improve-an-agent loop, written down (2026-11-20)
+
+> **In plain words:** a recipe card pinned to the fridge. Whenever we change what an agent is told, we follow the same steps, so it never depends on anyone remembering.
+
+- **Where:** ADR 0011 (the decision and why) and a working rule in CLAUDE.md (the steps).
+- **The steps:** run the agent's exam → read why it fails → a separate Claude proposes a general change → run the exam again, including the held-out cases → keep it only if the score holds or improves.
+- **Exams grow from real mistakes:** a card you cut or a mark you dispute becomes a labelled case.
+- **Still to do:** the easy/hard tagger (`primer_check`) gets its exam when you next spot-check its tags, because it needs your labels.
+

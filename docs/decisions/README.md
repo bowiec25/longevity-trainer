@@ -17,6 +17,7 @@ One file per big decision, numbered in order. Never deleted or rewritten: if a d
 | [0008](0008-card-writer-uses-claude-p.md) | The card writer uses `claude -p` (one call, JSON reply, no tools), not the Agent SDK; replaces 0002 guardrail 5 | Accepted |
 | [0009](0009-web-page-on-one-quiz-brain.md) | A local Streamlit web page on one shared quiz brain (`quiz_round`); HSK ADR 0014 pattern | Accepted |
 | [0010](0010-primer-as-checker-easy-and-hard.md) | The primer as a checker: each card tagged easy (the primer states it) or hard (beyond it), proven by a primer quote (`primer_check`) | Accepted |
+| [0011](0011-every-agent-has-an-exam.md) | Every agent has an exam with a held-out part; prompt changes go through it (run, read failures, Claude proposes, exam decides) | Accepted |
 
 ## Template
 ```markdown
