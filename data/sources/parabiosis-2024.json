@@ -1,0 +1,20 @@
+{
+  "id": "parabiosis-2024",
+  "title": "Aging insights from heterochronic parabiosis models",
+  "authors": "Lagunas-Rangel FA",
+  "publisher": "npj Aging",
+  "journal": "npj Aging 2024",
+  "tier": "B",
+  "format": "jats-xml",
+  "year": 2024,
+  "doi": "10.1038/s41514-024-00166-0",
+  "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11330497/fullTextXML",
+  "topics": [
+    "young-blood"
+  ],
+  "licence_note": "CC BY 4.0 (article licence). Tier B. Record + short quotes only; raw file not committed.",
+  "retrieved": "2026-11-20",
+  "size": 185166,
+  "sha256": "fddfb2db4a9bfa5ae51b85b870156f1f1695fca37dbc64cece22d8bc92dccd33",
+  "local_path": "data/raw/parabiosis-2024.xml"
+}
