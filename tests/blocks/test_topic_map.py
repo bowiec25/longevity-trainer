@@ -78,6 +78,7 @@ def test_block_spec_lists_every_spec_input_and_output():
         "CHAPTERS",
         "syllabus_lines",
         "todo_lines",
+        "topic_guide",
     }
 
 
@@ -1093,6 +1094,125 @@ def test_todo_lines_with_no_topics_has_nothing_to_fill():
     assert block.todo_lines([], []) == ["Nothing to fill: every sub-topic is covered"]
 
 
+# --- topic_guide --------------------------------------------------------------------
+
+
+def gtopic(id_, area, status="v1"):
+    """A Topic for the topic_guide tests: its text is "Text of <id>"."""
+    return block.Topic(
+        id=id_,
+        topic=f"Text of {id_}",
+        group="g",
+        area=area,
+        status=status,
+        priority="core" if status == "v1" else "",
+    )
+
+
+def guide_map():
+    """File order isn't AREAS order; one area has only a non-v1 topic."""
+    return [
+        gtopic("rapamycin", "Drugs & treatments"),
+        gtopic("hallmarks", "How we age"),
+        gtopic("deals", "Industry", status="after-m5"),
+        gtopic("metformin", "Drugs & treatments"),
+        gtopic("essay", "How we age", status="read"),
+        gtopic("pathways", "How we age"),
+    ]
+
+
+def test_topic_guide_types_are_importable():
+    from longevity_trainer.blocks.topic_map import AREA_SUMMARIES, AreaGuide
+
+    assert isinstance(AREA_SUMMARIES, dict)
+    guides = block.topic_guide(guide_map())
+    assert guides and all(isinstance(g, AreaGuide) for g in guides)
+
+
+def test_topic_guide_areas_follow_areas_order_not_file_order():
+    topics = [
+        gtopic("pilates", "Lifestyle"),
+        gtopic("rapamycin", "Drugs & treatments"),
+        gtopic("nmn", "Supplements"),
+        gtopic("hallmarks", "How we age"),
+        gtopic("yoga", "Lifestyle"),
+    ]
+    guides = block.topic_guide(topics)
+    assert [g.area for g in guides] == [
+        "How we age",
+        "Drugs & treatments",
+        "Supplements",
+        "Lifestyle",
+    ]
+    assert guides[-1].topics == ["Text of pilates", "Text of yoga"]
+
+
+def test_topic_guide_areas_not_in_areas_come_last_in_first_appearance_order():
+    """Topic.model_construct skips validation, as a caller building Topics might."""
+
+    def odd(id_, area):
+        return block.Topic.model_construct(
+            id=id_,
+            topic=f"Text of {id_}",
+            group="g",
+            area=area,
+            status="v1",
+            aliases=[],
+            parts=[],
+            primer="",
+            kinds=[],
+            priority="core",
+        )
+
+    topics = [
+        odd("bees", "Zoology"),
+        gtopic("rapamycin", "Drugs & treatments"),
+        odd("art", "Arts"),
+        gtopic("hallmarks", "How we age"),
+        odd("wasps", "Zoology"),
+    ]
+    guides = block.topic_guide(topics)
+    assert [g.area for g in guides] == [
+        "How we age",
+        "Drugs & treatments",
+        "Zoology",
+        "Arts",
+    ]
+    assert guides[2].topics == ["Text of bees", "Text of wasps"]
+
+
+def test_topic_guide_topics_are_the_v1_topic_texts_in_file_order():
+    guides = block.topic_guide(guide_map())
+    assert [g.topics for g in guides] == [
+        ["Text of hallmarks", "Text of pathways"],
+        ["Text of rapamycin", "Text of metformin"],
+    ]
+
+
+def test_topic_guide_leaves_out_non_v1_topics_and_their_only_area():
+    guides = block.topic_guide(guide_map())
+    listed = [x for g in guides for x in g.topics]
+    assert "Text of deals" not in listed
+    assert "Text of essay" not in listed
+    assert "Industry" not in [g.area for g in guides]
+
+
+def test_topic_guide_summary_comes_from_area_summaries(monkeypatch):
+    monkeypatch.setattr(block, "AREA_SUMMARIES", {"How we age": "Why bodies wear."})
+    guides = {g.area: g for g in block.topic_guide(guide_map())}
+    assert guides["How we age"].summary == "Why bodies wear."
+
+
+def test_topic_guide_area_missing_from_area_summaries_has_empty_summary(monkeypatch):
+    monkeypatch.setattr(block, "AREA_SUMMARIES", {"How we age": "Why bodies wear."})
+    guides = {g.area: g for g in block.topic_guide(guide_map())}
+    assert guides["Drugs & treatments"].summary == ""
+
+
+def test_topic_guide_with_no_topics_is_empty():
+    assert block.topic_guide([]) == []
+
+
 # --- CLI: longevity coverage -------------------------------------------------------
 
 
@@ -1379,3 +1499,17 @@ def test_real_syllabus_report_runs(real_map):
     assert any(x.startswith(LATER) for x in lines)
     assert any(x.startswith(READ) for x in lines)
     assert not any(x.startswith("?? ") for x in lines)
+
+
+def test_every_real_area_has_a_summary(real_map):
+    guides = block.topic_guide(real_map)
+    assert guides
+    assert [g.area for g in guides if not g.summary.strip()] == []
+    areas = {t.area for t in real_map}
+    assert [a for a in areas if not block.AREA_SUMMARIES.get(a, "").strip()] == []
+
+
+def test_real_topic_guide_lists_every_v1_topic_once(real_map):
+    listed = [x for g in block.topic_guide(real_map) for x in g.topics]
+    v1 = [t.topic for t in real_map if t.status == "v1"]
+    assert sorted(listed) == sorted(v1)

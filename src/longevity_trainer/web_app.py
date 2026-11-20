@@ -1,6 +1,6 @@
 """The web app (ADR 0009): `uv run longevity web` opens it in your browser.
 
-The entry only: the page settings and Streamlit's page menu (Quiz, Stats). The pages
+The entry only: the page settings and Streamlit's page menu (Quiz, Stats, Topics). The pages
 live in `web_pages/`; the quiz's rules live in the `quiz_round` block. Switching page
 keeps a running quiz (same browser tab). It runs on your computer only (127.0.0.1);
 nothing is sent to Streamlit.
@@ -23,5 +23,6 @@ st.navigation(
     [
         st.Page(PAGES / "quiz.py", title="Quiz", icon="📝", default=True),
         st.Page(PAGES / "stats.py", title="Stats", icon="📊"),
+        st.Page(PAGES / "topics.py", title="Topics", icon="📚"),
     ]
 ).run()

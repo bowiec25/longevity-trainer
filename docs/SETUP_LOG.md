@@ -490,3 +490,11 @@ A plain-English record of each step: **what** it does, **why** it's best practic
 - **Writer prompt v8:** a "how" card must be an explain card, so it is counted.
 - **Evidence grades:** your primer's A-E scale has no outside source, so (your choice) we quiz the standard GRADE scale from the Cochrane Handbook, chapter 14 (an official methods handbook, tier A).
 - **Pathways:** first cards for mTOR, insulin/IGF-1 and sirtuins (sirtuins covered).
+
+## A "What's in each topic" page in the web app (2026-11-20)
+
+> **In plain words:** a third page, next to Quiz and Stats, shows what is in each topic you can pick in the quiz: click "How we age" to see a one-line summary and its sub-topics (the Gompertz curve, the 12 hallmarks, mTOR, AMPK...).
+
+- **What it isn't:** a first version showed how much of each chapter was covered; you wanted the content, not completion, so that was replaced before merging (`longevity coverage` still has the counts).
+- **The summaries** are one sentence per topic in our own words (`AREA_SUMMARIES`), never the primer's text.
+- **Read-only:** it never touches your progress file; a broken topic file shows one line, not a crash.

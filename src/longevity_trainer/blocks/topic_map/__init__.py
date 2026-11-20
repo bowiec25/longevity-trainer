@@ -31,6 +31,7 @@ BLOCK_SPEC = BlockSpec(
         "CHAPTERS",
         "syllabus_lines",
         "todo_lines",
+        "topic_guide",
     ],
 )
 
@@ -304,6 +305,54 @@ def syllabus_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]
     if other := len(status) - later - read:
         lines.append(f"Other status: {other} sub-topics")
     return lines
+
+
+AREA_SUMMARIES = {  # one plain sentence per quiz topic (area), our own words
+    "How we age": "Why and how bodies age: the death-risk curve, healthspan vs lifespan,"
+    " why evolution lets us age, the 12 hallmarks and the nutrient-sensing pathways"
+    " (mTOR, AMPK, insulin/IGF-1, sirtuins).",
+    "Big ideas": "The big theories and research bets: geroscience, damage vs lost"
+    " information, reprogramming, senescent cells, young blood and the mouse"
+    " drug-testing programme.",
+    "Evidence & trials": "How to judge a claim (evidence grades, kinds of study,"
+    " surrogate endpoints) and the landmark ageing trials (TAME, PEARL, dogs).",
+    "Drugs & treatments": "Medicines and treatments discussed for longevity: GLP-1s,"
+    " statins, rapamycin, metformin, peptides, hormones and clinic procedures.",
+    "Supplements": "Popular supplements and what the evidence really shows: NAD+"
+    " boosters, resveratrol, creatine, urolithin A, omega-3, vitamin D, taurine.",
+    "Lifestyle": "The habits with the strongest evidence: exercise, sleep, diet and"
+    " fasting, and smoking, alcohol and social ties.",
+    "Measuring ageing": "How ageing and health risk are measured: blood markers,"
+    " ageing clocks, scans, wearables, glucose monitors and genes.",
+    "Industry": "The longevity business: companies, funding and the drug pipeline"
+    " (dated facts, quizzed once they can be kept fresh).",
+}
+
+
+class AreaGuide(BaseModel):
+    """One quiz topic (area) on the web page: a summary and what's in it."""
+
+    area: str
+    summary: str  # from AREA_SUMMARIES; "" if the area has none
+    topics: list[str]  # the topic text of each v1 topic in it, file order
+
+
+def topic_guide(topics: list[Topic]) -> list[AreaGuide]:
+    """What's in each quiz topic (area): AREAS order (as in the quiz's topic box),
+    then any other area in the order it first appears."""
+    guide: dict[str, list[str]] = {}
+    for topic in topics:
+        if topic.status == "v1":
+            guide.setdefault(topic.area, []).append(topic.topic)
+    rank = {area: n for n, area in enumerate(AREAS)}
+    order = sorted(
+        guide, key=lambda a: rank.get(a, len(AREAS))
+    )  # stable: others keep file order
+    guide = {area: guide[area] for area in order}
+    return [
+        AreaGuide(area=area, summary=AREA_SUMMARIES.get(area, ""), topics=names)
+        for area, names in guide.items()
+    ]
 
 
 def todo_lines(cards: list[LongevityCard], topics: list[Topic]) -> list[str]:
